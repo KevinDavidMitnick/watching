@@ -1,16 +1,18 @@
+// add by liucong,2017.7.25
 package http
 
 import (
 	"encoding/json"
 	"fmt"
 	"github.com/open-falcon/falcon-plus/modules/transfer/g"
+	"io/ioutil"
 	"net/http"
 )
 
-type QueryMetric struct {
-	Endpoint string `json:"endpoint"`
-	Metric   string `json:"metric"`
-	Tags     string `json:"tags"`
+type Metrics struct {
+	Endpoint string            `json:"endpoint"`
+	Metric   string            `json:"metric"`
+	Tags     map[string]string `json:"tags"`
 }
 
 func query_last_metric(rw http.ResponseWriter, req *http.Request) {
@@ -24,23 +26,34 @@ func query_last_metric(rw http.ResponseWriter, req *http.Request) {
 		return
 	}
 
-	decoder := json.NewDecoder(req.Body)
-	var metrics []*QueryMetric
-	err := decoder.Decode(&metrics)
-	if err != nil || len(metrics) != 1 {
+	var metrics Metrics
+	body, err := ioutil.ReadAll(req.Body)
+	if err != nil {
+		http.Error(rw, "read error", http.StatusBadRequest)
+		return
+	}
+
+	err = json.Unmarshal(body, &metrics)
+	if err != nil {
 		http.Error(rw, "decode error", http.StatusBadRequest)
 		return
 	}
 
-	metric := metrics[0].Metric
-	endpoint := metrics[0].Endpoint
-	tags := metrics[0].Tags
+	metric := metrics.Metric
+	endpoint := metrics.Endpoint
+	if err != nil {
+		http.Error(rw, "decode error", http.StatusBadRequest)
+		return
+	}
 	str := ""
-	for key, value := range tags {
+	for key, value := range metrics.Tags {
 		if str != "" {
 			str = fmt.Sprintf("%s%s", str, ",")
 		}
 		str = fmt.Sprintf("%s%s=%s", str, key, value)
+	}
+	if str != "" {
+		str = fmt.Sprintf("%s%s", str, ",")
 	}
 	str = fmt.Sprintf("%s%s=%s", str, "endpoint", endpoint)
 	query_str := fmt.Sprintf("timeseries=%s{%s}", metric, str)
@@ -53,7 +66,22 @@ func query_last_metric(rw http.ResponseWriter, req *http.Request) {
 		return
 	}
 
-	RenderDataJson(rw, reply)
+	body, err = ioutil.ReadAll(reply.Body)
+	if err != nil {
+		http.Error(rw, "request to tsdb failed.", http.StatusBadRequest)
+		return
+	}
+
+	test := string(body)
+
+	var ret []map[string]interface{}
+	err = json.Unmarshal(body, &ret)
+	if err != nil {
+		http.Error(rw, "decode error", http.StatusBadRequest)
+		return
+	}
+
+	RenderDataJson(rw, ret)
 }
 
 func configQueryRoutes() {

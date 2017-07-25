@@ -44,11 +44,11 @@ fmt-check:
 	fi;
 
 $(CMD):
-	go build -o bin/$@/falcon-$@ ./modules/$@
+	go build -gcflags="-N -l" -o bin/$@/falcon-$@ ./modules/$@
 
 .PHONY: $(TARGET)
 $(TARGET): $(GOFILES)
-	go build -ldflags "-X main.GitCommit=`git rev-parse --short HEAD` -X main.Version=$(VERSION)" -o open-falcon
+	go build -gcflags="-N -l" -ldflags "-X main.GitCommit=`git rev-parse --short HEAD` -X main.Version=$(VERSION)" -o open-falcon
 
 checkbin: bin/ config/ open-falcon
 
