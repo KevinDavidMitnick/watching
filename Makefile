@@ -1,5 +1,5 @@
 CMD = agent aggregator graph hbs judge nodata transfer gateway api alarm
-TARGET = open-falcon
+TARGET = opsultra
 PACKAGES ?= $(shell go list ./... | grep -v /vendor/)
 GOFILES := $(shell find . -name "*.go" -type f -not -path "./vendor/*")
 GOFMT ?= gofmt "-s"
@@ -44,13 +44,13 @@ fmt-check:
 	fi;
 
 $(CMD):
-	go build -gcflags="-N -l" -o bin/$@/falcon-$@ ./modules/$@
+	go build -gcflags="-N -l" -o bin/$@/opsultra-$@ ./modules/$@
 
 .PHONY: $(TARGET)
 $(TARGET): $(GOFILES)
-	go build -gcflags="-N -l" -ldflags "-X main.GitCommit=`git rev-parse --short HEAD` -X main.Version=$(VERSION)" -o open-falcon
+	go build -gcflags="-N -l" -ldflags "-X main.GitCommit=`git rev-parse --short HEAD` -X main.Version=$(VERSION)" -o opsultra
 
-checkbin: bin/ config/ open-falcon
+checkbin: bin/ config/ opsultra
 
 pack: checkbin
 	@if [ -e out ] ; then rm -rf out; fi
@@ -59,7 +59,7 @@ pack: checkbin
 	@$(foreach var,$(CMD),mkdir -p ./out/$(var)/config;)
 	@$(foreach var,$(CMD),mkdir -p ./out/$(var)/logs;)
 	@$(foreach var,$(CMD),cp ./config/$(var).json ./out/$(var)/config/cfg.json;)
-	@$(foreach var,$(CMD),cp ./bin/$(var)/falcon-$(var) ./out/$(var)/bin;)
+	@$(foreach var,$(CMD),cp ./bin/$(var)/opsultra-$(var) ./out/$(var)/bin;)
 	@cp -r ./modules/agent/public ./out/agent/
 	@(cd ./out && ln -s ./agent/public/ ./public)
 	@cp -r ./modules/agent/plugins ./out/agent/
@@ -68,13 +68,13 @@ pack: checkbin
 	@mkdir out/graph/data
 	@bash ./config/confgen.sh
 	@cp $(TARGET) ./out/$(TARGET)
-	tar -C out -zcf open-falcon-v$(VERSION).tar.gz .
+	tar -C out -zcf opsultra-v$(VERSION).tar.gz .
 	@rm -rf out
 
 clean:
 	@rm -rf ./bin
 	@rm -rf ./out
 	@rm -rf ./$(TARGET)
-	@rm -rf open-falcon-v$(VERSION).tar.gz
+	@rm -rf opsultra-v$(VERSION).tar.gz
 
 .PHONY: clean all agent aggregator graph hbs judge nodata transfer gateway api alarm

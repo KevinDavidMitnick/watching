@@ -72,8 +72,6 @@ func query_last_metric(rw http.ResponseWriter, req *http.Request) {
 		return
 	}
 
-	test := string(body)
-
 	var ret []map[string]interface{}
 	err = json.Unmarshal(body, &ret)
 	if err != nil {
