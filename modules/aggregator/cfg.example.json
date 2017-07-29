@@ -5,7 +5,7 @@
         "listen": "0.0.0.0:6055"
     },
     "database": {
-        "addr": "root:@tcp(127.0.0.1:3306)/falcon_portal?loc=Local&parseTime=true",
+        "addr": "{{ db_user }}:{{ db_password }}@tcp({% for host in groups['db']%}{{ hostvars[host]['ansible_ssh_host'] }}:3306{% endfor %})/falcon_portal?loc=Local&parseTime=true",
         "idle": 10,
         "ids": [1, -1],
         "interval": 55
@@ -13,7 +13,7 @@
     "api": {
         "connect_timeout": 500,
         "request_timeout": 2000,
-        "plus_api": "http://127.0.0.1:8080",
+        "plus_api": "http://{% for host in groups['api']%}{{ hostvars[host]['ansible_ssh_host'] }}:8080{% endfor %}",
         "plus_api_token": "default-token-used-in-server-side",
         "push_api": "http://127.0.0.1:1988/v1/push"
     }

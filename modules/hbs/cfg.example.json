@@ -1,6 +1,6 @@
 {
     "debug": true,
-    "database": "root:@tcp(127.0.0.1:3306)/falcon_portal?loc=Local&parseTime=true",
+    "database": "{{ db_user }}:{{ db_password }}@tcp({% for host in groups['db']%}{{ hostvars[host]['ansible_ssh_host'] }}:3306{% endfor %})/falcon_portal?loc=Local&parseTime=true",
     "hosts": "",
     "maxIdle": 100,
     "listen": ":6030",

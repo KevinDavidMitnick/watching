@@ -7,12 +7,12 @@
     "plus_api":{
         "connectTimeout": 500,
         "requestTimeout": 2000,
-        "addr": "http://127.0.0.1:8080",
+        "addr": "http://{% for host in groups['api']%}{{ hostvars[host]['ansible_ssh_host'] }}:8080{% endfor %}",
         "token": "default-token-used-in-server-side"
     },
     "config": {
         "enabled": true,
-        "dsn": "root:@tcp(127.0.0.1:3306)/falcon_portal?loc=Local&parseTime=true&wait_timeout=604800",
+        "dsn": "{{ db_user }}:{{ db_password }}@tcp({% for host in groups['db']%}{{ hostvars[host]['ansible_ssh_host'] }}:3306{% endfor %})/falcon_portal?loc=Local&parseTime=true&wait_timeout=604800",
         "maxIdle": 4
     },
     "collector":{
@@ -24,7 +24,7 @@
         "enabled": true,
         "connectTimeout": 500,
         "requestTimeout": 2000,
-        "transferAddr": "127.0.0.1:6060",
+        "transferAddr": "{% for host in groups['api']%}{{ hostvars[host]['ansible_ssh_host'] }}:6060{% endfor %}",
         "batch": 500
     }
 }
