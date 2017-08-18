@@ -4,9 +4,9 @@
     "ip": "",
     "plugin": {
         "enabled": true,
-        "dir": "./tiresias-plugin",
+        "dir": "./agent/tiresias-plugin",
         "git": "https://gitlab.chinac.com/OpsUltra/tiresias-plugin.git",
-        "logs": "./logs"
+        "logs": "./agent/logs"
     },
     "heartbeat": {
         "enabled": true,
@@ -18,7 +18,7 @@
         "enabled": true,
         "addrs": [
             {% for host in groups['transfer']%}
-            "{{ hostvars[host]['ansible_ssh_host'] }}:8443"{% if not loop.last %},{% endif %}
+            "{{ hostvars[host]['ansible_ssh_host'] }}:8433"{% if not loop.last %},{% endif %}
             {% endfor %}
         ],
         "interval": 60,
