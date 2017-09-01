@@ -5,7 +5,7 @@ import (
 	"net/http"
 	"strconv"
 	"strings"
-	"time"
+	//"time"
 
 	log "github.com/Sirupsen/logrus"
 	"github.com/gin-gonic/gin"
@@ -13,7 +13,7 @@ import (
 	h "github.com/open-falcon/falcon-plus/modules/api/app/helper"
 	"github.com/open-falcon/falcon-plus/modules/api/app/model/uic"
 	"github.com/open-falcon/falcon-plus/modules/api/app/utils"
-	"github.com/spf13/viper"
+	//"github.com/spf13/viper"
 )
 
 type APIUserInput struct {
@@ -29,7 +29,7 @@ type APIUserInput struct {
 func CreateUser(c *gin.Context) {
 	var inputs APIUserInput
 	err := c.Bind(&inputs)
-	signupDisable := viper.GetBool("signup_disable")
+	//signupDisable := viper.GetBool("signup_disable")
 
 	switch {
 	case err != nil:
@@ -38,21 +38,21 @@ func CreateUser(c *gin.Context) {
 	case utils.HasDangerousCharacters(inputs.Cnname):
 		h.JSONR(c, http.StatusBadRequest, "name pattern is invalid")
 		return
-	//when sign is disabled, only admin user can create user
-	case signupDisable:
-		user, err := h.GetUser(c)
-		errorMsgs := []string{"sign up is not enabled, please contact administrator"}
-		if err != nil {
-			if !strings.Contains(err.Error(), "token key is not set") {
-				errorMsgs = append(errorMsgs, err.Error())
-			}
-			h.JSONR(c, badstatus, strings.Join(errorMsgs, ". "))
-			return
-		} else if !user.IsAdmin() {
-			errorMsgs = append(errorMsgs, "You are not admin, no permissions can do this")
-			h.JSONR(c, badstatus, strings.Join(errorMsgs, ". "))
-			return
-		}
+		//when sign is disabled, only admin user can create user
+		//case signupDisable:
+		//	user, err := h.GetUser(c)
+		//	errorMsgs := []string{"sign up is not enabled, please contact administrator"}
+		//	if err != nil {
+		//		if !strings.Contains(err.Error(), "token key is not set") {
+		//			errorMsgs = append(errorMsgs, err.Error())
+		//		}
+		//		h.JSONR(c, badstatus, strings.Join(errorMsgs, ". "))
+		//		return
+		//	} else if !user.IsAdmin() {
+		//		errorMsgs = append(errorMsgs, "You are not admin, no permissions can do this")
+		//		h.JSONR(c, badstatus, strings.Join(errorMsgs, ". "))
+		//		return
+		//	}
 		//if current user is admin will passed this and continue to next part
 	}
 	var user uic.User
@@ -73,9 +73,9 @@ func CreateUser(c *gin.Context) {
 	}
 
 	//for create a root user during the first time
-	if inputs.Name == "root" {
-		user.Role = 2
-	}
+	//if inputs.Name == "root" {
+	//	user.Role = 2
+	//}
 
 	dt := db.Uic.Table("user").Create(&user)
 	if dt.Error != nil {
@@ -83,26 +83,28 @@ func CreateUser(c *gin.Context) {
 		return
 	}
 
-	var session uic.Session
-	response := map[string]string{}
-	s := db.Uic.Table("session").Where("uid = ?", user.ID).Scan(&session)
-	if s.Error != nil && s.Error.Error() != "record not found" {
-		h.JSONR(c, http.StatusBadRequest, s.Error)
-		return
-	} else if session.ID == 0 {
-		session.Sig = utils.GenerateUUID()
-		session.Expired = int(time.Now().Unix()) + 3600*24*30
-		session.Uid = user.ID
-		db.Uic.Create(&session)
-	}
-	log.Debugf("%v", session)
-	response["sig"] = session.Sig
-	response["name"] = user.Name
+	//var session uic.Session
+	//response := map[string]string{}
+	//s := db.Uic.Table("session").Where("uid = ?", user.ID).Scan(&session)
+	//if s.Error != nil && s.Error.Error() != "record not found" {
+	//	h.JSONR(c, http.StatusBadRequest, s.Error)
+	//	return
+	//} else if session.ID == 0 {
+	//	session.Sig = utils.GenerateUUID()
+	//	session.Expired = int(time.Now().Unix()) + 3600*24*30
+	//	session.Uid = user.ID
+	//	db.Uic.Create(&session)
+	//}
+	//log.Debugf("%v", session)
+	//response["sig"] = session.Sig
+	//response["name"] = user.Name
+	response := user.Name + "create success"
 	h.JSONR(c, http.StatusOK, response)
 	return
 }
 
 type APIUserUpdateInput struct {
+	Name   string `json:"name" binding:"required"`
 	Cnname string `json:"cnname" binding:"required"`
 	Email  string `json:"email" binding:"required"`
 	Phone  string `json:"phone"`
@@ -122,13 +124,13 @@ func UpdateCurrentUser(c *gin.Context) {
 		h.JSONR(c, http.StatusBadRequest, "name pattern is invalid")
 		return
 	}
-	websession, err := h.GetSession(c)
-	if err != nil {
-		h.JSONR(c, badstatus, err)
-		return
-	}
+	//websession, err := h.GetSession(c)
+	//if err != nil {
+	//	h.JSONR(c, badstatus, err)
+	//	return
+	//}
 	user := uic.User{}
-	db.Uic.Table("user").Where("name = ?", websession.Name).Scan(&user)
+	db.Uic.Table("user").Where("name = ?", inputs.Name).Scan(&user)
 	if user.ID == 0 {
 		h.JSONR(c, http.StatusBadRequest, "name is not existing")
 		return
@@ -156,36 +158,36 @@ type APICgPassedInput struct {
 }
 
 func ChangePassword(c *gin.Context) {
-	var inputs APICgPassedInput
-	err := c.Bind(&inputs)
-	if err != nil {
-		h.JSONR(c, http.StatusBadRequest, err)
-	}
-	websession, err := h.GetSession(c)
-	if err != nil {
-		h.JSONR(c, badstatus, err)
-		return
-	}
+	//var inputs APICgPassedInput
+	//err := c.Bind(&inputs)
+	//if err != nil {
+	//	h.JSONR(c, http.StatusBadRequest, err)
+	//}
+	//websession, err := h.GetSession(c)
+	//if err != nil {
+	//	h.JSONR(c, badstatus, err)
+	//	return
+	//}
 
-	user := uic.User{Name: websession.Name}
+	//user := uic.User{Name: websession.Name}
 
-	dt := db.Uic.Where(&user).Find(&user)
-	switch {
-	case dt.Error != nil:
-		h.JSONR(c, http.StatusExpectationFailed, dt.Error)
-		return
-	case user.Passwd != utils.HashIt(inputs.OldPassword):
-		h.JSONR(c, http.StatusBadRequest, "oldPassword is not match current one")
-		return
-	}
+	//dt := db.Uic.Where(&user).Find(&user)
+	//switch {
+	//case dt.Error != nil:
+	//	h.JSONR(c, http.StatusExpectationFailed, dt.Error)
+	//	return
+	//case user.Passwd != utils.HashIt(inputs.OldPassword):
+	//	h.JSONR(c, http.StatusBadRequest, "oldPassword is not match current one")
+	//	return
+	//}
 
-	user.Passwd = utils.HashIt(inputs.NewPassword)
-	dt = db.Uic.Save(&user)
-	if dt.Error != nil {
-		h.JSONR(c, http.StatusExpectationFailed, dt.Error)
-		return
-	}
-	h.JSONR(c, http.StatusOK, "password updated!")
+	//user.Passwd = utils.HashIt(inputs.NewPassword)
+	//dt = db.Uic.Save(&user)
+	//if dt.Error != nil {
+	//	h.JSONR(c, http.StatusExpectationFailed, dt.Error)
+	//	return
+	//}
+	//h.JSONR(c, http.StatusOK, "password updated!")
 	return
 }
 

@@ -132,19 +132,19 @@ func CreateTemplate(c *gin.Context) {
 		h.JSONR(c, badstatus, err)
 		return
 	}
-	user, err := h.GetUser(c)
-	if err != nil {
-		h.JSONR(c, badstatus, err)
-		return
-	} else if inputs.Name == "" {
-		h.JSONR(c, badstatus, "input name is empty, please check it")
-		return
-	}
+	//user, err := h.GetUser(c)
+	//if err != nil {
+	//	h.JSONR(c, badstatus, err)
+	//	return
+	//} else if inputs.Name == "" {
+	//	h.JSONR(c, badstatus, "input name is empty, please check it")
+	//	return
+	//}
 	template := f.Template{
 		Name:       inputs.Name,
 		ParentID:   inputs.ParentID,
 		ActionID:   inputs.ActionID,
-		CreateUser: user.Name,
+		CreateUser: "root",
 	}
 	dt := db.Falcon.Table("tpl").Save(&template)
 	if dt.Error != nil {
@@ -168,18 +168,9 @@ func UpdateTemplate(c *gin.Context) {
 		h.JSONR(c, badstatus, err)
 		return
 	}
-	user, err := h.GetUser(c)
-	if err != nil {
-		h.JSONR(c, badstatus, err)
-		return
-	}
 	var tpl f.Template
 	if dt := db.Falcon.Find(&tpl, inputs.TplID); dt.Error != nil {
 		h.JSONR(c, badstatus, dt.Error)
-		return
-	}
-	if tpl.CreateUser != user.Name && !user.IsAdmin() {
-		h.JSONR(c, badstatus, "You don't have permission!")
 		return
 	}
 

@@ -114,7 +114,7 @@ func CreateExrpession(c *gin.Context) {
 		h.JSONR(c, badstatus, err)
 		return
 	}
-	user, _ := h.GetUser(c)
+	//user, _ := h.GetUser(c)
 	tx := db.Falcon.Begin()
 	action := f.Action{
 		UIC:                strings.Join(inputs.Action.UIC, ","),
@@ -139,7 +139,7 @@ func CreateExrpession(c *gin.Context) {
 		Priority:   inputs.Priority,
 		Note:       inputs.Note,
 		Pause:      inputs.Pause,
-		CreateUser: user.Name,
+		CreateUser: "root",
 		ActionId:   action.ID,
 	}
 	dt := tx.Save(&expression)
@@ -199,7 +199,7 @@ func UpdateExrpession(c *gin.Context) {
 		return
 	}
 	tx := db.Falcon.Begin()
-	user, _ := h.GetUser(c)
+	//user, _ := h.GetUser(c)
 	expression := f.Expression{ID: inputs.ID}
 	if dt := tx.Find(&expression); dt.Error != nil {
 		h.JSONR(c, expecstatus, fmt.Sprintf(
@@ -207,13 +207,13 @@ func UpdateExrpession(c *gin.Context) {
 		tx.Rollback()
 		return
 	}
-	if !user.IsAdmin() {
-		if expression.CreateUser != user.Name {
-			h.JSONR(c, badstatus, "You don't have permission!")
-			tx.Rollback()
-			return
-		}
-	}
+	//if !user.IsAdmin() {
+	//	if expression.CreateUser != user.Name {
+	//		h.JSONR(c, badstatus, "You don't have permission!")
+	//		tx.Rollback()
+	//		return
+	//	}
+	//}
 	uexpression := map[string]interface{}{
 		"ID":         expression.ID,
 		"Expression": inputs.Expression,
@@ -272,16 +272,7 @@ func DeleteExpression(c *gin.Context) {
 		return
 	}
 	tx := db.Falcon.Begin()
-	user, _ := h.GetUser(c)
 	expression := f.Expression{ID: int64(eid)}
-	if !user.IsAdmin() {
-		tx.Find(&expression)
-		if expression.CreateUser != user.Name {
-			h.JSONR(c, badstatus, "You don't have permission!")
-			tx.Rollback()
-			return
-		}
-	}
 	dt := tx.Table("action").Where("id = ?", expression.ActionId).Delete(&f.Action{})
 	if dt.Error != nil {
 		h.JSONR(c, badstatus, dt.Error)

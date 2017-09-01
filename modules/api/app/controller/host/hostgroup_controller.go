@@ -53,13 +53,37 @@ func CrateHostGroup(c *gin.Context) {
 		h.JSONR(c, badstatus, err)
 		return
 	}
-	user, _ := h.GetUser(c)
-	hostgroup := f.HostGroup{Name: inputs.Name, CreateUser: user.Name, ComeFrom: 1}
+	//user, _ := h.GetUser(c)
+	hostgroup := f.HostGroup{Name: inputs.Name, CreateUser: "root", ComeFrom: 1}
 	if dt := db.Falcon.Create(&hostgroup); dt.Error != nil {
 		h.JSONR(c, expecstatus, dt.Error)
 		return
 	}
 	h.JSONR(c, hostgroup)
+	return
+}
+
+type APIUpdateHostGroup struct {
+	New_name string `json:"new_name" binding:"required"`
+	Id       int64  `json:"id" binding:"required"`
+}
+
+func UpdateHostGroup(c *gin.Context) {
+	var inputs APIUpdateHostGroup
+	if err := c.Bind(&inputs); err != nil {
+		h.JSONR(c, badstatus, err)
+		return
+	}
+
+	//user, _ := h.GetUser(c)
+	hostgroup := f.HostGroup{
+		Name: inputs.New_name,
+	}
+	if dt := db.Falcon.Table("grp").Where("id=?", inputs.Id).Update(&hostgroup); dt.Error != nil {
+		h.JSONR(c, expecstatus, dt.Error)
+		return
+	}
+	h.JSONR(c, "hostgroup updated")
 	return
 }
 
