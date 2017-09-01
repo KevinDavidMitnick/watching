@@ -3,7 +3,7 @@ TARGET = opsultra
 PACKAGES ?= $(shell go list ./... | grep -v /vendor/)
 GOFILES := $(shell find . -name "*.go" -type f -not -path "./vendor/*")
 GOFMT ?= gofmt "-s"
-VERSION := $(shell cat VERSION)
+VERSION := $(shell cat version)
 
 all: $(CMD) $(TARGET)
 
