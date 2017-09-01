@@ -9,7 +9,7 @@
 		"listen": "0.0.0.0:6070"
 	},
 	"rrd": {
-		"storage": "./data/6070"
+		"storage": "./graph/data/6070"
 	},
 	"db": {
 		"dsn": "{{ db_user }}:{{ db_password }}@tcp({% for host in groups['db']%}{{ hostvars[host]['ansible_ssh_host'] }}:3306{% endfor %})/graph?loc=Local&parseTime=true",
