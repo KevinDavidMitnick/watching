@@ -20,6 +20,7 @@ func Routes(r *gin.Engine) {
 	//hostgroup
 	hostr.GET("/hostgroup", GetHostGroups)
 	hostr.POST("/hostgroup", CrateHostGroup)
+	hostr.PUT("/hostgroup", UpdateHostGroup)
 	hostr.POST("/hostgroup/host", BindHostToHostGroup)
 	hostr.PUT("/hostgroup/host", UnBindAHostToHostGroup)
 	hostr.GET("/hostgroup/:host_group", GetHostGroup)
