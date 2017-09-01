@@ -1,7 +1,7 @@
 package uic
 
 import (
-	"errors"
+	//"errors"
 	"fmt"
 	"net/http"
 	"strconv"
@@ -36,14 +36,14 @@ func Teams(c *gin.Context) {
 		return
 	}
 	query := c.DefaultQuery("q", ".+")
-	user, err := h.GetUser(c)
-	if err != nil {
-		h.JSONR(c, badstatus, err)
-		return
-	}
+	//user, err := h.GetUser(c)
+	//if err != nil {
+	//	h.JSONR(c, badstatus, err)
+	//	return
+	//}
 	var dt *gorm.DB
 	teams := []uic.Team{}
-	if user.IsAdmin() {
+	if true {
 		if limit != -1 && page != -1 {
 			dt = db.Uic.Table("team").Raw(
 				"select * from team where name regexp ? limit ?, ?", query, page, limit).Scan(&teams)
@@ -53,12 +53,12 @@ func Teams(c *gin.Context) {
 		err = dt.Error
 	} else {
 		//team creator and team member can manage the team
-		dt = db.Uic.Raw(
-			`select a.* from team as a, rel_team_user as b 
-			where a.name regexp ? and a.id = b.tid and b.uid = ? 
-			UNION select * from team where name regexp ? and creator = ?`,
-			query, user.ID, query, user.ID).Scan(&teams)
-		err = dt.Error
+		//dt = db.Uic.Raw(
+		//	`select a.* from team as a, rel_team_user as b
+		//	where a.name regexp ? and a.id = b.tid and b.uid = ?
+		//	UNION select * from team where name regexp ? and creator = ?`,
+		//	query, user.ID, query, user.ID).Scan(&teams)
+		//err = dt.Error
 	}
 	if err != nil {
 		h.JSONR(c, badstatus, err)
@@ -98,7 +98,7 @@ func CreateTeam(c *gin.Context) {
 		h.JSONR(c, badstatus, err)
 		return
 	}
-	user, err := h.GetUser(c)
+	//user, err := h.GetUser(c)
 	if err != nil {
 		h.JSONR(c, badstatus, err)
 		return
@@ -106,7 +106,7 @@ func CreateTeam(c *gin.Context) {
 	team := uic.Team{
 		Name:    cteam.Name,
 		Resume:  cteam.Resume,
-		Creator: user.ID,
+		Creator: 1,
 	}
 	dt := db.Uic.Table("team").Create(&team)
 	if dt.Error != nil {
@@ -134,6 +134,7 @@ func CreateTeam(c *gin.Context) {
 type APIUpdateTeamInput struct {
 	ID      int    `json:"team_id" binding:"required"`
 	Resume  string `json:"resume"`
+	Name    string `json:"name"`
 	UserIDs []int  `json:"users"`
 }
 
@@ -145,22 +146,23 @@ func UpdateTeam(c *gin.Context) {
 		h.JSONR(c, badstatus, err)
 		return
 	}
-
-	user, err := h.GetUser(c)
-	if err != nil {
-		h.JSONR(c, badstatus, err)
-		return
-	}
+	fmt.Println(cteam.UserIDs)
+	fmt.Println(cteam.Resume)
+	//user, err := h.GetUser(c)
+	//if err != nil {
+	//	h.JSONR(c, badstatus, err)
+	//	return
+	//}
 
 	dt := db.Uic
-	if user.IsAdmin() {
+	if true {
 		dt = dt.Table("team").Where("id = ?", cteam.ID)
 	} else {
-		dt = dt.Raw(
-			`select a.* from team as a, rel_team_user as b 
-			where a.id = b.tid AND a.id = ? AND b.uid = ? 
-			UNION select * from team where creator = ? AND id = ?`,
-			cteam.ID, user.ID, user.ID, cteam.ID)
+		//dt = dt.Raw(
+		//	`select a.* from team as a, rel_team_user as b
+		//	where a.id = b.tid AND a.id = ? AND b.uid = ?
+		//	UNION select * from team where creator = ? AND id = ?`,
+		//	cteam.ID, user.ID, user.ID, cteam.ID)
 	}
 	var team uic.Team
 	dt = dt.Find(&team)
@@ -169,15 +171,17 @@ func UpdateTeam(c *gin.Context) {
 		return
 	}
 
-	tm := uic.Team{Resume: cteam.Resume}
+	tm := uic.Team{Name: cteam.Name, Resume: cteam.Resume}
 	dt = db.Uic.Table("team").Where("id=?", cteam.ID).Update(&tm)
 	if dt.Error != nil {
 		h.JSONR(c, badstatus, dt.Error)
 		return
 	}
-
+	fmt.Println(cteam.ID)
+	fmt.Println(cteam.UserIDs)
 	err = bindUsers(db, cteam.ID, cteam.UserIDs)
 	if err != nil {
+		fmt.Println("---------------------------")
 		h.JSONR(c, badstatus, err)
 	} else {
 		h.JSONR(c, "team updated!")
@@ -248,28 +252,28 @@ func DeleteTeam(c *gin.Context) {
 		h.JSONR(c, badstatus, err)
 		return
 	}
-	user, err := h.GetUser(c)
-	if err != nil {
-		h.JSONR(c, badstatus, err.Error())
-		return
-	}
+	//user, err := h.GetUser(c)
+	//if err != nil {
+	//	h.JSONR(c, badstatus, err.Error())
+	//	return
+	//}
 	dt := db.Uic.Table("team")
-	if user.IsAdmin() {
+	if true {
 		dt = dt.Delete(&uic.Team{ID: teamId})
 		err = dt.Error
 	} else {
-		team := uic.Team{
-			ID:      teamId,
-			Creator: user.ID,
-		}
-		dt = dt.Where(&team).Find(&team)
-		if team.ID == 0 {
-			err = errors.New("You don't have permission")
-		} else if dt.Error != nil {
-			err = dt.Error
-		} else {
-			db.Uic.Where("id = ?", teamId).Delete(&uic.Team{ID: teamId})
-		}
+		//team := uic.Team{
+		//	ID:      teamId,
+		//	Creator: user.ID,
+		//}
+		//dt = dt.Where(&team).Find(&team)
+		//if team.ID == 0 {
+		//	err = errors.New("You don't have permission")
+		//} else if dt.Error != nil {
+		//	err = dt.Error
+		//} else {
+		//	db.Uic.Where("id = ?", teamId).Delete(&uic.Team{ID: teamId})
+		//}
 	}
 	var dt2 *gorm.DB
 	if err != nil {

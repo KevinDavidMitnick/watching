@@ -1,7 +1,7 @@
 package uic
 
 import (
-	"net/http"
+	//"net/http"
 	"time"
 
 	log "github.com/Sirupsen/logrus"
@@ -84,12 +84,12 @@ func Logout(c *gin.Context) {
 }
 
 func AuthSession(c *gin.Context) {
-	auth, err := h.SessionChecking(c)
-	if err != nil || auth != true {
-		h.JSONR(c, http.StatusUnauthorized, err)
-		return
-	}
-	h.JSONR(c, "session is vaild!")
+	//auth, err := h.SessionChecking(c)
+	//if err != nil || auth != true {
+	//	h.JSONR(c, http.StatusUnauthorized, err)
+	//	return
+	//}
+	//h.JSONR(c, "session is vaild!")
 	return
 }
 

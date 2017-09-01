@@ -9,6 +9,7 @@ import (
 	"github.com/jinzhu/gorm"
 	h "github.com/open-falcon/falcon-plus/modules/api/app/helper"
 	f "github.com/open-falcon/falcon-plus/modules/api/app/model/falcon_portal"
+	u "github.com/open-falcon/falcon-plus/modules/api/app/utils"
 )
 
 type APIGetTemplatesOutput struct {
@@ -131,19 +132,19 @@ func CreateTemplate(c *gin.Context) {
 		h.JSONR(c, badstatus, err)
 		return
 	}
-	user, err := h.GetUser(c)
-	if err != nil {
-		h.JSONR(c, badstatus, err)
-		return
-	} else if inputs.Name == "" {
-		h.JSONR(c, badstatus, "input name is empty, please check it")
-		return
-	}
+	//user, err := h.GetUser(c)
+	//if err != nil {
+	//	h.JSONR(c, badstatus, err)
+	//	return
+	//} else if inputs.Name == "" {
+	//	h.JSONR(c, badstatus, "input name is empty, please check it")
+	//	return
+	//}
 	template := f.Template{
 		Name:       inputs.Name,
 		ParentID:   inputs.ParentID,
 		ActionID:   inputs.ActionID,
-		CreateUser: user.Name,
+		CreateUser: "root",
 	}
 	dt := db.Falcon.Table("tpl").Save(&template)
 	if dt.Error != nil {
@@ -167,18 +168,9 @@ func UpdateTemplate(c *gin.Context) {
 		h.JSONR(c, badstatus, err)
 		return
 	}
-	user, err := h.GetUser(c)
-	if err != nil {
-		h.JSONR(c, badstatus, err)
-		return
-	}
 	var tpl f.Template
 	if dt := db.Falcon.Find(&tpl, inputs.TplID); dt.Error != nil {
 		h.JSONR(c, badstatus, dt.Error)
-		return
-	}
-	if tpl.CreateUser != user.Name && !user.IsAdmin() {
-		h.JSONR(c, badstatus, "You don't have permission!")
 		return
 	}
 
@@ -244,6 +236,40 @@ func DeleteTemplate(c *gin.Context) {
 	return
 }
 
+func GetATemplateHostgroup(c *gin.Context) {
+	tplidtmp := c.Params.ByName("tpl_id")
+	if tplidtmp == "" {
+		h.JSONR(c, badstatus, "tpl_id is missing")
+		return
+	}
+	tplId, err := strconv.Atoi(tplidtmp)
+	if err != nil {
+		h.JSONR(c, badstatus, err)
+		return
+	}
+	var tpl f.Template
+	if dt := db.Falcon.Find(&tpl, tplId); dt.Error != nil {
+		h.JSONR(c, badstatus, dt.Error)
+		return
+	}
+	tplGrps := []f.GrpTpl{}
+	hostgroups := []f.HostGroup{}
+	db.Falcon.Where("tpl_id = ?", tplId).Find(&tplGrps)
+	if len(tplGrps) != 0 {
+		tips := []int64{}
+		for _, t := range tplGrps {
+			tips = append(tips, t.GrpID)
+		}
+		tipsStr, _ := u.ArrInt64ToString(tips)
+		db.Falcon.Where(fmt.Sprintf("id in (%s)", tipsStr)).Find(&hostgroups)
+	}
+	h.JSONR(c, map[string]interface{}{
+		"template":   tpl,
+		"hostgroups": hostgroups,
+	})
+	return
+}
+
 type APICreateActionToTmplateInput struct {
 	UIC                string `json:"uic" binding:"exists"`
 	URL                string `json:"url" binding:"exists"`
@@ -294,7 +320,6 @@ func CreateActionToTmplate(c *gin.Context) {
 		return
 	}
 	tx.Commit()
-	// db.Falcon.Commit()
 	h.JSONR(c, fmt.Sprintf("action is created and bind to template: %d", inputs.TplId))
 	return
 }
