@@ -5,7 +5,7 @@
         "listen": "0.0.0.0:9912"
     },
     "redis": {
-        "addr": "127.0.0.1:6379",
+        "addr": {% for host in groups['redis']%} "{{ hostvars[host]['ansible_ssh_host'] }}:6379",{% endfor %}
         "maxIdle": 5,
         "highQueues": [
             "event:p0",
@@ -25,13 +25,13 @@
     "api": {
         "im": "http://127.0.0.1:10086/wechat",
         "sms": "http://127.0.0.1:10086/sms",
-        "mail": "http://127.0.0.1:10086/mail",
-        "dashboard": "http://127.0.0.1:8081",
-        "plus_api":"http://127.0.0.1:8080",
+        "mail": "http://{% for host in groups['mail']%}{{ hostvars[host]['ansible_ssh_host'] }}:10086/mail{% endfor %}",
+        "dashboard": "http://{% for host in groups['dashboard']%}{{ hostvars[host]['ansible_ssh_host'] }}:8081{% endfor %}",
+        "plus_api":"http://{% for host in groups['api']%}{{ hostvars[host]['ansible_ssh_host'] }}:8080"{% endfor %}",
         "plus_api_token": "default-token-used-in-server-side"
     },
     "falcon_portal": {
-        "addr": "root:@tcp(127.0.0.1:3306)/alarms?charset=utf8&loc=Asia%2FChongqing",
+        "addr": "{{ db_user }}:{{ db_password }}@tcp({% for host in groups['db']%}{{ hostvars[host]['ansible_ssh_host'] }}:3306{% endfor %})/alarms?charset=utf8&loc=Asia%2FChongqing",
         "idle": 10,
         "max": 100
     },

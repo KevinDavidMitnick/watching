@@ -23,7 +23,9 @@
         "maxIdle": 32,
         "replicas": 500,
         "cluster": {
-            "judge-00" : "127.0.0.1:6080"
+            {% for host in groups['judge']%}
+            "judge-{{ hostvars[host]['ansible_nodename']}}":"{{ hostvars[host]['ansible_ssh_host'] }}:6080"{% if not loop.last %},{% endif %}
+            {% endfor %}
         }
     },
     "graph": {
@@ -35,17 +37,19 @@
         "maxIdle": 32,
         "replicas": 500,
         "cluster": {
-            "graph-00" : "127.0.0.1:6070"
+            {% for host in groups['graph']%}
+            "graph-{{ hostvars[host]['ansible_nodename']}}":"{{ hostvars[host]['ansible_ssh_host'] }}:6070"{% if not loop.last %},{% endif %}
+            {% endfor %}
         }
     },
     "tsdb": {
-        "enabled": false,
+        "enabled":true,
         "batch": 200,
         "connTimeout": 1000,
         "callTimeout": 5000,
         "maxConns": 32,
         "maxIdle": 32,
         "retry": 3,
-        "address": "127.0.0.1:8088"
+        "address": {% for host in groups['tsdb']%} "{{ hostvars[host]['ansible_ssh_host'] }}:4242"{% if not loop.last %},{% endif %} {% endfor %}
     }
 }
