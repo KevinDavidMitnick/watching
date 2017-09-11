@@ -151,7 +151,10 @@ func CreateTemplate(c *gin.Context) {
 		h.JSONR(c, badstatus, dt.Error)
 		return
 	}
-	h.JSONR(c, "template created")
+
+	h.JSONR(c, map[string]interface{}{
+		"template": template,
+	})
 	return
 }
 

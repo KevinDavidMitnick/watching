@@ -23,13 +23,15 @@ type Mockcfg struct {
 	Name string `json:"name" gorm:"column:name"`
 	Obj  string `json:"obj" gorm:"column:obj"`
 	//group, host, other
-	ObjType string  `json:"obj_type" gorm:"column:obj_type"`
-	Metric  string  `json:"metric" gorm:"column:metric"`
-	Tags    string  `json:"tags" gorm:"column:tags"`
-	DsType  string  `json:"dstype" gorm:"column:dstype"`
-	Step    int     `json:"step" gorm:"column:step"`
-	Mock    float64 `json:"mock" gorm:"column:mock"`
-	Creator string  `json:"creator" gorm:"column:creator"`
+	ObjType  string  `json:"obj_type" gorm:"column:obj_type"`
+	Metric   string  `json:"metric" gorm:"column:metric"`
+	Tags     string  `json:"tags" gorm:"column:tags"`
+	DsType   string  `json:"dstype" gorm:"column:dstype"`
+	Step     int     `json:"step" gorm:"column:step"`
+	Mock     float64 `json:"mock" gorm:"column:mock"`
+	Creator  string  `json:"creator" gorm:"column:creator"`
+	T_create string  `json:"t_create" gorm:"column:t_create"`
+	T_modify string  `json:"t_modify" gorm:"column:t_modify"`
 }
 
 func (this Mockcfg) TableName() string {

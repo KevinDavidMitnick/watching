@@ -3,6 +3,7 @@ package mockcfg
 import (
 	"fmt"
 	"strconv"
+	"time"
 
 	"github.com/gin-gonic/gin"
 	"github.com/jinzhu/gorm"
@@ -68,17 +69,19 @@ func CreateNoData(c *gin.Context) {
 		h.JSONR(c, badstatus, err)
 		return
 	}
-	user, _ := h.GetUser(c)
+	//user, _ := h.GetUser(c)
 	mockcfg := f.Mockcfg{
-		Name:    inputs.Name,
-		Obj:     inputs.Obj,
-		ObjType: inputs.ObjType,
-		Metric:  inputs.Metric,
-		Tags:    inputs.Tags,
-		DsType:  inputs.DsType,
-		Step:    inputs.Step,
-		Mock:    inputs.Mock,
-		Creator: user.Name,
+		Name:     inputs.Name,
+		Obj:      inputs.Obj,
+		ObjType:  inputs.ObjType,
+		Metric:   inputs.Metric,
+		Tags:     inputs.Tags,
+		DsType:   inputs.DsType,
+		Step:     inputs.Step,
+		Mock:     inputs.Mock,
+		Creator:  "root",
+		T_create: time.Now().Format("2006-01-02 15:04:05"),
+		T_modify: time.Now().Format("2006-01-02 15:04:05"),
 	}
 	if dt := db.Falcon.Save(&mockcfg); dt.Error != nil {
 		h.JSONR(c, expecstatus, dt.Error)
@@ -100,13 +103,15 @@ func UpdateNoData(c *gin.Context) {
 	}
 	mockcfg := &f.Mockcfg{ID: inputs.ID}
 	umockcfg := map[string]interface{}{
-		"Obj":     inputs.Obj,
-		"ObjType": inputs.ObjType,
-		"Metric":  inputs.Metric,
-		"Tags":    inputs.Tags,
-		"DsType":  inputs.DsType,
-		"Step":    inputs.Step,
-		"Mock":    inputs.Mock,
+		"Name":     inputs.Name,
+		"Obj":      inputs.Obj,
+		"ObjType":  inputs.ObjType,
+		"Metric":   inputs.Metric,
+		"Tags":     inputs.Tags,
+		"DsType":   inputs.DsType,
+		"Step":     inputs.Step,
+		"Mock":     inputs.Mock,
+		"T_modify": time.Now().Format("2006-01-02 15:04:05"),
 	}
 	if dt := db.Falcon.Model(&mockcfg).Where("id = ?", inputs.ID).Update(umockcfg).Find(&mockcfg); dt.Error != nil {
 		h.JSONR(c, expecstatus, dt.Error)

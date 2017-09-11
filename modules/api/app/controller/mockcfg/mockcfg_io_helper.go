@@ -23,8 +23,9 @@ func (this APICreateNoDataInputs) CheckFormat() (err error) {
 }
 
 type APIUpdateNoDataInputs struct {
-	ID  int64  `json:"id" binding:"required"`
-	Obj string `json:"obj" binding:"required"`
+	ID   int64  `json:"id" binding:"required"`
+	Name string `json:"name" binding:"required"`
+	Obj  string `json:"obj" binding:"required"`
 	//group, host, other
 	ObjType string  `json:"obj_type" binding:"required"`
 	Metric  string  `json:"metric" binding:"required"`
