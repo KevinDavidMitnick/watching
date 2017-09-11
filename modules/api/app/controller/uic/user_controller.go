@@ -98,7 +98,7 @@ func CreateUser(c *gin.Context) {
 	//log.Debugf("%v", session)
 	//response["sig"] = session.Sig
 	//response["name"] = user.Name
-	response := user.Name + "create success"
+	response := user.Name + "  create success"
 	h.JSONR(c, http.StatusOK, response)
 	return
 }

@@ -35,6 +35,8 @@ func startHttpServer() {
 
 	configApiRoutes()
 
+	configQueryRoutes()
+
 	s := &http.Server{
 		Addr:           addr,
 		MaxHeaderBytes: 1 << 30,

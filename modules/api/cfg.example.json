@@ -1,16 +1,18 @@
 {
 	"log_level": "debug",
 	"db": {
-		"falcon_portal": "root:@tcp(127.0.0.1:3306)/falcon_portal?charset=utf8&parseTime=True&loc=Local",
-		"graph": "root:@tcp(127.0.0.1:3306)/graph?charset=utf8&parseTime=True&loc=Local",
-		"uic": "root:@tcp(127.0.0.1:3306)/uic?charset=utf8&parseTime=True&loc=Local",
-		"dashboard": "root:@tcp(127.0.0.1:3306)/dashboard?charset=utf8&parseTime=True&loc=Local",
-		"alarms": "root:@tcp(127.0.0.1:3306)/alarms?charset=utf8&parseTime=True&loc=Local",
+		"falcon_portal": "{{ db_user }}:{{ db_password }}@tcp({% for host in groups['db']%}{{ hostvars[host]['ansible_ssh_host'] }}:3306{% endfor %})/falcon_portal?charset=utf8&parseTime=True&loc=Local",
+		"graph": "{{ db_user }}:{{ db_password }}@tcp({% for host in groups['db']%}{{ hostvars[host]['ansible_ssh_host'] }}:3306{% endfor %})/graph?charset=utf8&parseTime=True&loc=Local",
+		"uic": "{{ db_user }}:{{ db_password }}@tcp({% for host in groups['db']%}{{ hostvars[host]['ansible_ssh_host'] }}:3306{% endfor %})/uic?charset=utf8&parseTime=True&loc=Local",
+		"dashboard": "{{ db_user }}:{{ db_password }}@tcp({% for host in groups['db']%}{{ hostvars[host]['ansible_ssh_host'] }}:3306{% endfor %})/dashboard?charset=utf8&parseTime=True&loc=Local",
+		"alarms": "{{ db_user }}:{{ db_password }}@tcp({% for host in groups['db']%}{{ hostvars[host]['ansible_ssh_host'] }}:3306{% endfor %})/alarms?charset=utf8&parseTime=True&loc=Local",
 		"db_bug": true
 	},
 	"graphs": {
 		"cluster": {
-			"graph-00": "127.0.0.1:6070"
+        {% for host in groups['graph']%}
+        "graph-{{ hostvars[host]['ansible_nodename']}}":"{{ hostvars[host]['ansible_ssh_host'] }}:6070"{% if not loop.last %},{% endif %}
+        {% endfor %}
 		},
 		"max_conns": 100,
 		"max_idle": 100,
