@@ -385,15 +385,15 @@ func AdminUserDelete(c *gin.Context) {
 		h.JSONR(c, badstatus, err)
 		return
 	}
-	cuser, err := h.GetUser(c)
-	if err != nil {
-		h.JSONR(c, http.StatusExpectationFailed, err)
-		return
-	} else if !cuser.IsAdmin() {
-		h.JSONR(c, http.StatusBadRequest, "you don't have permission!")
-		return
-	}
-	dt := db.Uic.Where("id = ? and role <= ?", inputs.UserID, cuser.Role).Delete(&uic.User{})
+	//cuser, err := h.GetUser(c)
+	//if err != nil {
+	//	h.JSONR(c, http.StatusExpectationFailed, err)
+	//	return
+	//} else if !cuser.IsAdmin() {
+	//	h.JSONR(c, http.StatusBadRequest, "you don't have permission!")
+	//	return
+	//}
+	dt := db.Uic.Where("id = ? ", inputs.UserID).Delete(&uic.User{})
 	if dt.Error != nil {
 		h.JSONR(c, http.StatusExpectationFailed, dt.Error)
 		return

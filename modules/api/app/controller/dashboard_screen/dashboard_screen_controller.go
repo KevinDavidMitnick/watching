@@ -22,7 +22,19 @@ func ScreenCreate(c *gin.Context) {
 		return
 	}
 
-	dt := db.Dashboard.Exec("insert ignore into dashboard_screen (pid, name) values(?, ?)", ipid, name)
+	//不能重名
+	var ids []int
+	dt := db.Dashboard.Table("dashboard_screen").Select("id").Where("name = ?", name).Limit(1).Pluck("id", &ids)
+	if dt.Error != nil {
+		h.JSONR(c, badstatus, dt.Error)
+		return
+	}
+	if len(ids) > 0 {
+		h.JSONR(c, badstatus, fmt.Sprintf("name=%s already exists", name))
+		return
+	}
+
+	dt = db.Dashboard.Exec("insert ignore into dashboard_screen (pid, name) values(?, ?)", ipid, name)
 	if dt.Error != nil {
 		h.JSONR(c, badstatus, dt.Error)
 		return
@@ -137,7 +149,24 @@ func ScreenUpdate(c *gin.Context) {
 		new_data["pid"] = ipid
 	}
 
-	dt := db.Dashboard.Table("dashboard_screen").Where("id = ?", sid).Update(new_data)
+	//不能重名
+	var ids []int64
+	dt := db.Dashboard.Table("dashboard_screen").Select("id").Where("name = ?", name).Limit(1).Pluck("id", &ids)
+	if dt.Error != nil {
+		h.JSONR(c, badstatus, dt.Error)
+		return
+	}
+	intid, err := strconv.ParseInt(id, 10, 64)
+	if err != nil {
+		h.JSONR(c, badstatus, fmt.Sprintf("id type tranfer error"))
+		return
+	}
+	if len(ids) > 0 && ids[0] != intid {
+		h.JSONR(c, badstatus, fmt.Sprintf("name=%s already exists", name))
+		return
+	}
+
+	dt = db.Dashboard.Table("dashboard_screen").Where("id = ?", sid).Update(new_data)
 	if dt.Error != nil {
 		h.JSONR(c, badstatus, dt.Error)
 		return
