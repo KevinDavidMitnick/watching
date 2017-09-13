@@ -55,6 +55,23 @@ func GetAggregatorListOfGrp(c *gin.Context) {
 		}
 	}
 
+	if hostgroupName == "" {
+		id64, err := strconv.ParseInt(grpIDtmp, 10, 64)
+		if err != nil {
+			log.Debugf("grpID64tmp: %v", grpIDtmp)
+			h.JSONR(c, badstatus, err)
+			return
+		}
+		tmpagg := f.Cluster{
+			GrpId: id64,
+		}
+		hostgroupName, err = tmpagg.HostGroupName()
+		if err != nil {
+			h.JSONR(c, badstatus, err)
+			return
+		}
+	}
+
 	h.JSONR(c, map[string]interface{}{
 		"hostgroup":   hostgroupName,
 		"aggregators": aggregators,
