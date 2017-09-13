@@ -104,6 +104,7 @@ func CreateUser(c *gin.Context) {
 }
 
 type APIUserUpdateInput struct {
+	ID     int64  `json:"id" binding:"required"`
 	Name   string `json:"name" binding:"required"`
 	Cnname string `json:"cnname" binding:"required"`
 	Email  string `json:"email" binding:"required"`
@@ -131,12 +132,13 @@ func UpdateCurrentUser(c *gin.Context) {
 	//}
 	user := uic.User{}
 	db.Uic.Table("user").Where("name = ?", inputs.Name).Scan(&user)
-	if user.ID == 0 {
-		h.JSONR(c, http.StatusBadRequest, "name is not existing")
+	if user.ID != 0 && user.ID != inputs.ID {
+		h.JSONR(c, http.StatusBadRequest, "name is  existing")
 		return
 	}
-	uid := user.ID
+	uid := inputs.ID
 	uuser := map[string]interface{}{
+		"Name":   inputs.Name,
 		"Cnname": inputs.Cnname,
 		"Email":  inputs.Email,
 		"Phone":  inputs.Phone,
