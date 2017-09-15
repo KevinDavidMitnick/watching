@@ -20,6 +20,7 @@ func HandleCallback(event *model.Event, action *api.Action) {
 	ims := []string{}
 
 	if teams != "" {
+		//获取phone mail im 列表
 		phones, mails, ims = api.ParseTeams(teams)
 		smsContent := GenerateSmsContent(event)
 		mailContent := GenerateMailContent(event)

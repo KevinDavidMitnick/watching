@@ -79,6 +79,7 @@ func sendEvent(event *model.Event) {
 	redisKey := fmt.Sprintf(g.Config().Alarm.QueuePattern, event.Priority())
 	rc := g.RedisConnPool.Get()
 	defer rc.Close()
+	log.Printf("[ERROR] send Event %s", string(bs))
 	rc.Do("LPUSH", redisKey, string(bs))
 }
 

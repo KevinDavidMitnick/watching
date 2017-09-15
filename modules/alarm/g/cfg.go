@@ -32,12 +32,16 @@ type ApiConfig struct {
 	IM           string `json:"im"`
 }
 
+//addr:mysql connect address
+//idle:idle connect number
+//max: max connect number
 type FalconPortalConfig struct {
 	Addr string `json:"addr"`
 	Idle int    `json:"idle"`
 	Max  int    `json:"max"`
 }
 
+//10  10  50
 type WorkerConfig struct {
 	IM   int `json:"im"`
 	Sms  int `json:"sms"`
