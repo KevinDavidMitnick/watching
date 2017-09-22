@@ -6,6 +6,7 @@ import (
 	"github.com/gin-gonic/gin"
 	h "github.com/open-falcon/falcon-plus/modules/api/app/helper"
 	alm "github.com/open-falcon/falcon-plus/modules/api/app/model/alarm"
+	"net/http"
 	"strings"
 )
 
@@ -169,4 +170,44 @@ func EventsGet(c *gin.Context) {
 	perparedSql := fmt.Sprintf("select id, event_caseId, cond, status, timestamp from %s %s order by timestamp DESC limit %d,%d", f.TableName(), filterCollector, inputs.Page, inputs.Limit)
 	db.Alarm.Raw(perparedSql).Scan(&evens)
 	h.JSONR(c, evens)
+}
+
+type APIEventDeleteInput struct {
+	EventId string `json:"event_id" form:"event_id"`
+}
+
+func DeleteEvent(c *gin.Context) {
+	var inputs APIEventDeleteInput
+	err := c.Bind(&inputs)
+	if err != nil {
+		h.JSONR(c, badstatus, err)
+		return
+	}
+	dt := db.Alarm.Where("event_caseId = ? ", inputs.EventId).Delete(&alm.Events{})
+	if dt.Error != nil {
+		h.JSONR(c, http.StatusExpectationFailed, dt.Error)
+		return
+	}
+	h.JSONR(c, fmt.Sprintf("event %v has been delete, affect row: %v", inputs.EventId, dt.RowsAffected))
+	return
+}
+
+type APIEventCaseDeleteInput struct {
+	EventId string `json:"event_id" form:"event_id"`
+}
+
+func DeleteEventCase(c *gin.Context) {
+	var inputs APIEventCaseDeleteInput
+	err := c.Bind(&inputs)
+	if err != nil {
+		h.JSONR(c, badstatus, err)
+		return
+	}
+	dt := db.Alarm.Where("id = ? ", inputs.EventId).Delete(&alm.EventCases{})
+	if dt.Error != nil {
+		h.JSONR(c, http.StatusExpectationFailed, dt.Error)
+		return
+	}
+	h.JSONR(c, fmt.Sprintf("EventCases %v has been delete, affect row: %v", inputs.EventId, dt.RowsAffected))
+	return
 }

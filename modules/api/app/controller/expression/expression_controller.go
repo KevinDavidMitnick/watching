@@ -22,6 +22,8 @@ func GetExpressionList(c *gin.Context) {
 	pageTmp := c.DefaultQuery("page", "")
 	limitTmp := c.DefaultQuery("limit", "")
 	page, limit, err = h.PageParser(pageTmp, limitTmp)
+	fmt.Println(page)
+	fmt.Println(limit)
 	if err != nil {
 		h.JSONR(c, badstatus, err.Error())
 		return
@@ -37,6 +39,17 @@ func GetExpressionList(c *gin.Context) {
 		h.JSONR(c, badstatus, dt.Error)
 		return
 	}
+
+	//action := f.Action{ID: expression.ActionId}
+	//if dt := db.Falcon.Find(&action); dt.Error != nil {
+	//	h.JSONR(c, badstatus, fmt.Sprintf("find action got error: %v", dt.Error.Error()))
+	//	return
+	//}
+	//h.JSONR(c, map[string]interface{}{
+	//	"expression": expression,
+	//	"action":     action,
+	//})
+
 	h.JSONR(c, expressions)
 	return
 }
@@ -160,7 +173,7 @@ type APIUpdateExrpessionInput struct {
 	Op         string     `json:"op" binding:"required"`
 	RightValue string     `json:"right_value" binding:"required"`
 	MaxStep    int        `json:"max_step" binding:"required"`
-	Priority   int        `json:"priority" binding:"required"`
+	Priority   int        `json:"priority" binding:"exists"`
 	Note       string     `json:"note" binding:"exists"`
 	Pause      int        `json:"pause" binding:"exists"`
 	Action     ActionTmpU `json:"action" binding:"required"`
@@ -189,11 +202,18 @@ func (this APIUpdateExrpessionInput) CheckFormat() (err error) {
 }
 
 func UpdateExrpession(c *gin.Context) {
+	//buf := make([]byte, 1024)
+	//n, _ := c.Request.Body.Read(buf)
+	//fmt.Println("-------------------------")
+	//fmt.Println(string(buf[0:n]))
+	//fmt.Println("-------------------------")
+
 	var inputs APIUpdateExrpessionInput
 	if err := c.Bind(&inputs); err != nil {
 		h.JSONR(c, badstatus, err)
 		return
 	}
+	fmt.Println(inputs)
 	if err := inputs.CheckFormat(); err != nil {
 		h.JSONR(c, badstatus, err)
 		return

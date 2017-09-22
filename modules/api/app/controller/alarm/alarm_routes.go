@@ -19,8 +19,10 @@ func Routes(r *gin.Engine) {
 	alarmapi.Use(utils.AuthSessionMidd)
 	alarmapi.POST("/eventcases", AlarmLists)
 	alarmapi.GET("/eventcases", AlarmLists)
+	alarmapi.DELETE("/eventcases", DeleteEventCase)
 	alarmapi.POST("/events", EventsGet)
 	alarmapi.GET("/events", EventsGet)
+	alarmapi.DELETE("/events", DeleteEvent)
 	alarmapi.POST("/event_note", AddNotesToAlarm)
 	alarmapi.GET("/event_note", GetNotesOfAlarm)
 }

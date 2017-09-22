@@ -73,11 +73,11 @@ func Teams(c *gin.Context) {
 			return
 		}
 		cteam.Users = user
-		creatorName, err := t.GetCreatorName()
-		if err != nil {
-			log.Debug(err.Error())
-		}
-		cteam.TeamCreator = creatorName
+		//creatorName, err := t.GetCreatorName()
+		//if err != nil {
+		//	log.Debug(err.Error())
+		//}
+		cteam.TeamCreator = "root"
 		outputs = append(outputs, cteam)
 	}
 	h.JSONR(c, outputs)
@@ -312,6 +312,7 @@ func GetTeam(c *gin.Context) {
 		log.Debug(dt.Error)
 	}
 	var resp APIGetTeamOutput
+	resp.TeamCreator = "root"
 	resp.Team = team
 	resp.Users = []uic.User{}
 	if len(uidarr) != 0 {
