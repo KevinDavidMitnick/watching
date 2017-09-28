@@ -21,6 +21,7 @@ import (
 
 const LIMIT = 200
 
+//创建双向链表
 var MetaDataQueue = NewSafeLinkedList()
 var PostPushUrl string
 var Debug bool
@@ -31,6 +32,7 @@ func StartSender() {
 
 func startSender() {
 	for {
+		// 从后端拿出200条记录
 		L := MetaDataQueue.PopBack(LIMIT)
 		if len(L) == 0 {
 			time.Sleep(time.Millisecond * 200)

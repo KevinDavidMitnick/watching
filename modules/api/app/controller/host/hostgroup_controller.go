@@ -152,18 +152,18 @@ func UnBindAHostToHostGroup(c *gin.Context) {
 		h.JSONR(c, badstatus, err)
 		return
 	}
-	user, _ := h.GetUser(c)
-	hostgroup := f.HostGroup{ID: inputs.HostGroupID}
-	if !user.IsAdmin() {
-		if dt := db.Falcon.Find(&hostgroup); dt.Error != nil {
-			h.JSONR(c, badstatus, dt.Error)
-			return
-		}
-		if hostgroup.CreateUser != user.Name {
-			h.JSONR(c, badstatus, "You don't have permission!")
-			return
-		}
-	}
+	//user, _ := h.GetUser(c)
+	//hostgroup := f.HostGroup{ID: inputs.HostGroupID}
+	//if !user.IsAdmin() {
+	//	if dt := db.Falcon.Find(&hostgroup); dt.Error != nil {
+	//		h.JSONR(c, badstatus, dt.Error)
+	//		return
+	//	}
+	//	if hostgroup.CreateUser != user.Name {
+	//		h.JSONR(c, badstatus, "You don't have permission!")
+	//		return
+	//	}
+	//}
 	if dt := db.Falcon.Where("grp_id = ? AND host_id = ?", inputs.HostGroupID, inputs.HostID).Delete(&f.GrpHost{}); dt.Error != nil {
 		h.JSONR(c, expecstatus, dt.Error)
 		return
@@ -314,21 +314,24 @@ func BindTemplateToGroup(c *gin.Context) {
 		h.JSONR(c, badstatus, err)
 		return
 	}
-	user, _ := h.GetUser(c)
+
 	grpTpl := f.GrpTpl{
 		GrpID: inputs.GrpID,
 		TplID: inputs.TplID,
 	}
+
 	db.Falcon.Where("grp_id = ? and tpl_id = ?", inputs.GrpID, inputs.TplID).Find(&grpTpl)
 	if grpTpl.BindUser != "" {
 		h.JSONR(c, badstatus, errors.New("this binding already existing, reject!"))
 		return
 	}
-	grpTpl.BindUser = user.Name
+
+	grpTpl.BindUser = "root"
 	if dt := db.Falcon.Save(&grpTpl); dt.Error != nil {
 		h.JSONR(c, badstatus, dt.Error)
 		return
 	}
+
 	h.JSONR(c, grpTpl)
 	return
 }
@@ -505,5 +508,30 @@ func unbindHostToHostGroup(c *gin.Context, hostgroup f.HostGroup, hosts []string
 	}
 	tx.Commit()
 	h.JSONR(c, fmt.Sprintf("%v unbind to hostgroup: %s", unbindHosts, hostgroup.Name))
+	return
+}
+
+func GetHosts(c *gin.Context) {
+	//var (
+	//	limit int
+	//	page  int
+	//	err   error
+	//)
+	//pageTmp := c.DefaultQuery("page", "")
+	//limitTmp := c.DefaultQuery("limit", "")
+	//q := c.DefaultQuery("q", ".+")
+	//page, limit, err = h.PageParser(pageTmp, limitTmp)
+	//if err != nil {
+	//	h.JSONR(c, badstatus, err.Error())
+	//	return
+	//}
+	var hosts []f.Host
+	var dt *gorm.DB
+	dt = db.Falcon.Table("host").Find(&hosts)
+	if dt.Error != nil {
+		h.JSONR(c, expecstatus, dt.Error)
+		return
+	}
+	h.JSONR(c, hosts)
 	return
 }

@@ -18,6 +18,7 @@ func Routes(r *gin.Engine) {
 	hostr := r.Group("/api/v1")
 	hostr.Use(utils.AuthSessionMidd)
 	//hostgroup
+	hostr.GET("/hosts", GetHosts)
 	hostr.GET("/hostgroup", GetHostGroups)
 	hostr.POST("/hostgroup", CrateHostGroup)
 	hostr.PUT("/hostgroup", UpdateHostGroup)
