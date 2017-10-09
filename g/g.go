@@ -51,16 +51,16 @@ func init() {
 	}
 
 	ModuleApps = map[string]string{
-		"agent":      "falcon-agent",
-		"aggregator": "falcon-aggregator",
-		"graph":      "falcon-graph",
-		"hbs":        "falcon-hbs",
-		"judge":      "falcon-judge",
-		"nodata":     "falcon-nodata",
-		"transfer":   "falcon-transfer",
-		"gateway":    "falcon-gateway",
-		"api":        "falcon-api",
-		"alarm":      "falcon-alarm",
+		"agent":      "opsultra-agent",
+		"aggregator": "opsultra-aggregator",
+		"graph":      "opsultra-graph",
+		"hbs":        "opsultra-hbs",
+		"judge":      "opsultra-judge",
+		"nodata":     "opsultra-nodata",
+		"transfer":   "opsultra-transfer",
+		"gateway":    "opsultra-gateway",
+		"api":        "opsultra-api",
+		"alarm":      "opsultra-alarm",
 	}
 
 	logpathOf = map[string]string{

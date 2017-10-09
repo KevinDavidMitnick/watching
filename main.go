@@ -25,10 +25,10 @@ import (
 var versionFlag bool
 
 var RootCmd = &cobra.Command{
-	Use: "open-falcon",
+	Use: "opsultra",
 	RunE: func(c *cobra.Command, args []string) error {
 		if versionFlag {
-			fmt.Printf("Open-Falcon version %s, build %s\n", Version, GitCommit)
+			fmt.Printf("opsultra version %s, build %s\n", Version, GitCommit)
 			return nil
 		}
 		return c.Usage()
