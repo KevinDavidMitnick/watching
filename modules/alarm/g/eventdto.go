@@ -22,7 +22,9 @@ import (
 func Link(event *cmodel.Event) string {
 	tplId := event.TplId()
 	if tplId != 0 {
-		return fmt.Sprintf("%s/portal/template/view/%d", Config().Api.Dashboard, tplId)
+		// comment this line and add 1 line by liucong,add tpl name instead.
+		//return fmt.Sprintf("%s/portal/template/view/%d", Config().Api.Dashboard, tplId)
+		return fmt.Sprintf("%s:%s", "TplName", event.Tpl().Name)
 	}
 
 	eid := event.ExpressionId()
