@@ -19,6 +19,9 @@ func GetNoDataList(c *gin.Context) {
 	)
 	pageTmp := c.DefaultQuery("page", "")
 	limitTmp := c.DefaultQuery("limit", "")
+	name_regex := c.DefaultQuery("name_regex", ".")
+	metric_regex := c.DefaultQuery("metric_regex", ".")
+
 	page, limit, err = h.PageParser(pageTmp, limitTmp)
 	if err != nil {
 		h.JSONR(c, badstatus, err.Error())
@@ -27,9 +30,9 @@ func GetNoDataList(c *gin.Context) {
 	var dt *gorm.DB
 	mockcfgs := []f.Mockcfg{}
 	if limit != -1 && page != -1 {
-		dt = db.Falcon.Raw(fmt.Sprintf("SELECT * from mockcfg limit %d,%d", page, limit)).Scan(&mockcfgs)
+		dt = db.Falcon.Raw(fmt.Sprintf("SELECT * from mockcfg where name regexp \"%s\" and metric regexp \"%s\" limit %d,%d", name_regex, metric_regex, page, limit)).Scan(&mockcfgs)
 	} else {
-		dt = db.Falcon.Find(&mockcfgs)
+		dt = db.Falcon.Raw(fmt.Sprintf("SELECT * from mockcfg where name regexp \"%s\" and metric regexp \"%s\"", name_regex, metric_regex)).Scan(&mockcfgs)
 	}
 	if dt.Error != nil {
 		h.JSONR(c, badstatus, dt.Error)

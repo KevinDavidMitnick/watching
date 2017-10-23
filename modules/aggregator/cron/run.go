@@ -14,7 +14,7 @@ import (
 
 func WorkerRun(item *g.Cluster) {
 	debug := g.Config().Debug
-
+	//删除空格
 	numeratorStr := cleanParam(item.Numerator)
 	denominatorStr := cleanParam(item.Denominator)
 

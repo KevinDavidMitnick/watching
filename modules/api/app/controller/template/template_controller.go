@@ -390,3 +390,60 @@ func GetActionByID(c *gin.Context) {
 
 	h.JSONR(c, act)
 }
+
+type APICreateActionInput struct {
+	UIC                string `json:"uic" binding:"exists"`
+	URL                string `json:"url" binding:"exists"`
+	Callback           int    `json:"callback" binding:"exists"`
+	BeforeCallbackSMS  int    `json:"before_callback_sms" binding:"exists"`
+	AfterCallbackSMS   int    `json:"after_callback_sms" binding:"exists"`
+	BeforeCallbackMail int    `json:"before_callback_mail" binding:"exists"`
+	AfterCallbackMail  int    `json:"after_callback_mail" binding:"exists"`
+}
+
+func CreateAction(c *gin.Context) {
+	var inputs APICreateActionInput
+	err := c.Bind(&inputs)
+	if err != nil {
+		h.JSONR(c, badstatus, err)
+		return
+	}
+	action := f.Action{
+		UIC:                inputs.UIC,
+		URL:                inputs.URL,
+		Callback:           inputs.Callback,
+		BeforeCallbackSMS:  inputs.BeforeCallbackSMS,
+		BeforeCallbackMail: inputs.BeforeCallbackMail,
+		AfterCallbackMail:  inputs.AfterCallbackMail,
+		AfterCallbackSMS:   inputs.AfterCallbackSMS,
+	}
+
+	dt := db.Falcon.Table("action").Save(&action)
+	if dt.Error != nil {
+		h.JSONR(c, badstatus, dt.Error)
+		return
+	}
+
+	h.JSONR(c, action)
+}
+
+func GetTemplate_byname(c *gin.Context) {
+	tplidtmp := c.Params.ByName("tpl_name")
+	if tplidtmp == "" {
+		h.JSONR(c, badstatus, "tpl_name is missing")
+		return
+	}
+
+	var dt *gorm.DB
+	var templates []f.Template
+	dt = db.Falcon.Raw(
+		fmt.Sprintf("SELECT * from tpl WHERE tpl_name=\"%s\"", tplidtmp)).Scan(&templates)
+	if dt.Error != nil {
+		log.Infof(dt.Error.Error())
+		h.JSONR(c, badstatus, dt.Error)
+		return
+	}
+	tlen := len(templates)
+	h.JSONR(c, tlen)
+	return
+}

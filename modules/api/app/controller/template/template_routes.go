@@ -27,8 +27,13 @@ func Routes(r *gin.Engine) {
 
 	actr := r.Group("/api/v1/action")
 	actr.GET("/:act_id", GetActionByID)
+	actr.POST("/action", CreateAction)
 
 	//simple list for ajax use
+	tmpd := r.Group("/api/v1/templatename")
+	tmpd.Use(utils.AuthSessionMidd)
+	tmpd.GET("/:tpl_name", GetTemplate_byname)
+
 	tmpr2 := r.Group("/api/v1/template_simple")
 	tmpr.Use(utils.AuthSessionMidd)
 	tmpr2.GET("", GetTemplatesSimple)

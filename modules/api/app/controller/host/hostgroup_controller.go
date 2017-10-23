@@ -98,16 +98,16 @@ func BindHostToHostGroup(c *gin.Context) {
 		h.JSONR(c, badstatus, err)
 		return
 	}
-	user, _ := h.GetUser(c)
+	//user, _ := h.GetUser(c)
 	hostgroup := f.HostGroup{ID: inputs.HostGroupID}
 	if dt := db.Falcon.Find(&hostgroup); dt.Error != nil {
 		h.JSONR(c, expecstatus, dt.Error)
 		return
 	}
-	if !user.IsAdmin() && hostgroup.CreateUser != user.Name {
-		h.JSONR(c, expecstatus, "You don't have permission.")
-		return
-	}
+	//if !user.IsAdmin() && hostgroup.CreateUser != user.Name {
+	//	h.JSONR(c, expecstatus, "You don't have permission.")
+	//	return
+	//}
 	tx := db.Falcon.Begin()
 	if dt := tx.Where("grp_id = ?", hostgroup.ID).Delete(&f.GrpHost{}); dt.Error != nil {
 		h.JSONR(c, expecstatus, fmt.Sprintf("delete grp_host got error: %v", dt.Error))
@@ -183,18 +183,18 @@ func DeleteHostGroup(c *gin.Context) {
 		h.JSONR(c, badstatus, err)
 		return
 	}
-	user, _ := h.GetUser(c)
-	hostgroup := f.HostGroup{ID: int64(grpID)}
-	if !user.IsAdmin() {
-		if dt := db.Falcon.Find(&hostgroup); dt.Error != nil {
-			h.JSONR(c, badstatus, dt.Error)
-			return
-		}
-		if hostgroup.CreateUser != user.Name {
-			h.JSONR(c, badstatus, "You don't have permission!")
-			return
-		}
-	}
+	//user, _ := h.GetUser(c)
+	//hostgroup := f.HostGroup{ID: int64(grpID)}
+	//if !user.IsAdmin() {
+	//	if dt := db.Falcon.Find(&hostgroup); dt.Error != nil {
+	//		h.JSONR(c, badstatus, dt.Error)
+	//		return
+	//	}
+	//	if hostgroup.CreateUser != user.Name {
+	//		h.JSONR(c, badstatus, "You don't have permission!")
+	//		return
+	//	}
+	//}
 	tx := db.Falcon.Begin()
 	//delete hostgroup referance of grp_host table
 	if dt := tx.Where("grp_id = ?", grpID).Delete(&f.GrpHost{}); dt.Error != nil {
@@ -347,17 +347,17 @@ func UnBindTemplateToGroup(c *gin.Context) {
 		h.JSONR(c, badstatus, err)
 		return
 	}
-	user, _ := h.GetUser(c)
+	//user, _ := h.GetUser(c)
 	grpTpl := f.GrpTpl{
 		GrpID: inputs.GrpID,
 		TplID: inputs.TplID,
 	}
 	db.Falcon.Where("grp_id = ? and tpl_id = ?", inputs.GrpID, inputs.TplID).Find(&grpTpl)
-	switch {
-	case !user.IsAdmin() && grpTpl.BindUser != user.Name:
-		h.JSONR(c, badstatus, errors.New("You don't have permission can do this."))
-		return
-	}
+	//switch {
+	//case !user.IsAdmin() && grpTpl.BindUser != user.Name:
+	//	h.JSONR(c, badstatus, errors.New("You don't have permission can do this."))
+	//	return
+	//}
 	if dt := db.Falcon.Where("grp_id = ? and tpl_id = ?", inputs.GrpID, inputs.TplID).Delete(&grpTpl); dt.Error != nil {
 		h.JSONR(c, badstatus, dt.Error)
 		return
@@ -431,17 +431,17 @@ func PatchHostGroupHost(c *gin.Context) {
 		return
 	}
 
-	user, _ := h.GetUser(c)
+	//user, _ := h.GetUser(c)
 
 	hostgroup := f.HostGroup{ID: int64(grpID)}
 	if dt := db.Falcon.Find(&hostgroup); dt.Error != nil {
 		h.JSONR(c, expecstatus, dt.Error)
 		return
 	}
-	if !user.IsAdmin() && hostgroup.CreateUser != user.Name {
-		h.JSONR(c, expecstatus, "You don't have permission.")
-		return
-	}
+	//if !user.IsAdmin() && hostgroup.CreateUser != user.Name {
+	//	h.JSONR(c, expecstatus, "You don't have permission.")
+	//	return
+	//}
 
 	switch action {
 	case "add":
