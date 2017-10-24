@@ -60,22 +60,36 @@ func BuildCommonIMContent(event *model.Event) string {
 
 func BuildCommonMailContent(event *model.Event) string {
 	link := g.Link(event)
+	// change by liucong format mail
+	status := "类型(Type)"
+	if event.Status == "OK" {
+		status += ":" + "恢复"
+	} else {
+		status += ":" + "告警"
+	}
+	level := fmt.Sprintf("级别(Level):P%d", event.Priority())
+	timestamp := fmt.Sprintf("时间(Timestamp):%s", event.FormattedTime())
+	metric := "指标(Metric):" + event.Metric()
+	note := "描述(Description):" + event.Note()
+	tags := "标签(Tags):" + utils.SortedTags(event.PushedTags)
+	meta := "元数据(Meta-data):"
+	funcs := "函数(func):" + event.Func() + ":" + utils.ReadableFloat(event.LeftValue) + event.Operator() + utils.ReadableFloat(event.RightValue())
+	times := fmt.Sprintf("报警次数(Strategy):最大(max)%d次，当前(current)第%d次", event.MaxStep(), event.CurrentStep)
+	tpl := "模板(Tpl):" + link
+	endpoint := "Endpoint/Uuid:" + event.Endpoint
 	return fmt.Sprintf(
-		"%s\r\nP%d\r\nEndpoint:%s\r\nMetric:%s\r\nTags:%s\r\n%s: %s%s%s\r\nNote:%s\r\nMax:%d, Current:%d\r\nTimestamp:%s\r\n%s\r\n",
-		event.Status,
-		event.Priority(),
-		event.Endpoint,
-		event.Metric(),
-		utils.SortedTags(event.PushedTags),
-		event.Func(),
-		utils.ReadableFloat(event.LeftValue),
-		event.Operator(),
-		utils.ReadableFloat(event.RightValue()),
-		event.Note(),
-		event.MaxStep(),
-		event.CurrentStep,
-		event.FormattedTime(),
-		link,
+		"%s\r\n%s\r\n%s\r\n%s\r\n%s\r\n%s\r\n%s\r\n\t%s\r\n\t%s\r\n\t%s\r\n\t%s\r\n",
+		status,
+		level,
+		timestamp,
+		metric,
+		note,
+		tags,
+		meta,
+		funcs,
+		times,
+		tpl,
+		endpoint,
 	)
 }
 

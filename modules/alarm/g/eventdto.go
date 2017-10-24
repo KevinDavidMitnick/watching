@@ -24,7 +24,7 @@ func Link(event *cmodel.Event) string {
 	if tplId != 0 {
 		// comment this line and add 1 line by liucong,add tpl name instead.
 		//return fmt.Sprintf("%s/portal/template/view/%d", Config().Api.Dashboard, tplId)
-		return fmt.Sprintf("%s:%s", "TplName", event.Tpl().Name)
+		return event.Tpl().Name
 	}
 
 	eid := event.ExpressionId()
