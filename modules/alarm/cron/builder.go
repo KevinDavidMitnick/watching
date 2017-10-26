@@ -95,7 +95,7 @@ func BuildCommonMailContent(event *model.Event) string {
 	timestamp := fmt.Sprintf("时间(Timestamp):%s", event.FormattedTime())
 	endpoint := "Endpoint(Uuid):" + event.Endpoint
 	if data.Name.DisplayName != "" {
-		endpoint = string(data.Name.DisplayName)
+		endpoint = "对象(Object):" + string(data.Name.DisplayName)
 	}
 	metric := "指标(Metric):" + event.Metric()
 	note := "描述(Description):" + event.Note()
