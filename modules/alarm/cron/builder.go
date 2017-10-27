@@ -65,7 +65,7 @@ func BuildCommonIMContent(event *model.Event) string {
 
 func BuildCommonMailContent(event *model.Event) string {
 	// get hostname from cmdb ,modify by liucong.
-	addr := g.Config().CmdbConfig.Addr
+	addr := g.Config().CmdbConfig.Addr + "/" + event.Endpoint
 	var data DataStruct
 
 	request, _ := http.NewRequest("GET", addr, nil)
@@ -94,7 +94,7 @@ func BuildCommonMailContent(event *model.Event) string {
 	level := fmt.Sprintf("级别(Level):P%d", event.Priority())
 	timestamp := fmt.Sprintf("时间(Timestamp):%s", event.FormattedTime())
 	endpoint := "Endpoint(Uuid):" + event.Endpoint
-	if data.Name.DisplayName != "" {
+	if &data != nil  && data.Name.DisplayName != "" {
 		endpoint = "对象(Object):" + string(data.Name.DisplayName)
 	}
 	metric := "指标(Metric):" + event.Metric()
