@@ -46,11 +46,31 @@ func BuildCommonSMSContent(event *model.Event) string {
 }
 
 func BuildCommonIMContent(event *model.Event) string {
+	var data DataStruct
+	addr := g.Config().CmdbConfig.Addr + "/" + event.Endpoint
+	request, _ := http.NewRequest("GET", addr, nil)
+	request.Header.Set("Content-Type", "application/json")
+	request.Header.Set("TIMEOUT", "10")
+
+	client := &http.Client{}
+	resp, err := client.Do(request)
+	if err == nil {
+		defer resp.Body.Close()
+		body, err := ioutil.ReadAll(resp.Body)
+		if err == nil {
+			json.Unmarshal(body, &data)
+		}
+	}
+	endpoint := event.Endpoint
+	if &data != nil && data.Name.DisplayName != "" {
+		endpoint = string(data.Name.DisplayName)
+	}
+
 	return fmt.Sprintf(
 		"[P%d][%s][%s][][%s %s %s %s %s%s%s][O%d %s]",
 		event.Priority(),
 		event.Status,
-		event.Endpoint,
+		endpoint,
 		event.Note(),
 		event.Func(),
 		event.Metric(),
@@ -65,8 +85,8 @@ func BuildCommonIMContent(event *model.Event) string {
 
 func BuildCommonMailContent(event *model.Event) string {
 	// get hostname from cmdb ,modify by liucong.
-	addr := g.Config().CmdbConfig.Addr + "/" + event.Endpoint
 	var data DataStruct
+	addr := g.Config().CmdbConfig.Addr + "/" + event.Endpoint
 
 	request, _ := http.NewRequest("GET", addr, nil)
 	request.Header.Set("Content-Type", "application/json")
@@ -94,7 +114,7 @@ func BuildCommonMailContent(event *model.Event) string {
 	level := fmt.Sprintf("级别(Level):P%d", event.Priority())
 	timestamp := fmt.Sprintf("时间(Timestamp):%s", event.FormattedTime())
 	endpoint := "Endpoint(Uuid):" + event.Endpoint
-	if &data != nil  && data.Name.DisplayName != "" {
+	if &data != nil && data.Name.DisplayName != "" {
 		endpoint = "对象(Object):" + string(data.Name.DisplayName)
 	}
 	metric := "指标(Metric):" + event.Metric()
