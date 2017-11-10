@@ -480,6 +480,7 @@ func UserList(c *gin.Context) {
 	)
 	pageTmp := c.DefaultQuery("page", "")
 	limitTmp := c.DefaultQuery("limit", "")
+	//user_regex := c.DefaultQuery("user_name", "")
 	page, limit, err = h.PageParser(pageTmp, limitTmp)
 	if err != nil {
 		h.JSONR(c, badstatus, err.Error())

@@ -47,6 +47,7 @@ func GetConcurrentOfUpdateIndexAll() int {
 
 // 索引的全量更新
 func UpdateIndexAllByDefaultStep() {
+	//两天时间
 	UpdateIndexAll(DefaultUpdateStepInSec)
 }
 func UpdateIndexAll(updateStepInSec int64) {

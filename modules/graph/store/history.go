@@ -61,6 +61,7 @@ func GetAllItems(key string) []*cmodel.GraphItem {
 	return ret
 }
 
+//add item to linkedlist
 func AddItem(key string, val *cmodel.GraphItem) {
 	itemlist, found := HistoryCache.Get(key)
 	var slist *tlist.SafeListLimited

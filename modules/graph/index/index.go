@@ -49,6 +49,8 @@ func ReceiveItem(item *cmodel.GraphItem, md5 string) {
 		return
 	}
 
+	//流程走到这一块，说明数据没有上报过
+
 	// 针对 mysql索引重建场景 做的优化，是否有rrdtool文件存在,如果有 则认为MySQL中已建立索引；
 	rrdFileName := g.RrdFileName(g.Config().RRD.Storage, md5, item.DsType, item.Step)
 	if g.IsRrdFileExist(rrdFileName) {

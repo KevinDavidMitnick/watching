@@ -54,6 +54,7 @@ func configCommonRoutes() {
 	router.GET("/api/v2/stats/graph-queue-size", func(c *gin.Context) {
 		rt := make(map[string]int)
 		for i := 0; i < store.GraphItems.Size; i++ {
+			//获取key slice
 			keys := store.GraphItems.KeysByIndex(i)
 			oneHourAgo := time.Now().Unix() - 3600
 

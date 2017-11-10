@@ -33,6 +33,7 @@ func GetAggregatorListOfGrp(c *gin.Context) {
 	)
 	pageTmp := c.DefaultQuery("page", "")
 	limitTmp := c.DefaultQuery("limit", "")
+	nameTmp := c.DefaultQuery("regex", ".+")
 	page, limit, err = h.PageParser(pageTmp, limitTmp)
 	if err != nil {
 		h.JSONR(c, badstatus, err.Error())
@@ -52,7 +53,7 @@ func GetAggregatorListOfGrp(c *gin.Context) {
 	aggregators := []f.Cluster{}
 	var dt *gorm.DB
 	if limit != -1 && page != -1 {
-		dt = db.Falcon.Raw(fmt.Sprintf("SELECT * from cluster WHERE grp_id = %d limit %d,%d", grpID, page, limit)).Scan(&aggregators)
+		dt = db.Falcon.Raw(fmt.Sprintf("SELECT * from cluster WHERE grp_id = %d and endpoint regexp \"%s\" limit %d,%d", grpID, nameTmp, page, limit)).Scan(&aggregators)
 	} else {
 		dt = db.Falcon.Where("grp_id = ?", grpID).Find(&aggregators)
 	}

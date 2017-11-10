@@ -55,6 +55,7 @@ func GetTemplates(c *gin.Context) {
 			fmt.Sprintf("SELECT * from tpl WHERE tpl_name regexp %s limit %d,%d", q, page, limit)).Scan(&templates)
 	} else {
 		dt = db.Falcon.Where("tpl_name regexp ?", q).Find(&templates)
+		//dt = db.Falcon.Raw(fmt.Sprintf("SELECT * from mockcfg where name regexp \"%s\" and metric regexp \"%s\" limit %d,%d", name_regex, metric_regex, page, limit)).Scan(&mockcfgs)
 	}
 	if dt.Error != nil {
 		log.Infof(dt.Error.Error())

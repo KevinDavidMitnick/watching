@@ -549,3 +549,50 @@ func GetHosts(c *gin.Context) {
 	h.JSONR(c, hosts)
 	return
 }
+
+type HGinfo struct {
+	Hostgroup_name string `json:"hostgroup_name"`
+	Hostgroup_id   int    `json:"hostgroup_Id"`
+	Device_num     int    `json:"device_num"`
+	agg_num        int    `json:"agg_Num"`
+	plugin_num     int    `json:"plugin_num"`
+	tpl_num        int    `json: "tpl_num"`
+}
+
+//func GetHostGroupDash(c *gin.Context) {
+//	//var hginfos []HGinfo
+//	var (
+//		limit int
+//		page  int
+//		err   error
+//	)
+//	pageTmp := c.DefaultQuery("page", "")
+//	limitTmp := c.DefaultQuery("limit", "")
+//	q := c.DefaultQuery("q", ".+")
+//	page, limit, err = h.PageParser(pageTmp, limitTmp)
+//	if err != nil {
+//		h.JSONR(c, badstatus, err.Error())
+//		return
+//	}
+//	var hostgroups []f.HostGroup
+//	var dt *gorm.DB
+//	if limit != -1 && page != -1 {
+//		dt = db.Falcon.Raw(fmt.Sprintf("SELECT * from grp  where grp_name regexp '%s' limit %d,%d", q, page, limit)).Scan(&hostgroups)
+//	} else {
+//		dt = db.Falcon.Table("grp").Where("grp_name regexp ?", q).Find(&hostgroups)
+//	}
+//	if dt.Error != nil {
+//		h.JSONR(c, expecstatus, dt.Error)
+//		return
+//	}
+//	//output hosts
+//
+//	hgs := make(map[string])
+//
+//	for _, hg in hostgroups{
+//        id := hg.ID
+//
+//	}
+//	h.JSONR(c, hostgroups)
+//
+//}
