@@ -17,35 +17,60 @@ package cron
 import (
 	"fmt"
 
+	"encoding/json"
 	"github.com/open-falcon/falcon-plus/common/model"
 	"github.com/open-falcon/falcon-plus/common/utils"
 	"github.com/open-falcon/falcon-plus/modules/alarm/g"
+	"io/ioutil"
+	"net/http"
 )
 
+type NameStruct struct {
+	DisplayName string `json:"display_name"`
+}
+
+type DataStruct struct {
+	Name *NameStruct `json:"data"`
+}
+
 func BuildCommonSMSContent(event *model.Event) string {
+	// change by liucong format mail title
 	return fmt.Sprintf(
-		"[P%d][%s][%s][][%s %s %s %s %s%s%s][O%d %s]",
+		"[P%d][%s][0%d][%s][%s]",
 		event.Priority(),
 		event.Status,
-		event.Endpoint,
-		event.Note(),
-		event.Func(),
-		event.Metric(),
-		utils.SortedTags(event.PushedTags),
-		utils.ReadableFloat(event.LeftValue),
-		event.Operator(),
-		utils.ReadableFloat(event.RightValue()),
 		event.CurrentStep,
-		event.FormattedTime(),
+		event.Endpoint,
+		event.Metric(),
 	)
 }
 
 func BuildCommonIMContent(event *model.Event) string {
+	var data DataStruct
+	addr := g.Config().CmdbConfig.Addr + "/" + event.Endpoint
+	request, _ := http.NewRequest("GET", addr, nil)
+	request.Header.Set("Content-Type", "application/json")
+	request.Header.Set("TIMEOUT", "10")
+
+	client := &http.Client{}
+	resp, err := client.Do(request)
+	if err == nil {
+		defer resp.Body.Close()
+		body, err := ioutil.ReadAll(resp.Body)
+		if err == nil {
+			json.Unmarshal(body, &data)
+		}
+	}
+	endpoint := event.Endpoint
+	if &data != nil && data.Name.DisplayName != "" {
+		endpoint = string(data.Name.DisplayName)
+	}
+
 	return fmt.Sprintf(
 		"[P%d][%s][%s][][%s %s %s %s %s%s%s][O%d %s]",
 		event.Priority(),
 		event.Status,
-		event.Endpoint,
+		endpoint,
 		event.Note(),
 		event.Func(),
 		event.Metric(),
@@ -59,23 +84,60 @@ func BuildCommonIMContent(event *model.Event) string {
 }
 
 func BuildCommonMailContent(event *model.Event) string {
+	// get hostname from cmdb ,modify by liucong.
+	var data DataStruct
+	addr := g.Config().CmdbConfig.Addr + "/" + event.Endpoint
+
+	request, _ := http.NewRequest("GET", addr, nil)
+	request.Header.Set("Content-Type", "application/json")
+	request.Header.Set("TIMEOUT", "10")
+
+	client := &http.Client{}
+	resp, err := client.Do(request)
+	if err == nil {
+		defer resp.Body.Close()
+		body, err := ioutil.ReadAll(resp.Body)
+		if err == nil {
+			json.Unmarshal(body, &data)
+		}
+	}
+
 	link := g.Link(event)
+	// change by liucong format mail
+	line := "------------------------------------"
+	status := "类型(Type)"
+	if event.Status == "OK" {
+		status += ":" + "恢复"
+	} else {
+		status += ":" + "告警"
+	}
+	level := fmt.Sprintf("级别(Level):P%d", event.Priority())
+	timestamp := fmt.Sprintf("时间(Timestamp):%s", event.FormattedTime())
+	endpoint := "Endpoint(Uuid):" + event.Endpoint
+	if &data != nil && data.Name.DisplayName != "" {
+		endpoint = "对象(Object):" + string(data.Name.DisplayName)
+	}
+	metric := "指标(Metric):" + event.Metric()
+	note := "描述(Description):" + event.Note()
+	tags := "标签(Tags):" + utils.SortedTags(event.PushedTags)
+	meta := "元数据(Meta-data):"
+	funcs := "函数(func):" + event.Func() + ":" + utils.ReadableFloat(event.LeftValue) + event.Operator() + utils.ReadableFloat(event.RightValue())
+	times := fmt.Sprintf("报警次数(Strategy):最大(max)%d次，当前(current)第%d次", event.MaxStep(), event.CurrentStep)
+	tpl := "模板(Tpl):" + link
 	return fmt.Sprintf(
-		"%s\r\nP%d\r\nEndpoint:%s\r\nMetric:%s\r\nTags:%s\r\n%s: %s%s%s\r\nNote:%s\r\nMax:%d, Current:%d\r\nTimestamp:%s\r\n%s\r\n",
-		event.Status,
-		event.Priority(),
-		event.Endpoint,
-		event.Metric(),
-		utils.SortedTags(event.PushedTags),
-		event.Func(),
-		utils.ReadableFloat(event.LeftValue),
-		event.Operator(),
-		utils.ReadableFloat(event.RightValue()),
-		event.Note(),
-		event.MaxStep(),
-		event.CurrentStep,
-		event.FormattedTime(),
-		link,
+		"%s\r\n%s\r\n%s\r\n%s\r\n%s\r\n%s\r\n%s\r\n%s\r\n\t%s\r\n\t%s\r\n\t%s\r\n\t%s\r\n",
+		line,
+		status,
+		level,
+		timestamp,
+		endpoint,
+		metric,
+		note,
+		tags,
+		meta,
+		funcs,
+		times,
+		tpl,
 	)
 }
 
