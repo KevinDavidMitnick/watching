@@ -46,7 +46,7 @@ func GetNoDataList(c *gin.Context) {
 	if limit != -1 && page != -1 {
 		dt = db.Falcon.Raw(fmt.Sprintf("SELECT * from mockcfg where name regexp \"%s\" and metric regexp \"%s\" limit %d,%d", name_regex, metric_regex, page, limit)).Order("id DESC").Scan(&mockcfgs)
 	} else {
-		dt = db.Falcon.Raw(fmt.Sprintf("SELECT * from mockcfg where name regexp \"%s\" and metric regexp \"%s\"", name_regex, metric_regex)).Order("id DESC")Scan(&mockcfgs)
+		dt = db.Falcon.Raw(fmt.Sprintf("SELECT * from mockcfg where name regexp \"%s\" and metric regexp \"%s\"", name_regex, metric_regex)).Order("id DESC").Scan(&mockcfgs)
 	}
 	if dt.Error != nil {
 		h.JSONR(c, badstatus, dt.Error)
