@@ -541,7 +541,7 @@ func GetHosts(c *gin.Context) {
 	//}
 	var hosts []f.Host
 	var dt *gorm.DB
-	dt = db.Falcon.Table("host").Find(&hosts)
+	dt = db.Falcon.Table("host").Order("id DESC").Find(&hosts)
 	if dt.Error != nil {
 		h.JSONR(c, expecstatus, dt.Error)
 		return

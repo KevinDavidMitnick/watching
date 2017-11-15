@@ -41,7 +41,7 @@ func GetStrategys(c *gin.Context) {
 		h.JSONR(c, badstatus, err)
 		return
 	}
-	dt := db.Falcon.Where("tpl_id = ?", tid).Find(&strategys)
+	dt := db.Falcon.Where("tpl_id = ?", tid).Order("id DESC").Find(&strategys)
 	if dt.Error != nil {
 		h.JSONR(c, badstatus, dt.Error)
 		return

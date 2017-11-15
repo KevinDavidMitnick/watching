@@ -491,9 +491,9 @@ func UserList(c *gin.Context) {
 	var dt *gorm.DB
 	if limit != -1 && page != -1 {
 		dt = db.Uic.Raw(
-			fmt.Sprintf("select * from user where name regexp '%s' limit %d,%d", q, page, limit)).Scan(&user)
+			fmt.Sprintf("select * from user where name regexp '%s' limit %d,%d ", q, page, limit)).Order("id desc").Scan(&user)
 	} else {
-		dt = db.Uic.Table("user").Where("name regexp ?", q).Scan(&user)
+		dt = db.Uic.Table("user").Where("name regexp ? ", q).Order("id desc").Scan(&user)
 	}
 	if dt.Error != nil {
 		h.JSONR(c, http.StatusExpectationFailed, dt.Error)
