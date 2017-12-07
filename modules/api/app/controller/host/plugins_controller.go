@@ -35,19 +35,19 @@ func CreatePlugin(c *gin.Context) {
 		h.JSONR(c, badstatus, err)
 		return
 	}
-	user, _ := h.GetUser(c)
-	if !user.IsAdmin() {
-		hostgroup := f.HostGroup{ID: inputs.GrpId}
-		if dt := db.Falcon.Find(&hostgroup); dt.Error != nil {
-			h.JSONR(c, expecstatus, dt.Error)
-			return
-		}
-		if hostgroup.CreateUser != user.Name {
-			h.JSONR(c, badstatus, "You don't have permission!")
-			return
-		}
-	}
-	plugin := f.Plugin{Dir: inputs.DirPaht, GrpId: inputs.GrpId, CreateUser: user.Name}
+	//user, _ := h.GetUser(c)
+	//if !user.IsAdmin() {
+	//	hostgroup := f.HostGroup{ID: inputs.GrpId}
+	//	if dt := db.Falcon.Find(&hostgroup); dt.Error != nil {
+	//		h.JSONR(c, expecstatus, dt.Error)
+	//		return
+	//	}
+	//	if hostgroup.CreateUser != user.Name {
+	//		h.JSONR(c, badstatus, "You don't have permission!")
+	//		return
+	//	}
+	//}
+	plugin := f.Plugin{Dir: inputs.DirPaht, GrpId: inputs.GrpId, CreateUser: "root"}
 	if dt := db.Falcon.Save(&plugin); dt.Error != nil {
 		h.JSONR(c, expecstatus, dt.Error)
 		return
@@ -94,18 +94,18 @@ func DeletePlugin(c *gin.Context) {
 		h.JSONR(c, expecstatus, dt.Error)
 		return
 	}
-	user, _ := h.GetUser(c)
-	if !user.IsAdmin() {
-		hostgroup := f.HostGroup{ID: plugin.GrpId}
-		if dt := db.Falcon.Find(&hostgroup); dt.Error != nil {
-			h.JSONR(c, expecstatus, dt.Error)
-			return
-		}
-		if hostgroup.CreateUser != user.Name && plugin.CreateUser != user.Name {
-			h.JSONR(c, badstatus, "You don't have permission!")
-			return
-		}
-	}
+	//user, _ := h.GetUser(c)
+	//if !user.IsAdmin() {
+	//	hostgroup := f.HostGroup{ID: plugin.GrpId}
+	//	if dt := db.Falcon.Find(&hostgroup); dt.Error != nil {
+	//		h.JSONR(c, expecstatus, dt.Error)
+	//		return
+	//	}
+	//	if hostgroup.CreateUser != user.Name && plugin.CreateUser != user.Name {
+	//		h.JSONR(c, badstatus, "You don't have permission!")
+	//		return
+	//	}
+	//}
 
 	if dt := db.Falcon.Delete(&plugin); dt.Error != nil {
 		h.JSONR(c, expecstatus, dt.Error)
