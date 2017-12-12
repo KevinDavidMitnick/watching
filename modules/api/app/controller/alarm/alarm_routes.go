@@ -39,4 +39,6 @@ func Routes(r *gin.Engine) {
 	alarmapi.DELETE("/events", DeleteEvent)
 	alarmapi.POST("/event_note", AddNotesToAlarm)
 	alarmapi.GET("/event_note", GetNotesOfAlarm)
+	alarmapi.GET("/event_endpoint", GetEventEndpoint)
+	alarmapi.GET("/e", GetEventEndpoint)
 }

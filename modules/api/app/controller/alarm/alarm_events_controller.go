@@ -198,6 +198,7 @@ func EventsGet(c *gin.Context) {
 		inputs.Limit = 50
 	}
 	perparedSql := fmt.Sprintf("select id, event_caseId, cond, status, timestamp from %s %s order by timestamp DESC limit %d,%d", f.TableName(), filterCollector, inputs.Page, inputs.Limit)
+
 	db.Alarm.Raw(perparedSql).Scan(&evens)
 	h.JSONR(c, evens)
 }
@@ -240,4 +241,37 @@ func DeleteEventCase(c *gin.Context) {
 	}
 	h.JSONR(c, fmt.Sprintf("EventCases %v has been delete, affect row: %v", inputs.EventId, dt.RowsAffected))
 	return
+}
+
+func removeDuplicatesUnordered(elements []string) []string {
+	encountered := map[string]bool{}
+
+	// Create a map of all unique elements.
+	for v := range elements {
+		encountered[elements[v]] = true
+	}
+
+	// Place all keys from the map into a slice.
+	result := []string{}
+	for key, _ := range encountered {
+		result = append(result, key)
+	}
+	return result
+}
+
+type APIEventEndpoint struct {
+	Endpoint string `json:"endpoint"`
+}
+
+func GetEventEndpoint(c *gin.Context) {
+	uuids := make([]string, 0)
+	f := alm.EventCases{}
+	cevens := []APIEventEndpoint{}
+	perparedSql := fmt.Sprintf("select endpoint from %s ", f.TableName())
+	db.Alarm.Raw(perparedSql).Find(&cevens)
+	for _, event := range cevens {
+		uuids = append(uuids, event.Endpoint)
+	}
+	result := removeDuplicatesUnordered(uuids)
+	h.JSONR(c, result)
 }
