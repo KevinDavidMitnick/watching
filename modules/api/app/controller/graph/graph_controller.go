@@ -198,13 +198,36 @@ func EndpointCounterRegexpQuery(c *gin.Context) {
 			return
 		}
 
+		/*get counter alias*/
+		var counteraliass []m.CounterAlias
+		var gdt *gorm.DB
+		gdt = db.Graph.Table("counter_alias").Find(&counteraliass)
+		if gdt.Error != nil {
+			h.JSONR(c, expecstatus, dt.Error)
+			return
+		}
+		cache := make(map[string]string, 0)
+		for _, counteralias := range counteraliass {
+			counter := counteralias.Counters
+			alias := counteralias.Alias
+			cache[counter] = alias
+		}
+
 		countersResp := []interface{}{}
+		var current string
 		for _, c := range counters {
+			if v, ok := cache[c.Counter]; ok {
+				current = v
+			} else {
+				current = c.Counter
+			}
+
 			countersResp = append(countersResp, map[string]interface{}{
-				"endpoint_id": c.EndpointID,
-				"counter":     c.Counter,
-				"step":        c.Step,
-				"type":        c.Type,
+				"endpoint_id":   c.EndpointID,
+				"counter":       c.Counter,
+				"counter_alias": current,
+				"step":          c.Step,
+				"type":          c.Type,
 			})
 		}
 		h.JSONR(c, countersResp)
