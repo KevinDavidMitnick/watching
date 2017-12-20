@@ -468,3 +468,98 @@ func getCounterStep(endpoint, counter string) (step int, err error) {
 
 	return
 }
+
+type APICounterAliasInputs struct {
+	Alias    string `json:"alias"`
+	Counters string `json:"counters"`
+	Type     uint   `json:"type"`
+}
+
+func CreateCounterAlias(c *gin.Context) {
+	var inputs APICounterAliasInputs
+	if err := c.Bind(&inputs); err != nil {
+		h.JSONR(c, badstatus, err)
+		return
+	}
+
+	counteralias := m.CounterAlias{
+		Counters: inputs.Counters,
+		Alias:    inputs.Alias,
+		Htype:    inputs.Type,
+	}
+
+	if dt := db.Graph.Create(&counteralias); dt.Error != nil {
+		h.JSONR(c, expecstatus, dt.Error)
+		return
+	}
+	h.JSONR(c, counteralias)
+	return
+}
+
+type APIUpdateCounterAlias struct {
+	New_alias string `json:"new_alias" binding:"required"`
+	Id        int64  `json:"id" binding:"required"`
+}
+
+func UpdateCounterAlias(c *gin.Context) {
+	var inputs APIUpdateCounterAlias
+	if err := c.Bind(&inputs); err != nil {
+		h.JSONR(c, badstatus, err)
+		return
+	}
+
+	//user, _ := h.GetUser(c)
+	counteralias := m.CounterAlias{
+		Alias: inputs.New_alias,
+	}
+	if dt := db.Graph.Table("counter_alias").Where("id=?", inputs.Id).Update(&counteralias); dt.Error != nil {
+		h.JSONR(c, expecstatus, dt.Error)
+		return
+	}
+
+	h.JSONR(c, map[string]string{
+		"message": "update success",
+		"id":      fmt.Sprintf("%d", inputs.Id),
+	})
+	return
+}
+
+func GetCounterAlias(c *gin.Context) {
+	q := c.DefaultQuery("q", ".+")
+
+	var counteraliass []m.CounterAlias
+	var dt *gorm.DB
+	dt = db.Graph.Table("counter_alias").Where("counters regexp ?", q).Find(&counteraliass)
+	if dt.Error != nil {
+		h.JSONR(c, expecstatus, dt.Error)
+		return
+	}
+	h.JSONR(c, counteraliass)
+	return
+}
+
+func DeleteCounterAlias(c *gin.Context) {
+	idTmp := c.Params.ByName("nid")
+	if idTmp == "" {
+		h.JSONR(c, badstatus, "counter_alias id is missing")
+		return
+	}
+	counterID, err := strconv.Atoi(idTmp)
+	if err != nil {
+		log.Debugf("counterIDtmp: %v", counterID)
+		h.JSONR(c, badstatus, err)
+		return
+	}
+	plugin := m.CounterAlias{ID: uint(counterID)}
+	if dt := db.Graph.Find(&plugin); dt.Error != nil {
+		h.JSONR(c, expecstatus, dt.Error)
+		return
+	}
+
+	if dt := db.Graph.Delete(&plugin); dt.Error != nil {
+		h.JSONR(c, expecstatus, dt.Error)
+		return
+	}
+	h.JSONR(c, fmt.Sprintf("counter alias:%v has been deleted", counterID))
+	return
+}

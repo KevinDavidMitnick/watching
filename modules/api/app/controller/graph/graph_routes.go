@@ -39,6 +39,11 @@ func Routes(r *gin.Engine) {
 	authapi.DELETE("/graph/endpoint", DeleteGraphEndpoint)
 	authapi.DELETE("/graph/counter", DeleteGraphCounter)
 
+	authapi.GET("/graph/counter/alias", GetCounterAlias)
+	authapi.POST("/graph/counter/alias", CreateCounterAlias)
+	authapi.PUT("/graph/counter/alias", UpdateCounterAlias)
+	authapi.DELETE("/graph/counter/alias/:nid", DeleteCounterAlias)
+
 	grfanaapi := r.Group("/api")
 	grfanaapi.GET("/v1/grafana", GrafanaMainQuery)
 	grfanaapi.GET("/v1/grafana/metrics/find", GrafanaMainQuery)
