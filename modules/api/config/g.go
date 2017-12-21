@@ -24,6 +24,11 @@ const (
 	VERSION = "0.0.1"
 )
 
+var CMDB_ADDR string = "http://opsultra-cmdb.service.consul:8400/cmdb/monitor/name/ralation/uuid"
+
+func SetCmdbAddr(addr string) {
+	CMDB_ADDR = addr
+}
 func init() {
 	runtime.GOMAXPROCS(runtime.NumCPU())
 	log.SetFlags(log.Ldate | log.Ltime | log.Lshortfile)

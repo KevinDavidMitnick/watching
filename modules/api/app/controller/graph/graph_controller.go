@@ -15,6 +15,7 @@
 package graph
 
 import (
+	"encoding/json"
 	"errors"
 	"fmt"
 	"strconv"
@@ -22,12 +23,14 @@ import (
 	"time"
 
 	log "github.com/Sirupsen/logrus"
+	"github.com/astaxie/beego/httplib"
 	"github.com/gin-gonic/gin"
 	"github.com/jinzhu/gorm"
 	cmodel "github.com/open-falcon/falcon-plus/common/model"
 	h "github.com/open-falcon/falcon-plus/modules/api/app/helper"
 	m "github.com/open-falcon/falcon-plus/modules/api/app/model/graph"
 	"github.com/open-falcon/falcon-plus/modules/api/app/utils"
+	"github.com/open-falcon/falcon-plus/modules/api/config"
 	grh "github.com/open-falcon/falcon-plus/modules/api/graph"
 	tcache "github.com/toolkits/cache/localcache/timedcache"
 	"net/http"
@@ -152,6 +155,37 @@ func EndpointRegexpQuery(c *gin.Context) {
 	h.JSONR(c, endpoints)
 }
 
+type uuidName struct {
+	Display_name string `json:"display_name"`
+	Uuid         string `json:"uuid"`
+}
+
+func getNameRelUuid(url string) (map[string]string, error) {
+	req := httplib.Get(url).SetTimeout(3*time.Second, 20*time.Second)
+	resp, e := req.String()
+	if e != nil {
+		log.Warnln(e.Error())
+		return nil, e
+	}
+
+	type Resp struct {
+		Code    int        `json:"code"`
+		Message string     `json:"message"`
+		Data    []uuidName `json:"data"`
+	}
+	var rdata Resp
+	json.Unmarshal([]byte(resp), &rdata)
+
+	cache := make(map[string]string, 0)
+	for _, data := range rdata.Data {
+		uuid := data.Uuid
+		display := data.Display_name
+		cache[uuid] = display
+	}
+	return cache, nil
+
+}
+
 func EndpointCounterRegexpQuery(c *gin.Context) {
 	eid := c.DefaultQuery("eid", "")
 	metricQuery := c.DefaultQuery("metricQuery", ".+")
@@ -207,27 +241,32 @@ func EndpointCounterRegexpQuery(c *gin.Context) {
 			return
 		}
 		cache := make(map[string]string, 0)
+		counerIdCache := make(map[string]uint, 0)
 		for _, counteralias := range counteraliass {
 			counter := counteralias.Counters
 			alias := counteralias.Alias
 			cache[counter] = alias
+			counerIdCache[counter] = counteralias.ID
 		}
 
 		countersResp := []interface{}{}
 		var current string
+		var currid uint = 0
 		for _, c := range counters {
 			if v, ok := cache[c.Counter]; ok {
 				current = v
+				currid = counerIdCache[c.Counter]
 			} else {
-				current = c.Counter
+				current = ""
 			}
 
 			countersResp = append(countersResp, map[string]interface{}{
-				"endpoint_id":   c.EndpointID,
-				"counter":       c.Counter,
-				"counter_alias": current,
-				"step":          c.Step,
-				"type":          c.Type,
+				"endpoint_id":      c.EndpointID,
+				"counter":          c.Counter,
+				"counter_alias":    current,
+				"step":             c.Step,
+				"type":             c.Type,
+				"counter_alias_id": currid,
 			})
 		}
 		h.JSONR(c, countersResp)
@@ -245,12 +284,30 @@ type APIQueryGraphDrawData struct {
 }
 
 func QueryGraphDrawData(c *gin.Context) {
+	endpointcache, _ := getNameRelUuid(config.CMDB_ADDR)
+
 	var inputs APIQueryGraphDrawData
 	var err error
 	if err = c.Bind(&inputs); err != nil {
 		h.JSONR(c, badstatus, err)
 		return
 	}
+
+	/*get counter alias*/
+	var counteraliass []m.CounterAlias
+	var gdt *gorm.DB
+	gdt = db.Graph.Table("counter_alias").Find(&counteraliass)
+	if gdt.Error != nil {
+		h.JSONR(c, expecstatus, gdt.Error)
+		return
+	}
+	cache := make(map[string]string, 0)
+	for _, counteralias := range counteraliass {
+		counter := counteralias.Counters
+		alias := counteralias.Alias
+		cache[counter] = alias
+	}
+
 	respData := []*cmodel.GraphQueryResponse{}
 	for _, host := range inputs.HostNames {
 		for _, counter := range inputs.Counters {
@@ -264,6 +321,14 @@ func QueryGraphDrawData(c *gin.Context) {
 				}
 			}
 			data, _ := fetchData(host, counter, inputs.ConsolFun, inputs.StartTime, inputs.EndTime, step)
+
+			if v, ok := cache[data.Counter]; ok {
+				data.Counter = v
+			}
+
+			if v, ok := endpointcache[data.Endpoint]; ok {
+				data.Endpoint = v
+			}
 			respData = append(respData, data)
 		}
 	}

@@ -67,6 +67,8 @@ func main() {
 	if err != nil {
 		log.Fatal(err)
 	}
+
+	config.SetCmdbAddr(viper.GetString("cmdb_addr"))
 	err = config.InitDB(viper.GetBool("db.db_bug"))
 	if err != nil {
 		log.Fatalf("db conn failed with error %s", err.Error())
