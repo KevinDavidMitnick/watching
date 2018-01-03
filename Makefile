@@ -44,11 +44,11 @@ fmt-check:
 	fi;
 
 $(CMD):
-	go build -gcflags="-N -l" -o bin/$@/opsultra-$@ ./modules/$@
+	go build -gcflags="-s -w" -o bin/$@/opsultra-$@ ./modules/$@
 
 .PHONY: $(TARGET)
 $(TARGET): $(GOFILES)
-	go build -gcflags="-N -l" -ldflags "-X main.GitCommit=`git rev-parse --short HEAD` -X main.Version=$(VERSION)" -o opsultra
+	go build -gcflags="-s -w" -ldflags "-X main.GitCommit=`git rev-parse --short HEAD` -X main.Version=$(VERSION)" -o opsultra
 
 checkbin: bin/ config/ opsultra
 
