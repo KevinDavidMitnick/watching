@@ -34,13 +34,32 @@ type DataStruct struct {
 }
 
 func BuildCommonSMSContent(event *model.Event) string {
+	var data DataStruct
+	addr := g.Config().CmdbConfig.Addr + "/" + event.Endpoint
+	request, _ := http.NewRequest("GET", addr, nil)
+	request.Header.Set("Content-Type", "application/json")
+	request.Header.Set("TIMEOUT", "10")
+
+	client := &http.Client{}
+	resp, err := client.Do(request)
+	if err == nil {
+		defer resp.Body.Close()
+		body, err := ioutil.ReadAll(resp.Body)
+		if err == nil {
+			json.Unmarshal(body, &data)
+		}
+	}
+	endpoint := event.Endpoint
+	if &data != nil && data.Name.DisplayName != "" {
+		endpoint = string(data.Name.DisplayName)
+	}
 	// change by liucong format mail title
 	return fmt.Sprintf(
 		"[P%d][%s][0%d][%s][%s]",
 		event.Priority(),
 		event.Status,
 		event.CurrentStep,
-		event.Endpoint,
+		endpoint,
 		event.Metric(),
 	)
 }
@@ -125,7 +144,7 @@ func BuildCommonMailContent(event *model.Event) string {
 	times := fmt.Sprintf("报警次数(Strategy):最大(max)%d次，当前(current)第%d次", event.MaxStep(), event.CurrentStep)
 	tpl := "模板(Tpl):" + link
 	return fmt.Sprintf(
-		"%s\r\n%s\r\n%s\r\n%s\r\n%s\r\n%s\r\n%s\r\n%s\r\n\t%s\r\n\t%s\r\n\t%s\r\n\t%s\r\n",
+		"%s\r\n%s\r\n%s\r\n%s\r\n%s\r\n%s\r\n%s\r\n%s\r\n%s\r\n\t%s\r\n\t%s\r\n\t%s\r\n",
 		line,
 		status,
 		level,
