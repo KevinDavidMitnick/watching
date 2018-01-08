@@ -27,6 +27,9 @@ import (
 
 type NameStruct struct {
 	DisplayName string `json:"display_name"`
+	Parent_name string `json:"parent_name"`
+	Zone_name   string `json:"zone_name"`
+	Database    string `json:"database"`
 }
 
 type DataStruct struct {
@@ -136,6 +139,8 @@ func BuildCommonMailContent(event *model.Event) string {
 	if &data != nil && data.Name.DisplayName != "" {
 		endpoint = "对象(Object):" + string(data.Name.DisplayName)
 	}
+	uuid := "Uuid:" + string(event.Endpoint)
+	position := "位置信息(Position):" + string(data.Name.Database) + " " + string(data.Name.Zone_name) + " " + string(data.Name.Parent_name)
 	metric := "指标(Metric):" + event.Metric()
 	note := "描述(Description):" + event.Note()
 	tags := "标签(Tags):" + utils.SortedTags(event.PushedTags)
@@ -144,12 +149,14 @@ func BuildCommonMailContent(event *model.Event) string {
 	times := fmt.Sprintf("报警次数(Strategy):最大(max)%d次，当前(current)第%d次", event.MaxStep(), event.CurrentStep)
 	tpl := "模板(Tpl):" + link
 	return fmt.Sprintf(
-		"%s\r\n%s\r\n%s\r\n%s\r\n%s\r\n%s\r\n%s\r\n%s\r\n%s\r\n\t%s\r\n\t%s\r\n\t%s\r\n",
+		"%s\r\n%s\r\n%s\r\n%s\r\n%s\r\n%s\r\n%s\r\n%s\r\n%s\r\n%s\r\n%s\r\n\t%s\r\n\t%s\r\n\t%s\r\n",
 		line,
 		status,
 		level,
 		timestamp,
 		endpoint,
+		uuid,
+		position,
 		metric,
 		note,
 		tags,
