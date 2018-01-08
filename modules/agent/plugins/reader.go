@@ -17,54 +17,37 @@ package plugins
 import (
 	"github.com/open-falcon/falcon-plus/modules/agent/g"
 	"github.com/toolkits/file"
-	"io/ioutil"
-	"log"
+	"os"
 	"path/filepath"
-	"strconv"
 	"strings"
 )
 
-// key: sys/ntp/60_ntp.py
-func ListPlugins(relativePath string) map[string]*Plugin {
+func ListPlugins(relativePath string, params g.PluginParam) map[string]*Plugin {
 	ret := make(map[string]*Plugin)
 	if relativePath == "" {
 		return ret
 	}
 
-	dir := filepath.Join(g.Config().Plugin.Dir, relativePath)
+	executeFile := filepath.Join(g.Config().Plugin.Dir, relativePath, params.ExecuteScript)
+	executeFile = strings.TrimSpace(executeFile)
 
-	if !file.IsExist(dir) || file.IsFile(dir) {
+	if !file.IsExist(executeFile) || !file.IsFile(executeFile) {
 		return ret
 	}
 
-	fs, err := ioutil.ReadDir(dir)
+	f, err := os.Open(executeFile)
 	if err != nil {
-		log.Println("can not list files under", dir)
+		return ret
+	}
+	defer f.Close()
+	fi, err := f.Stat()
+	if err != nil {
 		return ret
 	}
 
-	for _, f := range fs {
-		if f.IsDir() {
-			continue
-		}
-
-		filename := f.Name()
-		arr := strings.Split(filename, "_")
-		if len(arr) < 2 {
-			continue
-		}
-
-		// filename should be: $cycle_$xx
-		var cycle int
-		cycle, err = strconv.Atoi(arr[0])
-		if err != nil {
-			continue
-		}
-
-		fpath := filepath.Join(relativePath, filename)
-		plugin := &Plugin{FilePath: fpath, MTime: f.ModTime().Unix(), Cycle: cycle}
-		ret[fpath] = plugin
-	}
-
+	cycle := params.ExecuteInterval
+	param := strings.TrimSpace(params.ExecuteParam)
+	plugin := &Plugin{FilePath: executeFile, MTime: fi.ModTime().Unix(), Cycle: cycle, Param: param}
+	ret[executeFile] = plugin
 	return ret
 }

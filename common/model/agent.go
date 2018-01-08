@@ -54,7 +54,7 @@ func (this *AgentHeartbeatRequest) String() string {
 }
 
 type AgentPluginsResponse struct {
-	Plugins   []string
+	Plugins   string
 	Timestamp int64
 }
 

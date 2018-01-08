@@ -16,7 +16,7 @@ package cache
 
 import (
 	"github.com/open-falcon/falcon-plus/modules/hbs/db"
-	"sort"
+	"github.com/open-falcon/falcon-plus/modules/hbs/g"
 	"sync"
 )
 
@@ -24,9 +24,10 @@ import (
 type SafeGroupPlugins struct {
 	sync.RWMutex
 	M map[int][]string
+	P map[int][]g.PluginParam
 }
 
-var GroupPlugins = &SafeGroupPlugins{M: make(map[int][]string)}
+var GroupPlugins = &SafeGroupPlugins{M: make(map[int][]string), P: make(map[int][]g.PluginParam)}
 
 func (this *SafeGroupPlugins) GetPlugins(gid int) ([]string, bool) {
 	this.RLock()
@@ -35,54 +36,65 @@ func (this *SafeGroupPlugins) GetPlugins(gid int) ([]string, bool) {
 	return plugins, exists
 }
 
+func (this *SafeGroupPlugins) GetPluginParams(gid int) ([]g.PluginParam, bool) {
+	this.RLock()
+	defer this.RUnlock()
+	params, exists := this.P[gid]
+	return params, exists
+}
+
 func (this *SafeGroupPlugins) Init() {
 	m, err := db.QueryPlugins()
 	if err != nil {
 		return
 	}
 
+	p, e := db.QueryPluginParams()
+	if e != nil {
+		return
+	}
+
 	this.Lock()
 	defer this.Unlock()
 	this.M = m
+	this.P = p
 }
 
 // 根据hostname获取关联的插件
-func GetPlugins(hostname string) []string {
+func GetPlugins(hostname string) map[string]g.PluginParam {
+	// 因为机器关联了多个Group，每个Group可能关联多个Plugin，故而一个机器关联的Plugin可能重复
+	// 所以，如果同一台机器关联多个相同的插件，则随机取一个执行。
+	pluginDirs := make(map[string]g.PluginParam)
 	hid, exists := HostMap.GetID(hostname)
 	if !exists {
-		return []string{}
+		return pluginDirs
 	}
 
 	gids, exists := HostGroupsMap.GetGroupIds(hid)
 	if !exists {
-		return []string{}
+		return pluginDirs
 	}
 
-	// 因为机器关联了多个Group，每个Group可能关联多个Plugin，故而一个机器关联的Plugin可能重复
-	pluginDirs := make(map[string]struct{})
 	for _, gid := range gids {
 		plugins, exists := GroupPlugins.GetPlugins(gid)
 		if !exists {
 			continue
 		}
+		params, exists := GroupPlugins.GetPluginParams(gid)
+		if !exists {
+			continue
+		}
 
 		for _, plugin := range plugins {
-			pluginDirs[plugin] = struct{}{}
+			pluginDirs[plugin] = g.PluginParam{}
+			for _, param := range params {
+				if param.Dir == plugin {
+					pluginDirs[plugin] = param
+					break
+				}
+			}
 		}
 	}
 
-	size := len(pluginDirs)
-	if size == 0 {
-		return []string{}
-	}
-
-	dirs := make([]string, size)
-	i := 0
-	for dir := range pluginDirs {
-		dirs[i] = dir
-		i++
-	}
-
-	sort.Strings(dirs)
-	return dirs
+	return pluginDirs
 }

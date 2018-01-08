@@ -23,6 +23,13 @@ import (
 	"github.com/toolkits/file"
 )
 
+type PluginParam struct {
+	Dir             string `json:"dir"`
+	ExecuteScript   string `json:"execute_script"`
+	ExecuteInterval int    `json:"execute_interval`
+	ExecuteParam    string `json:execute_param`
+}
+
 type PluginConfig struct {
 	Enabled bool   `json:"enabled"`
 	Dir     string `json:"dir"`
