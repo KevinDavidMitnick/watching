@@ -15,6 +15,7 @@
 package cron
 
 import (
+	"encoding/json"
 	"github.com/open-falcon/falcon-plus/common/model"
 	"github.com/open-falcon/falcon-plus/modules/agent/g"
 	"github.com/open-falcon/falcon-plus/modules/agent/plugins"
@@ -43,7 +44,7 @@ func syncMinePlugins() {
 
 	var (
 		timestamp  int64 = -1
-		pluginDirs []string
+		pluginDirs map[string]g.PluginParam
 	)
 
 	duration := time.Duration(g.Config().Heartbeat.Interval) * time.Second
@@ -71,7 +72,11 @@ func syncMinePlugins() {
 			continue
 		}
 
-		pluginDirs = resp.Plugins
+		errno := json.Unmarshal([]byte(resp.Plugins), &pluginDirs)
+		if errno != nil {
+			continue
+		}
+
 		timestamp = resp.Timestamp
 
 		if g.Config().Debug {
@@ -84,8 +89,8 @@ func syncMinePlugins() {
 
 		desiredAll := make(map[string]*plugins.Plugin)
 
-		for _, p := range pluginDirs {
-			underOneDir := plugins.ListPlugins(strings.Trim(p, "/"))
+		for dir, params := range pluginDirs {
+			underOneDir := plugins.ListPlugins(strings.Trim(dir, "/"), params)
 			for k, v := range underOneDir {
 				desiredAll[k] = v
 			}

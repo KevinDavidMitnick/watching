@@ -16,6 +16,7 @@ package rpc
 
 import (
 	"bytes"
+	"encoding/json"
 	"github.com/open-falcon/falcon-plus/common/model"
 	"github.com/open-falcon/falcon-plus/common/utils"
 	"github.com/open-falcon/falcon-plus/modules/hbs/cache"
@@ -29,8 +30,13 @@ func (t *Agent) MinePlugins(args model.AgentHeartbeatRequest, reply *model.Agent
 	if args.Hostname == "" {
 		return nil
 	}
-
-	reply.Plugins = cache.GetPlugins(args.Hostname)
+	plugins := cache.GetPlugins(args.Hostname)
+	ret, err := json.Marshal(plugins)
+	if err == nil {
+		reply.Plugins = string(ret)
+	} else {
+		reply.Plugins = ""
+	}
 	reply.Timestamp = time.Now().Unix()
 
 	return nil

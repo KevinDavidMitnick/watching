@@ -21,6 +21,13 @@ import (
 	"sync"
 )
 
+type PluginParam struct {
+	Dir             string `json:"dir"`
+	ExecuteScript   string `json:"execute_script"`
+	ExecuteInterval int    `json:"execute_interval`
+	ExecuteParam    string `json:execute_param`
+}
+
 type HttpConfig struct {
 	Enabled bool   `json:"enabled"`
 	Listen  string `json:"listen"`

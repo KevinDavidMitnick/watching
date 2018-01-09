@@ -15,6 +15,7 @@
 package db
 
 import (
+	"github.com/open-falcon/falcon-plus/modules/hbs/g"
 	"log"
 )
 
@@ -49,4 +50,40 @@ func QueryPlugins() (map[int][]string, error) {
 	}
 
 	return m, nil
+}
+
+func QueryPluginParams() (map[int][]g.PluginParam, error) {
+	p := make(map[int][]g.PluginParam)
+
+	sql := "select grp_id, dir, execute_script, execute_interval, execute_param from plugin_params"
+	rows, err := DB.Query(sql)
+	if err != nil {
+		log.Println("ERROR:", err)
+		return p, err
+	}
+
+	defer rows.Close()
+	for rows.Next() {
+		var (
+			grp_id   int
+			dir      string
+			script   string
+			interval int
+			param    string
+		)
+
+		err = rows.Scan(&grp_id, &dir, &script, &interval, &param)
+		if err != nil {
+			log.Println("ERROR:", err)
+			continue
+		}
+
+		if _, exists := p[grp_id]; exists {
+			p[grp_id] = append(p[grp_id], g.PluginParam{Dir: dir, ExecuteScript: script, ExecuteInterval: interval, ExecuteParam: param})
+		} else {
+			p[grp_id] = []g.PluginParam{g.PluginParam{Dir: dir, ExecuteScript: script, ExecuteInterval: interval, ExecuteParam: param}}
+		}
+	}
+
+	return p, nil
 }

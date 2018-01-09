@@ -62,7 +62,7 @@ func (this *PluginScheduler) Stop() {
 func PluginRun(plugin *Plugin) {
 
 	timeout := plugin.Cycle*1000 - 500
-	fpath := filepath.Join(g.Config().Plugin.Dir, plugin.FilePath)
+	fpath := plugin.FilePath
 
 	if !file.IsExist(fpath) {
 		log.Println("no such plugin:", fpath)
@@ -74,7 +74,7 @@ func PluginRun(plugin *Plugin) {
 		log.Println(fpath, "running...")
 	}
 
-	cmd := exec.Command(fpath)
+	cmd := exec.Command("/bin/sh", fpath, plugin.Param)
 	var stdout bytes.Buffer
 	cmd.Stdout = &stdout
 	var stderr bytes.Buffer

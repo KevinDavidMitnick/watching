@@ -18,6 +18,7 @@ type Plugin struct {
 	FilePath string
 	MTime    int64
 	Cycle    int
+	Param    string
 }
 
 var (
