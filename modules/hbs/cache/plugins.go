@@ -15,7 +15,6 @@
 package cache
 
 import (
-	"fmt"
 	"github.com/open-falcon/falcon-plus/modules/hbs/db"
 	"github.com/open-falcon/falcon-plus/modules/hbs/g"
 	"sync"
@@ -67,29 +66,21 @@ func GetPlugins(hostname string) map[string]g.PluginParam {
 	// 所以，如果同一台机器关联多个相同的插件，则随机取一个执行。
 	pluginDirs := make(map[string]g.PluginParam)
 	hid, exists := HostMap.GetID(hostname)
-	fmt.Println("hid is: ", hid)
-	fmt.Println("exists is: ", exists)
 	if !exists {
 		return pluginDirs
 	}
 
 	gids, exists := HostGroupsMap.GetGroupIds(hid)
-	fmt.Println("gid is: ", gid)
-	fmt.Println("exists is: ", exists)
 	if !exists {
 		return pluginDirs
 	}
 
 	for _, gid := range gids {
 		plugins, exists := GroupPlugins.GetPlugins(gid)
-		fmt.Println("plugins is: ", plugins)
-		fmt.Println("exists is: ", exists)
 		if !exists {
 			continue
 		}
 		params, exists := GroupPlugins.GetPluginParams(gid)
-		fmt.Println("params is: ", params)
-		fmt.Println("exists is: ", exists)
 		if !exists {
 			continue
 		}
@@ -104,7 +95,5 @@ func GetPlugins(hostname string) map[string]g.PluginParam {
 			}
 		}
 	}
-	fmt.Println("pluginDirs is: %v", pluginDirs)
-
 	return pluginDirs
 }
