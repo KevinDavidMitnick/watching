@@ -37,7 +37,6 @@ func (t *Agent) MinePlugins(args model.AgentHeartbeatRequest, reply *model.Agent
 	} else {
 		reply.Plugins = ""
 	}
-
 	reply.Timestamp = time.Now().Unix()
 
 	return nil

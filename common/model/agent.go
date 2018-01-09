@@ -60,7 +60,7 @@ type AgentPluginsResponse struct {
 
 func (this *AgentPluginsResponse) String() string {
 	return fmt.Sprintf(
-		"<Plugins:%v, Timestamp:%v>",
+		"<Plugins:%s, Timestamp:%v>",
 		this.Plugins,
 		this.Timestamp,
 	)
