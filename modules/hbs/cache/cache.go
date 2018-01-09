@@ -22,17 +22,17 @@ import (
 func Init() {
 	log.Println("cache begin")
 
+	log.Println("#4 HostMap...")
+	HostMap.Init()
+
+	log.Println("#3 HostGroupsMap...")
+	HostGroupsMap.Init()
+
 	log.Println("#1 GroupPlugins...")
 	GroupPlugins.Init()
 
 	log.Println("#2 GroupTemplates...")
 	GroupTemplates.Init()
-
-	log.Println("#3 HostGroupsMap...")
-	HostGroupsMap.Init()
-
-	log.Println("#4 HostMap...")
-	HostMap.Init()
 
 	log.Println("#5 TemplateCache...")
 	TemplateCache.Init()
