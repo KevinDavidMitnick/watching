@@ -74,7 +74,10 @@ func syncMinePlugins() {
 
 		bytes, err := json.Marshal(resp.Plugins)
 		if err == nil {
-			json.Unmarshal(bytes, &pluginDirs)
+			err := json.Unmarshal(bytes, &pluginDirs)
+			if err != nil {
+				continue
+			}
 		}
 
 		timestamp = resp.Timestamp
