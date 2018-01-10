@@ -32,7 +32,7 @@ CREATE TABLE `dashboard_graph` (
   `id` int(11) unsigned NOT NULL AUTO_INCREMENT,
   `title` char(128) NOT NULL,
   `hosts` varchar(10240) NOT NULL DEFAULT '',
-  `counters` varchar(1024) NOT NULL DEFAULT '',
+  `counters` varchar(10240) NOT NULL DEFAULT '',
   `screen_id` int(11) unsigned NOT NULL,
   `timespan` int(11) unsigned NOT NULL DEFAULT '3600',
   `graph_type` char(2) NOT NULL DEFAULT 'h',
