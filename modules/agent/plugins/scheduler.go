@@ -24,6 +24,7 @@ import (
 	"log"
 	"os/exec"
 	"path/filepath"
+	"strings"
 	"syscall"
 	"time"
 )
@@ -74,7 +75,8 @@ func PluginRun(plugin *Plugin) {
 		log.Println(fpath, "running...")
 	}
 
-	cmd := exec.Command("/bin/sh", fpath, plugin.Param)
+	param := strings.Split(plugin.Param, " ")
+	cmd := exec.Command(fpath, param...)
 	var stdout bytes.Buffer
 	cmd.Stdout = &stdout
 	var stderr bytes.Buffer
