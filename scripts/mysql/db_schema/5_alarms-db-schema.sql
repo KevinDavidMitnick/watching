@@ -1,4 +1,4 @@
-CREATE DATABASE alarms
+CREATE DATABASE IF NOT EXISTS alarms
   DEFAULT CHARACTER SET utf8
   DEFAULT COLLATE utf8_general_ci;
 USE alarms;
@@ -7,7 +7,6 @@ SET NAMES utf8;
 /*
 * 建立告警归档资料表, 主要存储各个告警的最后触发状况
 */
-DROP TABLE IF EXISTS event_cases;
 CREATE TABLE IF NOT EXISTS event_cases(
                 id VARCHAR(50),
                 endpoint VARCHAR(100) NOT NULL,
@@ -40,7 +39,6 @@ CREATE TABLE IF NOT EXISTS event_cases(
 /*
 * 建立告警归档资料表, 存储各个告警触发状况的历史状态
 */
-DROP TABLE IF EXISTS events;
 CREATE TABLE IF NOT EXISTS events (
                 id MEDIUMINT NOT NULL AUTO_INCREMENT,
                 event_caseId VARCHAR(50),

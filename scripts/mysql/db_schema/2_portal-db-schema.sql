@@ -1,4 +1,4 @@
-CREATE DATABASE falcon_portal
+CREATE DATABASE IF NOT EXISTS falcon_portal
   DEFAULT CHARACTER SET utf8
   DEFAULT COLLATE utf8_general_ci;
 USE falcon_portal;
@@ -8,8 +8,7 @@ SET NAMES utf8;
  * 这里的机器是从机器管理系统中同步过来的
  * 系统拿出来单独部署需要为hbs增加功能，心跳上来的机器写入host表
  */
-DROP TABLE IF EXISTS host;
-CREATE TABLE host
+CREATE TABLE IF NOT EXISTS host
 (
   id             INT UNSIGNED NOT NULL AUTO_INCREMENT,
   hostname       VARCHAR(255) NOT NULL DEFAULT '',
@@ -31,8 +30,7 @@ CREATE TABLE host
  * 机器分组信息
  * come_from 0: 从机器管理同步过来的；1: 从页面创建的
  */
-DROP TABLE IF EXISTS grp;
-CREATE TABLE `grp` (
+CREATE TABLE IF NOT EXISTS `grp` (
   id          INT(10) UNSIGNED NOT NULL AUTO_INCREMENT,
   grp_name    VARCHAR(255)     NOT NULL DEFAULT '',
   create_user VARCHAR(64)      NOT NULL DEFAULT '',
@@ -46,8 +44,7 @@ CREATE TABLE `grp` (
   COLLATE =utf8_unicode_ci;
 
 
-DROP TABLE IF EXISTS grp_host;
-CREATE TABLE grp_host
+CREATE TABLE IF NOT EXISTS grp_host
 (
   grp_id  INT UNSIGNED NOT NULL,
   host_id INT UNSIGNED NOT NULL,
@@ -63,8 +60,7 @@ CREATE TABLE grp_host
  * 监控策略模板
  * tpl_name全局唯一，命名的时候可以适当带上一些前缀，比如：sa.falcon.base
  */
-DROP TABLE IF EXISTS tpl;
-CREATE TABLE tpl
+CREATE TABLE IF NOT EXISTS tpl
 (
   id          INT UNSIGNED NOT NULL AUTO_INCREMENT,
   tpl_name    VARCHAR(255) NOT NULL DEFAULT '',
@@ -81,8 +77,7 @@ CREATE TABLE tpl
   COLLATE =utf8_unicode_ci;
 
 
-DROP TABLE IF EXISTS strategy;
-CREATE TABLE `strategy` (
+CREATE TABLE IF NOT EXISTS `strategy` (
   `id`          INT(10) UNSIGNED NOT NULL AUTO_INCREMENT,
   `metric`      VARCHAR(128)     NOT NULL DEFAULT '',
   `tags`        VARCHAR(256)     NOT NULL DEFAULT '',
@@ -103,8 +98,7 @@ CREATE TABLE `strategy` (
   COLLATE =utf8_unicode_ci;
 
 
-DROP TABLE IF EXISTS expression;
-CREATE TABLE `expression` (
+CREATE TABLE IF NOT EXISTS `expression` (
   `id`          INT(10) UNSIGNED NOT NULL AUTO_INCREMENT,
   `expression`  VARCHAR(1024)    NOT NULL,
   `func`        VARCHAR(16)      NOT NULL DEFAULT 'all(#1)',
@@ -123,8 +117,7 @@ CREATE TABLE `expression` (
   COLLATE =utf8_unicode_ci;
 
 
-DROP TABLE IF EXISTS grp_tpl;
-CREATE TABLE `grp_tpl` (
+CREATE TABLE IF NOT EXISTS `grp_tpl` (
   `grp_id`    INT(10) UNSIGNED NOT NULL,
   `tpl_id`    INT(10) UNSIGNED NOT NULL,
   `bind_user` VARCHAR(64)      NOT NULL DEFAULT '',
@@ -135,7 +128,7 @@ CREATE TABLE `grp_tpl` (
   DEFAULT CHARSET =utf8
   COLLATE =utf8_unicode_ci;
 
-CREATE TABLE `plugin_dir` (
+CREATE TABLE IF NOT EXISTS `plugin_dir` (
   `id`          INT(10) UNSIGNED NOT NULL AUTO_INCREMENT,
   `grp_id`      INT(10) UNSIGNED NOT NULL,
   `dir`         VARCHAR(255)     NOT NULL,
@@ -149,8 +142,7 @@ CREATE TABLE `plugin_dir` (
   COLLATE =utf8_unicode_ci;
 
 
-DROP TABLE IF EXISTS action;
-CREATE TABLE `action` (
+CREATE TABLE IF NOT EXISTS `action` (
   `id`                   INT(10) UNSIGNED NOT NULL AUTO_INCREMENT,
   `uic`                  VARCHAR(255)     NOT NULL DEFAULT '',
   `url`                  VARCHAR(255)     NOT NULL DEFAULT '',
@@ -168,8 +160,7 @@ CREATE TABLE `action` (
 /**
  * nodata mock config
  */
-DROP TABLE IF EXISTS `mockcfg`;
-CREATE TABLE `mockcfg` (
+CREATE TABLE IF NOT EXISTS `mockcfg` (
   `id`       BIGINT(20) UNSIGNED NOT NULL AUTO_INCREMENT,
   `name`     VARCHAR(255) NOT NULL DEFAULT '' COMMENT 'name of mockcfg, used for uuid',
   `obj`      VARCHAR(10240) NOT NULL DEFAULT '' COMMENT 'desc of object',
@@ -192,8 +183,7 @@ CREATE TABLE `mockcfg` (
 /**
  *  aggregator cluster metric config table
  */
-DROP TABLE IF EXISTS `cluster`;
-CREATE TABLE `cluster` (
+CREATE TABLE IF NOT EXISTS `cluster` (
   `id`          INT UNSIGNED   NOT NULL AUTO_INCREMENT,
   `grp_id`      INT            NOT NULL,
   `numerator`   VARCHAR(10240) NOT NULL,
@@ -214,8 +204,7 @@ CREATE TABLE `cluster` (
 /**
  * alert links
  */
-DROP TABLE IF EXISTS alert_link;
-CREATE TABLE alert_link
+CREATE TABLE IF NOT EXISTS alert_link
 (
   id        INT UNSIGNED NOT NULL AUTO_INCREMENT,
   path      VARCHAR(16)  NOT NULL DEFAULT '',
@@ -228,3 +217,20 @@ CREATE TABLE alert_link
   DEFAULT CHARSET =utf8
   COLLATE =utf8_unicode_ci;
 
+
+/**
+ * add plugin params
+ */
+ CREATE TABLE IF NOT EXISTS `plugin_params` 
+(
+  `id` int unsigned NOT NULL AUTO_INCREMENT,
+  `grp_id` int unsigned NOT NULL,
+  `dir` varchar(255)  NOT NULL,
+  `execute_script` varchar(255) DEFAULT '',
+  `execute_interval` int unsigned NOT NULL DEFAULT 60,
+  `execute_param` varchar(255) DEFAULT '',
+  PRIMARY KEY (`id`),
+  KEY `idx_plugin_params_dir` (`dir`)
+) ENGINE=InnoDB 
+  DEFAULT CHARSET=utf8 
+  COLLATE=utf8_unicode_ci;
