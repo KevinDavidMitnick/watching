@@ -82,6 +82,7 @@ func PluginRun(plugin *Plugin) {
 	var stderr bytes.Buffer
 	cmd.Stderr = &stderr
 	cmd.SysProcAttr = &syscall.SysProcAttr{Setpgid: true}
+	cmd.Dir = filepath.Dir(plugin.FilePath)
 	cmd.Start()
 	if debug {
 		log.Println("plugin started:", fpath)
