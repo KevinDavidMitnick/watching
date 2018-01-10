@@ -92,7 +92,7 @@ func PluginRun(plugin *Plugin) {
 
 	errStr := stderr.String()
 	if errStr != "" {
-		logFile := filepath.Join(g.Config().Plugin.LogDir, plugin.FilePath+".stderr.log")
+		logFile := filepath.Join(g.Config().Plugin.LogDir, filepath.Base(plugin.FilePath)+".stderr.log")
 		if _, err := file.WriteString(logFile, errStr); err != nil {
 			log.Printf("[ERROR] write log to %s fail, error: %s\n", logFile, err)
 		}
