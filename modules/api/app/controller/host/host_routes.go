@@ -47,6 +47,11 @@ func Routes(r *gin.Engine) {
 	hostr.POST("/plugin", CreatePlugin)
 	hostr.DELETE("/plugin/:id", DeletePlugin)
 
+	//plugin_params
+	hostr.GET("/hostgroup/:host_group/plugins_param", GetPluginParamsOfGrp)
+	hostr.POST("/plugin_params", CreatePluginParams)
+	hostr.DELETE("/plugin_params/:id", DeletePluginParams)
+
 	//aggreator
 	hostr.GET("/hostgroup/:host_group/aggregators", GetAggregatorListOfGrp)
 	hostr.GET("/aggregator/:id", GetAggregator)
