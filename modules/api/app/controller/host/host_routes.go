@@ -48,7 +48,7 @@ func Routes(r *gin.Engine) {
 	hostr.DELETE("/plugin/:id", DeletePlugin)
 
 	//plugin_params
-	hostr.GET("/hostgroup/:host_group/plugins_param", GetPluginParamsOfGrp)
+	hostr.GET("/hostgroup/:host_group/plugin_params", GetPluginParamsOfGrp)
 	hostr.POST("/plugin_params", CreatePluginParams)
 	hostr.DELETE("/plugin_params/:id", DeletePluginParams)
 
