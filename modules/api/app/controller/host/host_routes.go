@@ -42,7 +42,7 @@ func Routes(r *gin.Engine) {
 	hostr.DELETE("/hostgroup/:host_group", DeleteHostGroup)
 	hostr.PATCH("/hostgroup/:host_group/host", PatchHostGroupHost)
 
-	//plugins
+	//plugins,degraded
 	hostr.GET("/hostgroup/:host_group/plugins", GetPluginOfGrp)
 	hostr.POST("/plugin", CreatePlugin)
 	hostr.DELETE("/plugin/:id", DeletePlugin)
