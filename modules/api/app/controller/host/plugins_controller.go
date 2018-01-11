@@ -70,7 +70,7 @@ func CreatePluginParams(c *gin.Context) {
 		h.JSONR(c, badstatus, err)
 		return
 	}
-	plugin := f.PluginParams{Dir: inputs.DirPath, GrpId: inputs.GrpId, ExecuteScript: inputs.ExecuteParam, ExecuteInterval: inputs.ExecuteInterval, ExecuteParam: inputs.ExecuteParam}
+	plugin := f.PluginParams{Dir: inputs.DirPath, GrpId: inputs.GrpId, ExecuteScript: inputs.ExecuteScript, ExecuteInterval: inputs.ExecuteInterval, ExecuteParam: inputs.ExecuteParam}
 	if dt := db.Falcon.Save(&plugin); dt.Error != nil {
 		h.JSONR(c, expecstatus, dt.Error)
 		return
