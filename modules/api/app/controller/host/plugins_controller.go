@@ -80,20 +80,31 @@ func CreatePluginParams(c *gin.Context) {
 }
 
 type APIUpdatePluginParamsInput struct {
-	Id              int64  `json:"id" binding:"required"`
 	ExecuteScript   string `json:"execute_script" binding:"required"`
 	ExecuteInterval int64  `json:"execute_interval" binding:"required"`
 	ExecuteParam    string `json:"execute_param" binding:"required"`
 }
 
 func UpdatePluginParams(c *gin.Context) {
+	pluginIDtmp := c.Params.ByName("id")
+	if pluginIDtmp == "" {
+		h.JSONR(c, badstatus, "plugin param id is missing")
+		return
+	}
+
+	pluginID, err := strconv.Atoi(pluginIDtmp)
+	if err != nil {
+		log.Debugf("pluginIDtmp: %v", pluginIDtmp)
+		h.JSONR(c, badstatus, err)
+		return
+	}
 	var inputs APIUpdatePluginParamsInput
 	if err := c.Bind(&inputs); err != nil {
 		h.JSONR(c, badstatus, err)
 		return
 	}
 	plugin := f.PluginParams{ExecuteScript: inputs.ExecuteScript, ExecuteInterval: inputs.ExecuteInterval, ExecuteParam: inputs.ExecuteParam}
-	if dt := db.Falcon.Table("plugin_params").Where("id=?", inputs.Id).Update(&plugin); dt.Error != nil {
+	if dt := db.Falcon.Table("plugin_params").Where("id=?", int64(pluginID)).Update(&plugin); dt.Error != nil {
 		h.JSONR(c, expecstatus, dt.Error)
 		return
 	}
