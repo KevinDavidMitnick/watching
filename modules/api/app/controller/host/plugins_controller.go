@@ -32,7 +32,7 @@ type APICreatePluginInput struct {
 type APICreatePluginParamsInput struct {
 	GrpId           int64  `json:"hostgroup_id" binding:"required"`
 	DirPath         string `json:"dir_path" binding:"required"`
-	ExecuteScript   string `json:"execute_script binding:"required"`
+	ExecuteScript   string `json:"execute_script" binding:"required"`
 	ExecuteInterval int64  `json:"execute_interval" binding:"required"`
 	ExecuteParam    string `json:"execute_param"`
 }
