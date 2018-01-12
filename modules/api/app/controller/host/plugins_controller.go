@@ -79,6 +79,28 @@ func CreatePluginParams(c *gin.Context) {
 	return
 }
 
+type APIUpdatePluginParamsInput struct {
+	Id              int64  `json:"id" binding:"required"`
+	ExecuteScript   string `json:"execute_script" binding:"required"`
+	ExecuteInterval int64  `json:"execute_interval" binding:"required"`
+	ExecuteParam    string `json:"execute_param" binding:"required"`
+}
+
+func UpdatePluginParams(c *gin.Context) {
+	var inputs APIUpdatePluginParamsInput
+	if err := c.Bind(&inputs); err != nil {
+		h.JSONR(c, badstatus, err)
+		return
+	}
+	plugin := f.PluginParams{ExecuteScript: inputs.ExecuteScript, ExecuteInterval: inputs.ExecuteInterval, ExecuteParam: inputs.ExecuteParam}
+	if dt := db.Falcon.Table("plugin_params").Where("id=?", inputs.Id).Update(&plugin); dt.Error != nil {
+		h.JSONR(c, expecstatus, dt.Error)
+		return
+	}
+	h.JSONR(c, "plugin params updated")
+	return
+}
+
 func GetPluginOfGrp(c *gin.Context) {
 	grpIDtmp := c.Params.ByName("host_group")
 	if grpIDtmp == "" {
