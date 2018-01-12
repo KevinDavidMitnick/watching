@@ -82,7 +82,7 @@ func CreatePluginParams(c *gin.Context) {
 type APIUpdatePluginParamsInput struct {
 	ExecuteScript   string `json:"execute_script" binding:"required"`
 	ExecuteInterval int64  `json:"execute_interval" binding:"required"`
-	ExecuteParam    string `json:"execute_param" binding:"required"`
+	ExecuteParam    string `json:"execute_param"`
 }
 
 func UpdatePluginParams(c *gin.Context) {
