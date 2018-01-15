@@ -3,7 +3,7 @@ TARGET = opsultra
 PACKAGES ?= $(shell go list ./... | grep -v /vendor/)
 GOFILES := $(shell find . -name "*.go" -type f -not -path "./vendor/*")
 GOFMT ?= gofmt "-s"
-VERSION := $(shell cat version)
+VERSION := $(shell cat VERSION)
 
 all: $(CMD) $(TARGET)
 
@@ -44,11 +44,11 @@ fmt-check:
 	fi;
 
 $(CMD):
-	go build -gcflags="-s -w" -o bin/$@/opsultra-$@ ./modules/$@
+	go build  -o bin/$@/falcon-$@ ./modules/$@
 
 .PHONY: $(TARGET)
 $(TARGET): $(GOFILES)
-	go build -gcflags="-s -w" -ldflags "-X main.GitCommit=`git rev-parse --short HEAD` -X main.Version=$(VERSION)" -o opsultra
+	go build  -ldflags "-X main.GitCommit=`git rev-parse --short HEAD` -X main.Version=$(VERSION)" -o opsultra
 
 checkbin: bin/ config/ opsultra
 
@@ -59,7 +59,7 @@ pack: checkbin
 	@$(foreach var,$(CMD),mkdir -p ./out/$(var)/config;)
 	@$(foreach var,$(CMD),mkdir -p ./out/$(var)/logs;)
 	@$(foreach var,$(CMD),cp ./config/$(var).json ./out/$(var)/config/cfg.json;)
-	@$(foreach var,$(CMD),cp ./bin/$(var)/opsultra-$(var) ./out/$(var)/bin;)
+	@$(foreach var,$(CMD),cp ./bin/$(var)/falcon-$(var) ./out/$(var)/bin;)
 	@cp -r ./modules/agent/public ./out/agent/
 	@(cd ./out && ln -s ./agent/public/ ./public)
 	@cp -r ./modules/agent/plugins ./out/agent/
