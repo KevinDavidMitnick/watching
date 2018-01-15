@@ -14,8 +14,7 @@ Date: 2017-12-25 10:32:15
 */
 
 
-DROP DATABASE IF EXISTS `ops-cmdb`;
-CREATE DATABASE `ops-cmdb` DEFAULT CHARACTER SET utf8 DEFAULT COLLATE utf8_general_ci;
+CREATE DATABASE IF NOT EXISTS `ops-cmdb` DEFAULT CHARACTER SET utf8 DEFAULT COLLATE utf8_general_ci;
 USE ops-cmdb;
 
 SET NAMES utf8;
@@ -24,8 +23,7 @@ SET FOREIGN_KEY_CHECKS=0;
 -- ----------------------------
 -- Table structure for account_emailaddress
 -- ----------------------------
-DROP TABLE IF EXISTS `account_emailaddress`;
-CREATE TABLE `account_emailaddress` (
+CREATE TABLE IF NOT EXISTS `account_emailaddress` (
   `id` int(11) NOT NULL AUTO_INCREMENT,
   `email` varchar(254) NOT NULL,
   `verified` tinyint(1) NOT NULL,
@@ -44,8 +42,7 @@ CREATE TABLE `account_emailaddress` (
 -- ----------------------------
 -- Table structure for account_emailconfirmation
 -- ----------------------------
-DROP TABLE IF EXISTS `account_emailconfirmation`;
-CREATE TABLE `account_emailconfirmation` (
+CREATE TABLE IF NOT EXISTS `account_emailconfirmation` (
   `id` int(11) NOT NULL AUTO_INCREMENT,
   `created` datetime NOT NULL,
   `sent` datetime DEFAULT NULL,
@@ -64,8 +61,7 @@ CREATE TABLE `account_emailconfirmation` (
 -- ----------------------------
 -- Table structure for auth_group
 -- ----------------------------
-DROP TABLE IF EXISTS `auth_group`;
-CREATE TABLE `auth_group` (
+CREATE TABLE IF NOT EXISTS `auth_group` (
   `id` int(11) NOT NULL AUTO_INCREMENT,
   `name` varchar(80) NOT NULL,
   PRIMARY KEY (`id`),
@@ -79,8 +75,7 @@ CREATE TABLE `auth_group` (
 -- ----------------------------
 -- Table structure for auth_group_permissions
 -- ----------------------------
-DROP TABLE IF EXISTS `auth_group_permissions`;
-CREATE TABLE `auth_group_permissions` (
+CREATE TABLE IF NOT EXISTS `auth_group_permissions` (
   `id` int(11) NOT NULL AUTO_INCREMENT,
   `group_id` int(11) NOT NULL,
   `permission_id` int(11) NOT NULL,
@@ -98,8 +93,7 @@ CREATE TABLE `auth_group_permissions` (
 -- ----------------------------
 -- Table structure for auth_permission
 -- ----------------------------
-DROP TABLE IF EXISTS `auth_permission`;
-CREATE TABLE `auth_permission` (
+CREATE TABLE IF NOT EXISTS `auth_permission` (
   `id` int(11) NOT NULL AUTO_INCREMENT,
   `name` varchar(255) NOT NULL,
   `content_type_id` int(11) NOT NULL,
@@ -188,8 +182,7 @@ INSERT INTO `auth_permission` VALUES ('72', 'Can delete table_view', '24', 'dele
 -- ----------------------------
 -- Table structure for auth_user
 -- ----------------------------
-DROP TABLE IF EXISTS `auth_user`;
-CREATE TABLE `auth_user` (
+CREATE TABLE IF NOT EXISTS `auth_user` (
   `id` int(11) NOT NULL AUTO_INCREMENT,
   `password` varchar(128) NOT NULL,
   `last_login` datetime DEFAULT NULL,
@@ -213,8 +206,7 @@ INSERT INTO `auth_user` VALUES ('5', 'pbkdf2_sha256$36000$QLXvC5MYkd1d$W2Pm//LuH
 -- ----------------------------
 -- Table structure for auth_user_groups
 -- ----------------------------
-DROP TABLE IF EXISTS `auth_user_groups`;
-CREATE TABLE `auth_user_groups` (
+CREATE TABLE IF NOT EXISTS `auth_user_groups` (
   `id` int(11) NOT NULL AUTO_INCREMENT,
   `user_id` int(11) NOT NULL,
   `group_id` int(11) NOT NULL,
@@ -232,8 +224,7 @@ CREATE TABLE `auth_user_groups` (
 -- ----------------------------
 -- Table structure for auth_user_user_permissions
 -- ----------------------------
-DROP TABLE IF EXISTS `auth_user_user_permissions`;
-CREATE TABLE `auth_user_user_permissions` (
+CREATE TABLE IF NOT EXISTS `auth_user_user_permissions` (
   `id` int(11) NOT NULL AUTO_INCREMENT,
   `user_id` int(11) NOT NULL,
   `permission_id` int(11) NOT NULL,
@@ -251,8 +242,7 @@ CREATE TABLE `auth_user_user_permissions` (
 -- ----------------------------
 -- Table structure for auths_userinfo
 -- ----------------------------
-DROP TABLE IF EXISTS `auths_userinfo`;
-CREATE TABLE `auths_userinfo` (
+CREATE TABLE IF NOT EXISTS `auths_userinfo` (
   `id` int(11) NOT NULL AUTO_INCREMENT,
   `phone` varchar(20) NOT NULL,
   `qq` varchar(20) NOT NULL,
@@ -270,8 +260,7 @@ CREATE TABLE `auths_userinfo` (
 -- ----------------------------
 -- Table structure for authtoken_token
 -- ----------------------------
-DROP TABLE IF EXISTS `authtoken_token`;
-CREATE TABLE `authtoken_token` (
+CREATE TABLE IF NOT EXISTS `authtoken_token` (
   `key` varchar(40) NOT NULL,
   `created` datetime NOT NULL,
   `user_id` int(11) NOT NULL,
@@ -287,8 +276,7 @@ CREATE TABLE `authtoken_token` (
 -- ----------------------------
 -- Table structure for cmdb_ci_attr
 -- ----------------------------
-DROP TABLE IF EXISTS `cmdb_ci_attr`;
-CREATE TABLE `cmdb_ci_attr` (
+CREATE TABLE IF NOT EXISTS `cmdb_ci_attr` (
   `id` int(11) NOT NULL AUTO_INCREMENT,
   `name` varchar(255) NOT NULL,
   `display_name` varchar(255) DEFAULT NULL,
@@ -312,8 +300,7 @@ CREATE TABLE `cmdb_ci_attr` (
 -- ----------------------------
 -- Table structure for cmdb_ci_attr_keylist
 -- ----------------------------
-DROP TABLE IF EXISTS `cmdb_ci_attr_keylist`;
-CREATE TABLE `cmdb_ci_attr_keylist` (
+CREATE TABLE IF NOT EXISTS `cmdb_ci_attr_keylist` (
   `id` int(11) NOT NULL AUTO_INCREMENT,
   `name` varchar(255) NOT NULL,
   `key` varchar(2000) NOT NULL,
@@ -391,8 +378,7 @@ INSERT INTO `cmdb_ci_attr_keylist` VALUES ('92', '资源类型', 'resource_type'
 -- ----------------------------
 -- Table structure for cmdb_ci_attr_option
 -- ----------------------------
-DROP TABLE IF EXISTS `cmdb_ci_attr_option`;
-CREATE TABLE `cmdb_ci_attr_option` (
+CREATE TABLE IF NOT EXISTS `cmdb_ci_attr_option` (
   `id` int(11) NOT NULL AUTO_INCREMENT,
   `attr_key` varchar(255) NOT NULL,
   `o_key` int(11) DEFAULT NULL,
@@ -412,8 +398,7 @@ INSERT INTO `cmdb_ci_attr_option` VALUES ('3', 'SYSTEM.ARCHITECTURE', '0', 'powe
 -- ----------------------------
 -- Table structure for cmdb_ci_datacenter
 -- ----------------------------
-DROP TABLE IF EXISTS `cmdb_ci_datacenter`;
-CREATE TABLE `cmdb_ci_datacenter` (
+CREATE TABLE IF NOT EXISTS `cmdb_ci_datacenter` (
   `uuid` varchar(64) NOT NULL,
   `id` int(11) NOT NULL AUTO_INCREMENT,
   `name` varchar(255) NOT NULL,
@@ -428,8 +413,7 @@ CREATE TABLE `cmdb_ci_datacenter` (
 -- ----------------------------
 -- Table structure for cmdb_ci_interface
 -- ----------------------------
-DROP TABLE IF EXISTS `cmdb_ci_interface`;
-CREATE TABLE `cmdb_ci_interface` (
+CREATE TABLE IF NOT EXISTS `cmdb_ci_interface` (
   `id` int(11) NOT NULL AUTO_INCREMENT,
   `name` varchar(255) NOT NULL,
   `display_name` varchar(255) NOT NULL,
@@ -450,8 +434,7 @@ CREATE TABLE `cmdb_ci_interface` (
 -- ----------------------------
 -- Table structure for cmdb_ci_log
 -- ----------------------------
-DROP TABLE IF EXISTS `cmdb_ci_log`;
-CREATE TABLE `cmdb_ci_log` (
+CREATE TABLE IF NOT EXISTS `cmdb_ci_log` (
   `id` int(11) NOT NULL AUTO_INCREMENT,
   `level` varchar(1) NOT NULL,
   `title` varchar(255) NOT NULL,
@@ -468,8 +451,7 @@ CREATE TABLE `cmdb_ci_log` (
 -- ----------------------------
 -- Table structure for cmdb_ci_log_follower
 -- ----------------------------
-DROP TABLE IF EXISTS `cmdb_ci_log_follower`;
-CREATE TABLE `cmdb_ci_log_follower` (
+CREATE TABLE IF NOT EXISTS `cmdb_ci_log_follower` (
   `id` int(11) NOT NULL AUTO_INCREMENT,
   `title` varchar(255) DEFAULT NULL,
   `content` longtext NOT NULL,
@@ -489,8 +471,7 @@ CREATE TABLE `cmdb_ci_log_follower` (
 -- ----------------------------
 -- Table structure for cmdb_ci_object
 -- ----------------------------
-DROP TABLE IF EXISTS `cmdb_ci_object`;
-CREATE TABLE `cmdb_ci_object` (
+CREATE TABLE IF NOT EXISTS `cmdb_ci_object` (
   `uuid` varchar(64) NOT NULL,
   `id` int(11) NOT NULL AUTO_INCREMENT,
   `name` varchar(255) NOT NULL,
@@ -518,8 +499,7 @@ CREATE TABLE `cmdb_ci_object` (
 -- ----------------------------
 -- Table structure for cmdb_ci_object_phy
 -- ----------------------------
-DROP TABLE IF EXISTS `cmdb_ci_object_phy`;
-CREATE TABLE `cmdb_ci_object_phy` (
+CREATE TABLE IF NOT EXISTS `cmdb_ci_object_phy` (
   `id` int(11) NOT NULL AUTO_INCREMENT,
   `create_time` datetime NOT NULL,
   `update_time` datetime NOT NULL,
@@ -539,8 +519,7 @@ CREATE TABLE `cmdb_ci_object_phy` (
 -- ----------------------------
 -- Table structure for cmdb_ci_object_virtual
 -- ----------------------------
-DROP TABLE IF EXISTS `cmdb_ci_object_virtual`;
-CREATE TABLE `cmdb_ci_object_virtual` (
+CREATE TABLE  IF NOT EXISTS `cmdb_ci_object_virtual` (
   `id` varchar(64) NOT NULL,
   `name` varchar(255) NOT NULL,
   `display_name` varchar(255) NOT NULL,
@@ -567,8 +546,7 @@ CREATE TABLE `cmdb_ci_object_virtual` (
 -- ----------------------------
 -- Table structure for cmdb_ci_type
 -- ----------------------------
-DROP TABLE IF EXISTS `cmdb_ci_type`;
-CREATE TABLE `cmdb_ci_type` (
+CREATE TABLE  IF NOT EXISTS `cmdb_ci_type` (
   `id` int(11) NOT NULL AUTO_INCREMENT,
   `name` varchar(255) NOT NULL,
   `display_name` varchar(255) NOT NULL,
@@ -593,8 +571,7 @@ INSERT INTO `cmdb_ci_type` VALUES ('7', 'Storage', '云硬盘', '云硬盘', nul
 -- ----------------------------
 -- Table structure for cmdb_ci_zone
 -- ----------------------------
-DROP TABLE IF EXISTS `cmdb_ci_zone`;
-CREATE TABLE `cmdb_ci_zone` (
+CREATE TABLE  IF NOT EXISTS `cmdb_ci_zone` (
   `uuid` varchar(64) NOT NULL,
   `id` int(11) NOT NULL AUTO_INCREMENT,
   `name` varchar(255) NOT NULL,
@@ -614,8 +591,7 @@ CREATE TABLE `cmdb_ci_zone` (
 -- ----------------------------
 -- Table structure for cmdb_table_view
 -- ----------------------------
-DROP TABLE IF EXISTS `cmdb_table_view`;
-CREATE TABLE `cmdb_table_view` (
+CREATE TABLE  IF NOT EXISTS `cmdb_table_view` (
   `id` int(11) NOT NULL AUTO_INCREMENT,
   `name` varchar(64) NOT NULL,
   `default` tinyint(1) NOT NULL,
@@ -632,8 +608,7 @@ CREATE TABLE `cmdb_table_view` (
 -- ----------------------------
 -- Table structure for cmdb_type_link_attr_key
 -- ----------------------------
-DROP TABLE IF EXISTS `cmdb_type_link_attr_key`;
-CREATE TABLE `cmdb_type_link_attr_key` (
+CREATE TABLE  IF NOT EXISTS `cmdb_type_link_attr_key` (
   `id` int(11) NOT NULL AUTO_INCREMENT,
   `attr_keylist_id` int(11) NOT NULL,
   `k_type_id` int(11) NOT NULL,
@@ -649,8 +624,7 @@ CREATE TABLE `cmdb_type_link_attr_key` (
 -- ----------------------------
 -- Table structure for cmdb_type_link_zone
 -- ----------------------------
-DROP TABLE IF EXISTS `cmdb_type_link_zone`;
-CREATE TABLE `cmdb_type_link_zone` (
+CREATE TABLE  IF NOT EXISTS `cmdb_type_link_zone` (
   `id` int(11) NOT NULL AUTO_INCREMENT,
   `z_type_id` int(11) NOT NULL,
   `zone_id` int(11) NOT NULL,
@@ -665,8 +639,7 @@ CREATE TABLE `cmdb_type_link_zone` (
 -- ----------------------------
 -- Table structure for django_admin_log
 -- ----------------------------
-DROP TABLE IF EXISTS `django_admin_log`;
-CREATE TABLE `django_admin_log` (
+CREATE TABLE  IF NOT EXISTS `django_admin_log` (
   `id` int(11) NOT NULL AUTO_INCREMENT,
   `action_time` datetime NOT NULL,
   `object_id` longtext,
@@ -689,8 +662,7 @@ CREATE TABLE `django_admin_log` (
 -- ----------------------------
 -- Table structure for django_content_type
 -- ----------------------------
-DROP TABLE IF EXISTS `django_content_type`;
-CREATE TABLE `django_content_type` (
+CREATE TABLE  IF NOT EXISTS `django_content_type` (
   `id` int(11) NOT NULL AUTO_INCREMENT,
   `app_label` varchar(100) NOT NULL,
   `model` varchar(100) NOT NULL,
@@ -729,8 +701,7 @@ INSERT INTO `django_content_type` VALUES ('6', 'sessions', 'session');
 -- ----------------------------
 -- Table structure for django_migrations
 -- ----------------------------
-DROP TABLE IF EXISTS `django_migrations`;
-CREATE TABLE `django_migrations` (
+CREATE TABLE  IF NOT EXISTS `django_migrations` (
   `id` int(11) NOT NULL AUTO_INCREMENT,
   `app` varchar(255) NOT NULL,
   `name` varchar(255) NOT NULL,
@@ -771,8 +742,7 @@ INSERT INTO `django_migrations` VALUES ('26', 'cmdb', '0002_auto_20171215_1733',
 -- ----------------------------
 -- Table structure for django_session
 -- ----------------------------
-DROP TABLE IF EXISTS `django_session`;
-CREATE TABLE `django_session` (
+CREATE TABLE  IF NOT EXISTS `django_session` (
   `session_key` varchar(40) NOT NULL,
   `session_data` longtext NOT NULL,
   `expire_date` datetime NOT NULL,
@@ -789,8 +759,7 @@ INSERT INTO `django_session` VALUES ('hkfsuxsxvqbo4z23oukh02civxz4ank7', 'NTI0Mm
 -- ----------------------------
 -- Table structure for django_site
 -- ----------------------------
-DROP TABLE IF EXISTS `django_site`;
-CREATE TABLE `django_site` (
+CREATE TABLE IF NOT EXISTS `django_site` (
   `id` int(11) NOT NULL AUTO_INCREMENT,
   `domain` varchar(100) NOT NULL,
   `name` varchar(50) NOT NULL,

@@ -223,14 +223,14 @@ CREATE TABLE IF NOT EXISTS alert_link
  */
  CREATE TABLE IF NOT EXISTS `plugin_params` 
 (
-  `id` int unsigned NOT NULL AUTO_INCREMENT,
-  `grp_id` int unsigned NOT NULL,
-  `dir` varchar(255)  NOT NULL,
-  `execute_script` varchar(255) DEFAULT '',
-  `execute_interval` int unsigned NOT NULL DEFAULT 60,
-  `execute_param` varchar(255) DEFAULT '',
-  PRIMARY KEY (`id`),
-  KEY `idx_plugin_params_dir` (`dir`)
+	  `id` int unsigned NOT NULL AUTO_INCREMENT,
+	  `grp_id` int unsigned NOT NULL,
+	  `dir` varchar(255)  NOT NULL,
+	  `execute_script` varchar(255) NOT NULL,
+	  `execute_interval` int unsigned NOT NULL DEFAULT 60,
+	  `execute_param` varchar(255) DEFAULT '',
+	  PRIMARY KEY (`id`),
+	  KEY `idx_plugin_params_dir` (`dir`)
 ) ENGINE=InnoDB 
   DEFAULT CHARSET=utf8 
   COLLATE=utf8_unicode_ci;
