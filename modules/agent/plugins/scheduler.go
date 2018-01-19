@@ -24,6 +24,7 @@ import (
 	"log"
 	"os/exec"
 	"path/filepath"
+	"strings"
 	"syscall"
 	"time"
 )
@@ -74,42 +75,44 @@ func PluginRun(plugin *Plugin) {
 		log.Println(fpath, "running...")
 	}
 
-	cmd := exec.Command("/bin/sh", fpath, plugin.Param)
+	param := strings.Split(plugin.Param, " ")
+	cmd := exec.Command(fpath, param...)
 	var stdout bytes.Buffer
 	cmd.Stdout = &stdout
 	var stderr bytes.Buffer
 	cmd.Stderr = &stderr
 	cmd.SysProcAttr = &syscall.SysProcAttr{Setpgid: true}
+	cmd.Dir = filepath.Dir(plugin.FilePath)
 	cmd.Start()
 	if debug {
 		log.Println("plugin started:", fpath)
 	}
 
-	err, isTimeout := sys.CmdRunWithTimeout(cmd, time.Duration(timeout)*time.Millisecond)
+	errCmd, isTimeout := sys.CmdRunWithTimeout(cmd, time.Duration(timeout)*time.Millisecond)
 
 	errStr := stderr.String()
 	if errStr != "" {
-		logFile := filepath.Join(g.Config().Plugin.LogDir, plugin.FilePath+".stderr.log")
-		if _, err = file.WriteString(logFile, errStr); err != nil {
+		logFile := filepath.Join(g.Config().Plugin.LogDir, filepath.Base(plugin.FilePath)+".stderr.log")
+		if _, err := file.WriteString(logFile, errStr); err != nil {
 			log.Printf("[ERROR] write log to %s fail, error: %s\n", logFile, err)
 		}
 	}
 
 	if isTimeout {
 		// has be killed
-		if err == nil && debug {
+		if errCmd == nil && debug {
 			log.Println("[INFO] timeout and kill process", fpath, "successfully")
 		}
 
-		if err != nil {
-			log.Println("[ERROR] kill process", fpath, "occur error:", err)
+		if errCmd != nil {
+			log.Println("[ERROR] kill process", fpath, "occur error:", errCmd)
 		}
 
 		return
 	}
 
-	if err != nil {
-		log.Println("[ERROR] exec plugin", fpath, "fail. error:", err)
+	if errCmd != nil {
+		log.Println("[ERROR] exec plugin", fpath, "fail. error:", errCmd)
 		return
 	}
 
@@ -123,9 +126,9 @@ func PluginRun(plugin *Plugin) {
 	}
 
 	var metrics []*model.MetricValue
-	err = json.Unmarshal(data, &metrics)
-	if err != nil {
-		log.Printf("[ERROR] json.Unmarshal stdout of %s fail. error:%s stdout: \n%s\n", fpath, err, stdout.String())
+	errCmd = json.Unmarshal(data, &metrics)
+	if errCmd != nil {
+		log.Printf("[ERROR] json.Unmarshal stdout of %s fail. error:%s stdout: \n%s\n", fpath, errCmd, stdout.String())
 		return
 	}
 

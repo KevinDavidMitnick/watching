@@ -19,16 +19,15 @@
 -- Table structure for table `dashboard_graph`
 --
 
-CREATE DATABASE dashboard
+CREATE DATABASE IF NOT EXISTS dashboard
   DEFAULT CHARACTER SET utf8
   DEFAULT COLLATE utf8_general_ci;
 USE dashboard;
 SET NAMES utf8;
 
-DROP TABLE IF EXISTS `dashboard_graph`;
 /*!40101 SET @saved_cs_client     = @@character_set_client */;
 /*!40101 SET character_set_client = utf8 */;
-CREATE TABLE `dashboard_graph` (
+CREATE TABLE IF NOT EXISTS `dashboard_graph` (
   `id` int(11) unsigned NOT NULL AUTO_INCREMENT,
   `title` char(128) NOT NULL,
   `hosts` varchar(10240) NOT NULL DEFAULT '',
@@ -48,10 +47,9 @@ CREATE TABLE `dashboard_graph` (
 -- Table structure for table `dashboard_screen`
 --
 
-DROP TABLE IF EXISTS `dashboard_screen`;
 /*!40101 SET @saved_cs_client     = @@character_set_client */;
 /*!40101 SET character_set_client = utf8 */;
-CREATE TABLE `dashboard_screen` (
+CREATE TABLE IF NOT EXISTS `dashboard_screen` (
   `id` int(11) unsigned NOT NULL AUTO_INCREMENT,
   `pid` int(11) unsigned NOT NULL DEFAULT '0',
   `name` char(128) NOT NULL,
@@ -66,10 +64,9 @@ CREATE TABLE `dashboard_screen` (
 -- Table structure for table `tmp_graph`
 --
 
-DROP TABLE IF EXISTS `tmp_graph`;
 /*!40101 SET @saved_cs_client     = @@character_set_client */;
 /*!40101 SET character_set_client = utf8 */;
-CREATE TABLE `tmp_graph` (
+CREATE TABLE IF NOT EXISTS `tmp_graph` (
   `id` int(11) unsigned NOT NULL AUTO_INCREMENT,
   `endpoints` varchar(10240) NOT NULL DEFAULT '',
   `counters` varchar(10240) NOT NULL DEFAULT '',

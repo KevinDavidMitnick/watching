@@ -29,6 +29,14 @@ type APICreatePluginInput struct {
 	DirPaht string `json:"dir_path" binding:"required"`
 }
 
+type APICreatePluginParamsInput struct {
+	GrpId           int64  `json:"hostgroup_id" binding:"required"`
+	DirPath         string `json:"dir_path" binding:"required"`
+	ExecuteScript   string `json:"execute_script" binding:"required"`
+	ExecuteInterval int64  `json:"execute_interval" binding:"required"`
+	ExecuteParam    string `json:"execute_param"`
+}
+
 func CreatePlugin(c *gin.Context) {
 	var inputs APICreatePluginInput
 	if err := c.Bind(&inputs); err != nil {
@@ -56,6 +64,54 @@ func CreatePlugin(c *gin.Context) {
 	return
 }
 
+func CreatePluginParams(c *gin.Context) {
+	var inputs APICreatePluginParamsInput
+	if err := c.Bind(&inputs); err != nil {
+		h.JSONR(c, badstatus, err)
+		return
+	}
+	plugin := f.PluginParams{Dir: inputs.DirPath, GrpId: inputs.GrpId, ExecuteScript: inputs.ExecuteScript, ExecuteInterval: inputs.ExecuteInterval, ExecuteParam: inputs.ExecuteParam}
+	if dt := db.Falcon.Save(&plugin); dt.Error != nil {
+		h.JSONR(c, expecstatus, dt.Error)
+		return
+	}
+	h.JSONR(c, plugin)
+	return
+}
+
+type APIUpdatePluginParamsInput struct {
+	ExecuteScript   string `json:"execute_script" binding:"required"`
+	ExecuteInterval int64  `json:"execute_interval" binding:"required"`
+	ExecuteParam    string `json:"execute_param"`
+}
+
+func UpdatePluginParams(c *gin.Context) {
+	pluginIDtmp := c.Params.ByName("id")
+	if pluginIDtmp == "" {
+		h.JSONR(c, badstatus, "plugin param id is missing")
+		return
+	}
+
+	pluginID, err := strconv.Atoi(pluginIDtmp)
+	if err != nil {
+		log.Debugf("pluginIDtmp: %v", pluginIDtmp)
+		h.JSONR(c, badstatus, err)
+		return
+	}
+	var inputs APIUpdatePluginParamsInput
+	if err := c.Bind(&inputs); err != nil {
+		h.JSONR(c, badstatus, err)
+		return
+	}
+	plugin := f.PluginParams{ExecuteScript: inputs.ExecuteScript, ExecuteInterval: inputs.ExecuteInterval, ExecuteParam: inputs.ExecuteParam}
+	if dt := db.Falcon.Table("plugin_params").Where("id=?", int64(pluginID)).Update(&plugin); dt.Error != nil {
+		h.JSONR(c, expecstatus, dt.Error)
+		return
+	}
+	h.JSONR(c, "plugin params updated")
+	return
+}
+
 func GetPluginOfGrp(c *gin.Context) {
 	grpIDtmp := c.Params.ByName("host_group")
 	if grpIDtmp == "" {
@@ -77,6 +133,27 @@ func GetPluginOfGrp(c *gin.Context) {
 	return
 }
 
+func GetPluginParamsOfGrp(c *gin.Context) {
+	grpIDtmp := c.Params.ByName("host_group")
+	if grpIDtmp == "" {
+		h.JSONR(c, badstatus, "grp id is missing")
+		return
+	}
+	grpID, err := strconv.Atoi(grpIDtmp)
+	if err != nil {
+		log.Debugf("grpIDtmp: %v", grpIDtmp)
+		h.JSONR(c, badstatus, err)
+		return
+	}
+	plugin_params := []f.PluginParams{}
+	if dt := db.Falcon.Where("grp_id = ?", grpID).Find(&plugin_params); dt.Error != nil {
+		h.JSONR(c, expecstatus, dt.Error)
+		return
+	}
+	h.JSONR(c, plugin_params)
+	return
+}
+
 func DeletePlugin(c *gin.Context) {
 	pluginIDtmp := c.Params.ByName("id")
 	if pluginIDtmp == "" {
@@ -90,6 +167,44 @@ func DeletePlugin(c *gin.Context) {
 		return
 	}
 	plugin := f.Plugin{ID: int64(pluginID)}
+	if dt := db.Falcon.Find(&plugin); dt.Error != nil {
+		h.JSONR(c, expecstatus, dt.Error)
+		return
+	}
+	//user, _ := h.GetUser(c)
+	//if !user.IsAdmin() {
+	//	hostgroup := f.HostGroup{ID: plugin.GrpId}
+	//	if dt := db.Falcon.Find(&hostgroup); dt.Error != nil {
+	//		h.JSONR(c, expecstatus, dt.Error)
+	//		return
+	//	}
+	//	if hostgroup.CreateUser != user.Name && plugin.CreateUser != user.Name {
+	//		h.JSONR(c, badstatus, "You don't have permission!")
+	//		return
+	//	}
+	//}
+
+	if dt := db.Falcon.Delete(&plugin); dt.Error != nil {
+		h.JSONR(c, expecstatus, dt.Error)
+		return
+	}
+	h.JSONR(c, fmt.Sprintf("plugin:%v has been deleted", pluginID))
+	return
+}
+
+func DeletePluginParams(c *gin.Context) {
+	pluginIDtmp := c.Params.ByName("id")
+	if pluginIDtmp == "" {
+		h.JSONR(c, badstatus, "plugin id is missing")
+		return
+	}
+	pluginID, err := strconv.Atoi(pluginIDtmp)
+	if err != nil {
+		log.Debugf("pluginIDtmp: %v", pluginIDtmp)
+		h.JSONR(c, badstatus, err)
+		return
+	}
+	plugin := f.PluginParams{ID: int64(pluginID)}
 	if dt := db.Falcon.Find(&plugin); dt.Error != nil {
 		h.JSONR(c, expecstatus, dt.Error)
 		return
