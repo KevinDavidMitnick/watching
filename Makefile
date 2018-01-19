@@ -59,7 +59,7 @@ pack: checkbin
 	@$(foreach var,$(CMD),mkdir -p ./out/$(var)/config;)
 	@$(foreach var,$(CMD),mkdir -p ./out/$(var)/logs;)
 	@$(foreach var,$(CMD),cp ./config/$(var).json ./out/$(var)/config/cfg.json;)
-	@$(foreach var,$(CMD),cp ./bin/$(var)/falcon-$(var) ./out/$(var)/bin;)
+	@$(foreach var,$(CMD),cp ./bin/$(var)/opsultra-$(var) ./out/$(var)/bin;)
 	@cp -r ./modules/agent/public ./out/agent/
 	@(cd ./out && ln -s ./agent/public/ ./public)
 	@cp -r ./modules/agent/plugins ./out/agent/
