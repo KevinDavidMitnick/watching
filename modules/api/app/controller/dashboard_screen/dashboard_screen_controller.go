@@ -37,16 +37,16 @@ func ScreenCreate(c *gin.Context) {
 	}
 
 	//不能重名
-	var ids []int
-	dt := db.Dashboard.Table("dashboard_screen").Select("id").Where("name = ?", name).Limit(1).Pluck("id", &ids)
-	if dt.Error != nil {
-		h.JSONR(c, badstatus, dt.Error)
-		return
-	}
-	if len(ids) > 0 {
-		h.JSONR(c, badstatus, fmt.Sprintf("name=%s already exists", name))
-		return
-	}
+	//var ids []int
+	//dt := db.Dashboard.Table("dashboard_screen").Select("id").Where("name = ?", name).Limit(1).Pluck("id", &ids)
+	//if dt.Error != nil {
+	//	h.JSONR(c, badstatus, dt.Error)
+	//	return
+	//}
+	//if len(ids) > 0 {
+	//	h.JSONR(c, badstatus, fmt.Sprintf("name=%s already exists", name))
+	//	return
+	//}
 
 	dt = db.Dashboard.Exec("insert ignore into dashboard_screen (pid, name) values(?, ?)", ipid, name)
 	if dt.Error != nil {
