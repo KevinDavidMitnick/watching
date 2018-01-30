@@ -62,6 +62,13 @@ type CollectorConfig struct {
 	MountPoint  []string `json:"mountPoint"`
 }
 
+type ConsulConfig struct {
+	Enabled    bool     `json:"enabled"`
+	Addr       string   `json:"addr"`
+	MountPoint []string `json:"mountPoint"`
+	Interval   int      `json:"interval"`
+}
+
 type GlobalConfig struct {
 	Debug         bool              `json:"debug"`
 	Hostname      string            `json:"hostname"`
@@ -73,6 +80,7 @@ type GlobalConfig struct {
 	Collector     *CollectorConfig  `json:"collector"`
 	DefaultTags   map[string]string `json:"default_tags"`
 	IgnoreMetrics map[string]bool   `json:"ignore"`
+	Consul        *ConsulConfig     `json:"consul"`
 }
 
 var (
