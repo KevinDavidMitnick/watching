@@ -18,6 +18,7 @@ import (
 	"fmt"
 
 	"encoding/json"
+	log "github.com/Sirupsen/logrus"
 	"github.com/open-falcon/falcon-plus/common/model"
 	"github.com/open-falcon/falcon-plus/common/utils"
 	"github.com/open-falcon/falcon-plus/modules/alarm/g"
@@ -38,6 +39,7 @@ type DataStruct struct {
 
 func BuildCommonSMSContent(event *model.Event) string {
 	var data DataStruct
+	endpoint := event.Endpoint
 	addr := g.Config().CmdbConfig.Addr + "/" + event.Endpoint
 	request, _ := http.NewRequest("GET", addr, nil)
 	request.Header.Set("Content-Type", "application/json")
@@ -51,8 +53,18 @@ func BuildCommonSMSContent(event *model.Event) string {
 		if err == nil {
 			json.Unmarshal(body, &data)
 		}
+	} else {
+		log.Error(err)
+		return fmt.Sprintf(
+			"[P%d][%s][0%d][%s][%s]",
+			event.Priority(),
+			event.Status,
+			event.CurrentStep,
+			endpoint,
+			event.Metric(),
+		)
 	}
-	endpoint := event.Endpoint
+
 	if &data != nil && data.Name.DisplayName != "" {
 		endpoint = string(data.Name.DisplayName)
 	}
@@ -122,6 +134,9 @@ func BuildCommonMailContent(event *model.Event) string {
 		if err == nil {
 			json.Unmarshal(body, &data)
 		}
+	} else {
+		log.Error(err)
+		return ""
 	}
 
 	link := g.Link(event)
