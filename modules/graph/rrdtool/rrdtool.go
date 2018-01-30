@@ -88,12 +88,12 @@ func create(filename string, item *cmodel.GraphItem) error {
 
 	// 设置各种归档策略
 	// 1分钟一个点存 12小时
-	c.RRA("AVERAGE", 0, 1, RRA1PointCnt)
+	c.RRA("AVERAGE", 0, 1, RRA20PointCnt)
 
 	// 5m一个点存2d
-	c.RRA("AVERAGE", 0, 5, RRA5PointCnt)
-	c.RRA("MAX", 0, 5, RRA5PointCnt)
-	c.RRA("MIN", 0, 5, RRA5PointCnt)
+	c.RRA("AVERAGE", 0, 5, RRA20PointCnt)
+	c.RRA("MAX", 0, 5, RRA20PointCnt)
+	c.RRA("MIN", 0, 5, RRA20PointCnt)
 
 	// 20m一个点存7d
 	c.RRA("AVERAGE", 0, 20, RRA20PointCnt)

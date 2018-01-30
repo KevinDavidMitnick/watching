@@ -63,10 +63,15 @@ type CollectorConfig struct {
 }
 
 type ConsulConfig struct {
-	Enabled    bool     `json:"enabled"`
-	Addr       string   `json:"addr"`
-	MountPoint []string `json:"mountPoint"`
-	Interval   int      `json:"interval"`
+	Enabled  bool   `json:"enabled"`
+	Addr     string `json:"addr"`
+	Interval int    `json:"interval"`
+}
+
+type KvmConfig struct {
+	Enabled  bool   `json:"enabled"`
+	Addr     string `json:"addr"`
+	Interval int    `json:"interval"`
 }
 
 type GlobalConfig struct {
@@ -81,6 +86,7 @@ type GlobalConfig struct {
 	DefaultTags   map[string]string `json:"default_tags"`
 	IgnoreMetrics map[string]bool   `json:"ignore"`
 	Consul        *ConsulConfig     `json:"consul"`
+	Kvm           *KvmConfig        `json:"kvm"`
 }
 
 var (
