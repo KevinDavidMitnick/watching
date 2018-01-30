@@ -48,7 +48,7 @@ func ScreenCreate(c *gin.Context) {
 	//	return
 	//}
 
-	dt = db.Dashboard.Exec("insert ignore into dashboard_screen (pid, name) values(?, ?)", ipid, name)
+	dt := db.Dashboard.Exec("insert ignore into dashboard_screen (pid, name) values(?, ?)", ipid, name)
 	if dt.Error != nil {
 		h.JSONR(c, badstatus, dt.Error)
 		return
