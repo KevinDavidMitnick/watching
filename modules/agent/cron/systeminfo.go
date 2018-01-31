@@ -152,11 +152,10 @@ func getDiskInfo() map[string]interface{} {
 }
 
 func GetAllInfo() string {
-	t := time.Now()
 	info = make(map[string]interface{})
 	info["status"] = "Passing"
 	info["timeout"] = g.Config().Consul.Timeout
-	info["timestamp"] = t.Unix()
+	info["timestamp"] = time.Now().Unix()
 	getHostInfo()
 	getLoadInfo()
 	getCpuInfo()
