@@ -71,7 +71,9 @@ type ConsulConfig struct {
 
 type KvmConfig struct {
 	Enabled bool   `json:"enabled"`
-	Addr    string `json:"addr"`
+	Host    string `json:"host"`
+	Port    int    `json:"port"`
+	Timeout int    `json:"timeout"`
 }
 
 type GlobalConfig struct {

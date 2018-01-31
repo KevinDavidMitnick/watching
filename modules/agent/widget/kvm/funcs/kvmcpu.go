@@ -9,7 +9,7 @@ import (
 )
 
 func KvmCpuMetrics() (L []*model.MetricValue) {
-	host := g.Config().Kvm.Addr
+	host := g.Config().Kvm.Host
 	conn, err := util.ConnectLibvirt(host)
 	if err == nil && conn != nil {
 		defer conn.Close()

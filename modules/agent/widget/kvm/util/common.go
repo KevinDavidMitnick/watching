@@ -35,9 +35,9 @@ func GetValueFromQga(uuid string, action string) (interface{}, error) {
 	//flag.Parse()
 	//g.ParseConfig(*cfg)
 
-	host := g.Config().Default.HttpHost
-	port := g.Config().Default.HttpPort
-	timeout := g.Config().Default.HttpTimeout
+	host := g.Config().Kvm.Host
+	port := g.Config().Kvm.Port
+	timeout := g.Config().Kvm.Timeout
 
 	url := fmt.Sprintf("http://%s:%d", host, port)
 	bodyStr := fmt.Sprintf("{\"%s\": [\"{\\\"execute\\\": \\\"%s\\\", \\\"arguments\\\": {\\\"id\\\": \\\"%s\\\"}}\"]}", uuid, action, uuid)
