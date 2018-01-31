@@ -116,7 +116,7 @@ func reportKvmStatus(hostname string, ip string, version string) {
 
 func sendKvmInfoToConsul(consulAddr string, uuid string, data string) {
 	if data != "" {
-		url := fmt.Sprintf("http://%s/v1/kv/kvm/%s?raw", consulAddr, uuid)
+		url := fmt.Sprintf("%s/v1/kv/kvm/%s?raw", consulAddr, uuid)
 		r := httplib.Put(url)
 		r.Body(data)
 		ret, err := r.String()
