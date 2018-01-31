@@ -20,7 +20,7 @@ type KvmAndInterval struct {
 }
 
 func ReportKvmInfo() {
-	if g.Config().Kvm.Enabled && g.Config().Consul.Enabled && g.Config().Consul.Addr != "" && g.Config().Kvm.Addr != "" {
+	if g.Config().Kvm.Enabled && g.Config().Consul.Enabled && g.Config().Consul.Addr != "" && g.Config().Kvm.Host != "" {
 		interval := g.Config().Transfer.Interval
 		kvm := []KvmAndInterval{
 			KvmAndInterval{
@@ -50,7 +50,7 @@ func reportKvmInfo(sec int64, fns []func(*libvirt.Domain) map[string]interface{}
 }
 
 func MetricToConsul(sec int64, fns []func(*libvirt.Domain) map[string]interface{}) {
-	host := g.Config().Kvm.Addr
+	host := g.Config().Kvm.Host
 	consulAddr := g.Config().Consul.Addr
 	conn, err := kvmutil.ConnectLibvirt(host)
 	if err != nil || conn == nil {

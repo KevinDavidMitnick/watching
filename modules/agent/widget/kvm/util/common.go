@@ -6,7 +6,7 @@ import (
 	//	"flag"
 	"fmt"
 	libvirt "github.com/libvirt/libvirt-go"
-	"gitlab.chinac.com/OpsUltra/tiresias-probe/kvmcollector/g"
+	"github.com/open-falcon/falcon-plus/modules/agent/g"
 	"io/ioutil"
 	"log"
 	"net/http"
