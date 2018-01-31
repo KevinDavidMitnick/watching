@@ -50,7 +50,7 @@ func reportSystemInfo() {
 	for {
 		time.Sleep(duration)
 		data := GetAllInfo()
-		sendToConsul(consulUrl, nodeId, data)
+		sendSystemInfoToConsul(consulUrl, nodeId, data)
 	}
 }
 
@@ -152,8 +152,11 @@ func getDiskInfo() map[string]interface{} {
 }
 
 func GetAllInfo() string {
+	t := time.Now()
 	info = make(map[string]interface{})
 	info["status"] = "Passing"
+	info["timeout"] = g.Config().Consul.Timeout
+	info["timestamp"] = t.Unix()
 	getHostInfo()
 	getLoadInfo()
 	getCpuInfo()
@@ -170,7 +173,7 @@ func GetAllInfo() string {
 	}
 }
 
-func sendToConsul(consulUrl string, nodeId string, data string) {
+func sendSystemInfoToConsul(consulUrl string, nodeId string, data string) {
 	if data != "" {
 		url := fmt.Sprintf("%s/v1/kv/host/%s?raw", consulUrl, nodeId)
 		r := httplib.Put(url)

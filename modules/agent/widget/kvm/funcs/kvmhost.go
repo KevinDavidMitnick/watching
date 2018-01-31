@@ -7,7 +7,7 @@ import (
 )
 
 func KvmHostInfo(dom *libvirt.Domain) map[string]interface{} {
-	host := g.Config().Default.HostName
+	host := g.Config().Hostname
 	M := make(map[string]interface{})
 	info := make(map[string]interface{})
 	name, err := dom.GetName()

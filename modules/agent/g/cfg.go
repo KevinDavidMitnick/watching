@@ -66,12 +66,12 @@ type ConsulConfig struct {
 	Enabled  bool   `json:"enabled"`
 	Addr     string `json:"addr"`
 	Interval int    `json:"interval"`
+	Timeout  int    `json:"timeout"`
 }
 
 type KvmConfig struct {
-	Enabled  bool   `json:"enabled"`
-	Addr     string `json:"addr"`
-	Interval int    `json:"interval"`
+	Enabled bool   `json:"enabled"`
+	Addr    string `json:"addr"`
 }
 
 type GlobalConfig struct {
