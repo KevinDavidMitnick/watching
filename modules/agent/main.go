@@ -63,8 +63,8 @@ func main() {
 	cron.SyncBuiltinMetrics()
 	cron.SyncTrustableIps()
 	cron.Collect()
-	//cron.ReportSystemInfo()
-	//cron.ReportKvmInfo()
+	cron.ReportSystemInfo()
+	cron.ReportKvmInfo()
 
 	go http.Start()
 
