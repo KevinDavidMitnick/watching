@@ -174,7 +174,7 @@ func GetAllInfo() string {
 
 func sendSystemInfoToConsul(consulUrl string, nodeId string, data string) {
 	if data != "" {
-		url := fmt.Sprintf("%s/v1/kv/host/%s?raw", consulUrl, nodeId)
+		url := fmt.Sprintf("%s/v1/kv/host/%s/system?raw", consulUrl, nodeId)
 		r := httplib.Put(url)
 		r.Body(data)
 		ret, err := r.String()
