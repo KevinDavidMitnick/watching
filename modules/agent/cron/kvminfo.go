@@ -63,7 +63,9 @@ func MetricToConsul(sec int64, fns []func(*libvirt.Domain) map[string]interface{
 	}
 
 	for _, dom := range doms {
-		all := "{\"auto\":{%s}}"
+		timeout := g.Config().Consul.Timeout
+		timestamp := time.Now().Unix()
+		all := "{\"auto\":{%s,\"timeout\":%d,\"timestamp\":%d}}"
 		var gathers []string
 		active, err := dom.IsActive()
 		if active != true || err != nil {
@@ -90,7 +92,7 @@ func MetricToConsul(sec int64, fns []func(*libvirt.Domain) map[string]interface{
 			}
 
 		}
-		vms := fmt.Sprintf(all, strings.Join(gathers, ","))
+		vms := fmt.Sprintf(all, strings.Join(gathers, ","), timeout, timestamp)
 		reportKvmStatus(uuid, uuid, g.VERSION)
 		sendKvmInfoToConsul(consulAddr, uuid, vms)
 		dom.Free()
