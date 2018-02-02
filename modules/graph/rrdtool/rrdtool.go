@@ -71,11 +71,11 @@ func Start() {
 
 // RRA.Point.Size
 const (
-	RRA1PointCnt   = 720 // 1m一个点存12h
-	RRA5PointCnt   = 576 // 5m一个点存2d
-	RRA20PointCnt  = 504 // 20m一个点存7d
-	RRA180PointCnt = 766 // 3h一个点存3month
-	RRA720PointCnt = 730 // 12h一个点存1year
+	RRA1PointCnt   = 10080 // 1m一个点存12h *2 *7
+	RRA5PointCnt   = 576   // 5m一个点存2d
+	RRA20PointCnt  = 504   // 20m一个点存7d
+	RRA180PointCnt = 766   // 3h一个点存3month
+	RRA720PointCnt = 730   // 12h一个点存1year
 )
 
 func create(filename string, item *cmodel.GraphItem) error {
@@ -88,12 +88,12 @@ func create(filename string, item *cmodel.GraphItem) error {
 
 	// 设置各种归档策略
 	// 1分钟一个点存 12小时
-	c.RRA("AVERAGE", 0, 1, RRA20PointCnt)
+	c.RRA("AVERAGE", 0, 1, RRA1PointCnt)
 
 	// 5m一个点存2d
-	c.RRA("AVERAGE", 0, 5, RRA20PointCnt)
-	c.RRA("MAX", 0, 5, RRA20PointCnt)
-	c.RRA("MIN", 0, 5, RRA20PointCnt)
+	c.RRA("AVERAGE", 0, 5, RRA5PointCnt)
+	c.RRA("MAX", 0, 5, RRA5PointCnt)
+	c.RRA("MIN", 0, 5, RRA5PointCnt)
 
 	// 20m一个点存7d
 	c.RRA("AVERAGE", 0, 20, RRA20PointCnt)
