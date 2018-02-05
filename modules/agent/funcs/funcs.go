@@ -71,20 +71,6 @@ func BuildMappers() {
 			},
 			Interval: interval,
 		},
-		{
-			Fs: []func() []*model.MetricValue{
-				kvmfuncs.KvmCpuMetrics,
-				kvmfuncs.KvmMemMetrics,
-				kvmfuncs.KvmNetMetrics,
-				kvmfuncs.KvmDiskIOMetrics,
-				kvmfuncs.KvmDiskUsageMetrics,
-				kvmfuncs.KvmLoadMetrics,
-				kvmfuncs.KvmProcMetrics,
-				kvmfuncs.KvmSwapMetrics,
-				kvmfuncs.KvmTcpMetrics,
-			},
-			Interval: interval,
-		},
 	}
 
 	if g.Config().Kvm.Enabled {
