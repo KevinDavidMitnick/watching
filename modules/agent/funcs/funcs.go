@@ -17,7 +17,6 @@ package funcs
 import (
 	"github.com/open-falcon/falcon-plus/common/model"
 	"github.com/open-falcon/falcon-plus/modules/agent/g"
-	kvmfuncs "github.com/open-falcon/falcon-plus/modules/agent/widget/kvm/funcs"
 )
 
 type FuncsAndInterval struct {
@@ -72,23 +71,4 @@ func BuildMappers() {
 			Interval: interval,
 		},
 	}
-
-	if g.Config().Kvm.Enabled {
-		KvmMapper := FuncsAndInterval{
-			Fs: []func() []*model.MetricValue{
-				kvmfuncs.KvmCpuMetrics,
-				kvmfuncs.KvmMemMetrics,
-				kvmfuncs.KvmNetMetrics,
-				kvmfuncs.KvmDiskIOMetrics,
-				kvmfuncs.KvmDiskUsageMetrics,
-				kvmfuncs.KvmLoadMetrics,
-				kvmfuncs.KvmProcMetrics,
-				kvmfuncs.KvmSwapMetrics,
-				kvmfuncs.KvmTcpMetrics,
-			},
-			Interval: interval,
-		}
-		Mappers = append(Mappers, KvmMapper)
-	}
-
 }
