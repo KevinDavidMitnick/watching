@@ -69,13 +69,6 @@ type ConsulConfig struct {
 	Timeout  int    `json:"timeout"`
 }
 
-type KvmConfig struct {
-	Enabled bool   `json:"enabled"`
-	Host    string `json:"host"`
-	Port    int    `json:"port"`
-	Timeout int    `json:"timeout"`
-}
-
 type GlobalConfig struct {
 	Debug         bool              `json:"debug"`
 	Hostname      string            `json:"hostname"`
@@ -88,7 +81,6 @@ type GlobalConfig struct {
 	DefaultTags   map[string]string `json:"default_tags"`
 	IgnoreMetrics map[string]bool   `json:"ignore"`
 	Consul        *ConsulConfig     `json:"consul"`
-	Kvm           *KvmConfig        `json:"kvm"`
 }
 
 var (
