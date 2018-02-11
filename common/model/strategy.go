@@ -21,21 +21,22 @@ import (
 )
 
 type Strategy struct {
-	Id         int               `json:"id"`
-	Metric     string            `json:"metric"`
-	Tags       map[string]string `json:"tags"`
-	Func       string            `json:"func"`       // e.g. max(#3) all(#3)
-	Operator   string            `json:"operator"`   // e.g. < !=
-	RightValue float64           `json:"rightValue"` // critical value
-	MaxStep    int               `json:"maxStep"`
-	Priority   int               `json:"priority"`
-	Note       string            `json:"note"`
-	Tpl        *Template         `json:"tpl"`
+	Id              int               `json:"id"`
+	Metric          string            `json:"metric"`
+	Tags            map[string]string `json:"tags"`
+	Func            string            `json:"func"`       // e.g. max(#3) all(#3)
+	Operator        string            `json:"operator"`   // e.g. < !=
+	RightValue      float64           `json:"rightValue"` // critical value
+	MaxStep         int               `json:"maxStep"`
+	Priority        int               `json:"priority"`
+	Note            string            `json:"note"`
+	Tpl             *Template         `json:"tpl"`
+	StrategyGroupId int               `json:"strategyGroupId"`
 }
 
 func (this *Strategy) String() string {
 	return fmt.Sprintf(
-		"<Id:%d, Metric:%s, Tags:%v, %s%s%s MaxStep:%d, P%d, %s, %v>",
+		"<Id:%d, Metric:%s, Tags:%v, %s%s%s MaxStep:%d, P%d, %s, %v, StrategyGroupId:%d>",
 		this.Id,
 		this.Metric,
 		this.Tags,
@@ -46,6 +47,7 @@ func (this *Strategy) String() string {
 		this.Priority,
 		this.Note,
 		this.Tpl,
+		this.StrategyGroupId,
 	)
 }
 

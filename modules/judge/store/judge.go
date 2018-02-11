@@ -89,12 +89,31 @@ func sendEvent(event *model.Event) {
 		return
 	}
 
-	// send to redis
-	redisKey := fmt.Sprintf(g.Config().Alarm.QueuePattern, event.Priority())
 	rc := g.RedisConnPool.Get()
 	defer rc.Close()
-	log.Printf("[ERROR] send Event %s", string(bs))
-	rc.Do("LPUSH", redisKey, string(bs))
+	// if Event.Strategy.StrategyGroupId > 0,表示属于策略组事件，需要alarm单独处理，不放入redisKey队列中.
+	if event.Strategy.StrategyGroupId > 0 {
+		value := make(map[int]string)
+		strategyKey := fmt.Sprintf("StrategyGroup_%d", event.Strategy.StrategyGroupId)
+		lastValue, err := rc.Do("HGET", strategyKey)
+		if (err == nil) && (lastValue != nil) {
+			if strValue, ok := lastValue.(string); ok {
+				if err := json.Unmarshal([]byte(strValue), &value); err == nil {
+					value[event.Strategy.StrategyGroupId] = string(bs)
+					if input, err := json.Marshal(value); err == nil {
+						log.Printf("send event %v to %s, which belong to StrategyGroupId %d", event, strategyKey, event.Strategy.StrategyGroupId)
+						rc.Do("HSET", strategyKey, string(input))
+					}
+				}
+			}
+		}
+	} else {
+		// send to redis
+		redisKey := fmt.Sprintf(g.Config().Alarm.QueuePattern, event.Priority())
+		log.Printf("[DEBUG] send Event %s", string(bs))
+		rc.Do("LPUSH", redisKey, string(bs))
+	}
+
 }
 
 func CheckExpression(L *SafeLinkedList, firstItem *model.JudgeItem, now int64) {

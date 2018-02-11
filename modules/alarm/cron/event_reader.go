@@ -18,6 +18,7 @@ import (
 	"encoding/json"
 	"time"
 
+	"fmt"
 	log "github.com/Sirupsen/logrus"
 	"github.com/garyburd/redigo/redis"
 	cmodel "github.com/open-falcon/falcon-plus/common/model"
@@ -91,4 +92,55 @@ func popEvent(queues []string) (*cmodel.Event, error) {
 	// events no longer saved in memory
 
 	return &event, nil
+}
+
+func ReadStrategyGroupEvent() {
+	for {
+		consumeStrategyGroupEvent()
+		time.Sleep(time.Second)
+	}
+}
+
+func consumeStrategyGroupEvent() {
+	strategyGroup := g.StrategyGroupMap.Get()
+	if len(strategyGroup) > 0 {
+		rc := g.RedisConnPool.Get()
+		defer rc.Close()
+		for k, v := range strategyGroup {
+			value := make(map[int]string)
+			strategyKey := fmt.Sprintf("StrategyGroup_%d", k)
+			lastValue, err := rc.Do("HGET", strategyKey)
+			if (err == nil) && (lastValue != nil) {
+				if strValue, ok := lastValue.(string); ok {
+					if err := json.Unmarshal([]byte(strValue), &value); (err == nil) && (len(v) == len(value)) {
+						pushMap := make(map[string]string)
+						flag := true
+						for _, eventStr := range value {
+							var tmpEvent cmodel.Event
+							var eventTime int64
+							if err := json.Unmarshal([]byte(eventStr), &tmpEvent); err == nil {
+								if eventTime == 0 {
+									eventTime = tmpEvent.EventTime
+								}
+								diffTime := tmpEvent.EventTime - eventTime
+								if diffTime < -60 || diffTime > 60 {
+									flag = false
+									rc.Do("HDEL", "key", strategyKey)
+									break
+								}
+								redisKey := fmt.Sprintf("event:p%v", tmpEvent.Priority())
+								pushMap[redisKey] = eventStr
+							}
+						}
+						if flag {
+							for k, v := range pushMap {
+								rc.Do("LPUSH", k, v)
+							}
+							rc.Do("HDEL", "key", strategyKey)
+						}
+					}
+				}
+			}
+		}
+	}
 }

@@ -67,6 +67,12 @@ type HousekeeperConfig struct {
 	EventDeleteBatch   int `json:"event_delete_batch"`
 }
 
+type HbsConfig struct {
+	Servers  []string `json:"servers"`
+	Timeout  int64    `json:"timeout"`
+	Interval int64    `json:"interval"`
+}
+
 // add by liucong,cmdb api port,to get displayname
 type CmdbConfig struct {
 	Addr string `json:"addr"`
@@ -80,6 +86,7 @@ type GlobalConfig struct {
 	Api          *ApiConfig          `json:"api"`
 	Worker       *WorkerConfig       `json:"worker"`
 	Housekeeper  *HousekeeperConfig  `json:"Housekeeper"`
+	Hbs          *HbsConfig          `json:"hbs"`
 	CmdbConfig   *CmdbConfig         `json:"cmdb"`
 }
 

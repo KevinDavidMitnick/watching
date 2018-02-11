@@ -21,6 +21,11 @@ import (
 	"github.com/open-falcon/falcon-plus/modules/hbs/cache"
 )
 
+func (t *Hbs) GetGroupStrategies(req model.NullRpcRequest, reply *model.GroupStrigesResponse) error {
+	reply.GroupStriges = cache.GroupsStrategiesMap.GetMap()
+	return nil
+}
+
 func (t *Hbs) GetExpressions(req model.NullRpcRequest, reply *model.ExpressionResponse) error {
 	reply.Expressions = cache.ExpressionCache.Get()
 	return nil
