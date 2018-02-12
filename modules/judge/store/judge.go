@@ -20,6 +20,7 @@ import (
 	"github.com/open-falcon/falcon-plus/common/model"
 	"github.com/open-falcon/falcon-plus/modules/judge/g"
 	"log"
+	"strconv"
 )
 
 func Judge(L *SafeLinkedList, firstItem *model.JudgeItem, now int64) {
@@ -93,9 +94,8 @@ func sendEvent(event *model.Event) {
 	defer rc.Close()
 	// if Event.Strategy.StrategyGroupId > 0,表示属于策略组事件，需要alarm单独处理，不放入redisKey队列中.
 	if event.Strategy.StrategyGroupId > 0 {
-		value := make(map[int]string)
 		strategyKey := fmt.Sprintf("StrategyGroup_%d", event.Strategy.StrategyGroupId)
-		lastValue, err := rc.Do("HSET", strategyKey, event.StrategyId(), string(bs))
+		rc.Do("HSET", strategyKey, strconv.Itoa(event.StrategyId()), string(bs))
 		log.Printf("[DEBUG] send Event %s to %s", string(bs), strategyKey)
 	} else {
 		// send to redis
