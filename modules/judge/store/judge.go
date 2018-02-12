@@ -106,6 +106,12 @@ func sendEvent(event *model.Event) {
 					}
 				}
 			}
+		} else {
+			value[event.Strategy.StrategyGroupId] = string(bs)
+			if input, err := json.Marshal(value); err == nil {
+				log.Printf("first time,send event %v to %s, which belong to StrategyGroupId %d", event, strategyKey, event.Strategy.StrategyGroupId)
+				rc.Do("HSET", strategyKey, string(input))
+			}
 		}
 	} else {
 		// send to redis
