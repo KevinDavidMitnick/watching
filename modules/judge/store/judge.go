@@ -95,28 +95,12 @@ func sendEvent(event *model.Event) {
 	if event.Strategy.StrategyGroupId > 0 {
 		value := make(map[int]string)
 		strategyKey := fmt.Sprintf("StrategyGroup_%d", event.Strategy.StrategyGroupId)
-		lastValue, err := rc.Do("HGET", strategyKey)
-		if (err == nil) && (lastValue != nil) {
-			if strValue, ok := lastValue.(string); ok {
-				if err := json.Unmarshal([]byte(strValue), &value); err == nil {
-					value[event.Strategy.StrategyGroupId] = string(bs)
-					if input, err := json.Marshal(value); err == nil {
-						log.Printf("send event %v to %s, which belong to StrategyGroupId %d", event, strategyKey, event.Strategy.StrategyGroupId)
-						rc.Do("HSET", strategyKey, string(input))
-					}
-				}
-			}
-		} else {
-			value[event.Strategy.StrategyGroupId] = string(bs)
-			if input, err := json.Marshal(value); err == nil {
-				log.Printf("first time,send event %v to %s, which belong to StrategyGroupId %d", event, strategyKey, event.Strategy.StrategyGroupId)
-				rc.Do("HSET", strategyKey, string(input))
-			}
-		}
+		lastValue, err := rc.Do("HSET", strategyKey, event.StrategyId(), string(bs))
+		log.Printf("[DEBUG] send Event %s to %s", string(bs), strategyKey)
 	} else {
 		// send to redis
 		redisKey := fmt.Sprintf(g.Config().Alarm.QueuePattern, event.Priority())
-		log.Printf("[DEBUG] send Event %s", string(bs))
+		log.Printf("[DEBUG] send Event %s to %s", string(bs), redisKey)
 		rc.Do("LPUSH", redisKey, string(bs))
 	}
 
