@@ -234,3 +234,14 @@ CREATE TABLE IF NOT EXISTS alert_link
 ) ENGINE=InnoDB 
   DEFAULT CHARSET=utf8 
   COLLATE=utf8_unicode_ci;
+
+/**
+ * add strategy group table .
+ */
+CREATE TABLE IF NOT EXISTS `strategy_group` (
+	  `id` int(10) unsigned NOT NULL AUTO_INCREMENT,
+	  `name` varchar(255) COLLATE utf8_unicode_ci NOT NULL DEFAULT '',
+	  PRIMARY KEY (`id`)
+) ENGINE=InnoDB 
+  DEFAULT CHARSET=utf8 
+  COLLATE=utf8_unicode_ci;
