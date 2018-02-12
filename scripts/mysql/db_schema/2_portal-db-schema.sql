@@ -90,6 +90,7 @@ CREATE TABLE IF NOT EXISTS `strategy` (
   `run_begin`   VARCHAR(16)      NOT NULL DEFAULT '',
   `run_end`     VARCHAR(16)      NOT NULL DEFAULT '',
   `tpl_id`      INT(10) UNSIGNED NOT NULL DEFAULT '0',
+  `sgrp_id`     INT(10) UNSIGNED NOT NULL DEFAULT '0',
   PRIMARY KEY (`id`),
   KEY `idx_strategy_tpl_id` (`tpl_id`)
 )
