@@ -94,33 +94,33 @@ func sendEvent(event *model.Event) {
 	// if Event.Strategy.StrategyGroupId > 0,表示属于策略组事件，需要alarm单独处理，不放入redisKey队列中.
 	if event.Strategy.StrategyGroupId > 0 {
 		strategyKey := fmt.Sprintf("StrategyGroup_%d", event.Strategy.StrategyGroupId)
-		var eventList []*model.Event
+		eventMap := make(map[int]*model.Event)
 		// if not exists endpoint ,set it .
 		end_value, _ := rc.Do("HGET", strategyKey, event.Endpoint)
 		if end_value == nil {
-			eventList = append(eventList, event)
-			bsList, err := json.Marshal(eventList)
+			eventMap[event.StrategyId()] = event
+			bsMap, err := json.Marshal(eventMap)
 			if err != nil {
-				log.Printf("1.json marshal event list %v fail: %v", eventList, err)
+				log.Printf("1.json marshal event map %v fail: %v", eventMap, err)
 				return
 			}
 			log.Printf("1.[DEBUG] send Event %s to %s, endpoint: %s", string(bs), strategyKey, event.Endpoint)
-			rc.Do("HSET", strategyKey, event.Endpoint, string(bsList))
+			rc.Do("HSET", strategyKey, event.Endpoint, string(bsMap))
 		} else {
 			temp := end_value.([]byte)
-			err := json.Unmarshal(temp, &eventList)
+			err := json.Unmarshal(temp, &eventMap)
 			if err != nil {
-				log.Printf("2.json unmarshal eventlist %s fail: %v", end_value.([]byte), err)
+				log.Printf("2.json unmarshal event map %s fail: %v", string(temp), err)
 				return
 			}
-			eventList = append(eventList, event)
-			bsList, err := json.Marshal(eventList)
+			eventMap[event.StrategyId()] = event
+			bsMap, err := json.Marshal(eventMap)
 			if err != nil {
-				log.Printf("3.json marshal event list %v fail: %v", eventList, err)
+				log.Printf("3.json marshal event map %v fail: %v", eventMap, err)
 				return
 			}
 			log.Printf("2.[DEBUG] send Event %s to %s, endpoint: %s", string(bs), strategyKey, event.Endpoint)
-			rc.Do("HSET", strategyKey, event.Endpoint, string(bsList))
+			rc.Do("HSET", strategyKey, event.Endpoint, string(bsMap))
 		}
 	} else {
 		// send to redis
