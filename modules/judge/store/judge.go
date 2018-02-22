@@ -20,7 +20,6 @@ import (
 	"github.com/open-falcon/falcon-plus/common/model"
 	"github.com/open-falcon/falcon-plus/modules/judge/g"
 	"log"
-	"strconv"
 )
 
 func Judge(L *SafeLinkedList, firstItem *model.JudgeItem, now int64) {
@@ -95,12 +94,38 @@ func sendEvent(event *model.Event) {
 	// if Event.Strategy.StrategyGroupId > 0,表示属于策略组事件，需要alarm单独处理，不放入redisKey队列中.
 	if event.Strategy.StrategyGroupId > 0 {
 		strategyKey := fmt.Sprintf("StrategyGroup_%d", event.Strategy.StrategyGroupId)
-		rc.Do("HSET", strategyKey, strconv.Itoa(event.StrategyId()), string(bs))
-		log.Printf("[DEBUG] send Event %s to %s", string(bs), strategyKey)
+		var eventList []*model.Event
+		// if not exists endpoint ,set it .
+		end_value, _ := rc.Do("HGET", strategyKey, event.Endpoint)
+		if end_value == nil {
+			eventList = append(eventList, event)
+			bsList, err := json.Marshal(eventList)
+			if err != nil {
+				log.Printf("1.json marshal event list %v fail: %v", eventList, err)
+				return
+			}
+			log.Printf("1.[DEBUG] send Event %s to %s, endpoint: %s", string(bs), strategyKey, event.Endpoint)
+			rc.Do("HSET", strategyKey, event.Endpoint, string(bsList))
+		} else {
+			temp := []byte(end_value.(string))
+			err := json.Unmarshal(temp, &eventList)
+			if err != nil {
+				log.Printf("2.json unmarshal eventlist %s fail: %v", end_value.(string), err)
+				return
+			}
+			eventList = append(eventList, event)
+			bsList, err := json.Marshal(eventList)
+			if err != nil {
+				log.Printf("3.json marshal event list %v fail: %v", eventList, err)
+				return
+			}
+			log.Printf("2.[DEBUG] send Event %s to %s, endpoint: %s", string(bs), strategyKey, event.Endpoint)
+			rc.Do("HSET", strategyKey, event.Endpoint, string(bsList))
+		}
 	} else {
 		// send to redis
 		redisKey := fmt.Sprintf(g.Config().Alarm.QueuePattern, event.Priority())
-		log.Printf("[DEBUG] send Event %s to %s", string(bs), redisKey)
+		log.Printf("3.[DEBUG] send Event %s to %s", string(bs), redisKey)
 		rc.Do("LPUSH", redisKey, string(bs))
 	}
 
