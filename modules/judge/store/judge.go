@@ -107,10 +107,10 @@ func sendEvent(event *model.Event) {
 			log.Printf("1.[DEBUG] send Event %s to %s, endpoint: %s", string(bs), strategyKey, event.Endpoint)
 			rc.Do("HSET", strategyKey, event.Endpoint, string(bsList))
 		} else {
-			temp := []byte(end_value.(string))
+			temp := end_value.([]byte)
 			err := json.Unmarshal(temp, &eventList)
 			if err != nil {
-				log.Printf("2.json unmarshal eventlist %s fail: %v", end_value.(string), err)
+				log.Printf("2.json unmarshal eventlist %s fail: %v", end_value.([]byte), err)
 				return
 			}
 			eventList = append(eventList, event)
