@@ -24,6 +24,7 @@ import (
 	cmodel "github.com/open-falcon/falcon-plus/common/model"
 	"github.com/open-falcon/falcon-plus/modules/alarm/g"
 	eventmodel "github.com/open-falcon/falcon-plus/modules/alarm/model/event"
+	"strings"
 )
 
 func ReadHighEvent() {
@@ -101,42 +102,65 @@ func ReadStrategyGroupEvent() {
 	}
 }
 
+func getReisKeyArray(strategyKey string) []string {
+	rc := g.RedisConnPool.Get()
+	defer rc.Close()
+	var keys []string
+	var tempKeys []string
+
+	value, err := rc.Do("HKEYS", strategyKey)
+	if err == nil && value != nil {
+		tempValue := string(value.([]byte))
+		tempKeys = strings.Fields(tempValue)
+		for i, uuid := range tempKeys {
+			if i%2 > 0 {
+				keys = append(keys, uuid)
+			}
+		}
+	}
+	return keys
+}
+
 func consumeStrategyGroupEvent() {
 	strategyGroup := g.StrategyGroupMap.Get()
+	log.Printf("1.[DEBUG] start consume strategy group event,%v.........", strategyGroup)
 	if len(strategyGroup) > 0 {
 		rc := g.RedisConnPool.Get()
 		defer rc.Close()
 		for k, v := range strategyGroup {
-			value := make(map[int]string)
 			strategyKey := fmt.Sprintf("StrategyGroup_%d", k)
-			lastValue, err := rc.Do("HGET", strategyKey)
-			if (err == nil) && (lastValue != nil) {
-				if strValue, ok := lastValue.(string); ok {
-					if err := json.Unmarshal([]byte(strValue), &value); (err == nil) && (len(v) == len(value)) {
-						pushMap := make(map[string]string)
-						flag := true
-						for _, eventStr := range value {
-							var tmpEvent cmodel.Event
+			keyArray := getReisKeyArray(strategyKey)
+			log.Printf("2.[DEBUG] strategy group event key array is : %v", keyArray)
+			for _, key := range keyArray {
+				lastValue, err := rc.Do("HGET", strategyKey, key)
+				if (err == nil) && (lastValue != nil) {
+					if strValue, ok := lastValue.([]byte); ok {
+						value := make(map[int]*cmodel.Event)
+						if err := json.Unmarshal(strValue, &value); (err == nil) && (len(v) == len(value)) {
+							pushMap := make(map[string]string)
+							cnt := 0
 							var eventTime int64
-							if err := json.Unmarshal([]byte(eventStr), &tmpEvent); err == nil {
-								if eventTime == 0 {
-									eventTime = tmpEvent.EventTime
+							for _, id := range v {
+								if tmpEvent, flag := value[id]; flag {
+									if eventTime == 0 {
+										eventTime = tmpEvent.EventTime
+									}
+									diffTime := tmpEvent.EventTime - eventTime
+									if eventStr, err := json.Marshal(tmpEvent); diffTime < 60 && err == nil {
+										cnt = cnt + 1
+										redisKey := fmt.Sprintf("event:p%v", tmpEvent.Priority())
+										pushMap[redisKey] = string(eventStr)
+									}
 								}
-								diffTime := tmpEvent.EventTime - eventTime
-								if diffTime < -60 || diffTime > 60 {
-									flag = false
-									rc.Do("HDEL", "key", strategyKey)
-									break
+							}
+							if cnt == len(v) {
+								for k, v := range pushMap {
+									rc.Do("LPUSH", k, v)
 								}
-								redisKey := fmt.Sprintf("event:p%v", tmpEvent.Priority())
-								pushMap[redisKey] = eventStr
+								log.Printf("3.[DEBUG] push map is  : %v", pushMap)
 							}
-						}
-						if flag {
-							for k, v := range pushMap {
-								rc.Do("LPUSH", k, v)
-							}
-							rc.Do("HDEL", "key", strategyKey)
+							rc.Do("HDEL", strategyKey, key)
+							log.Printf("4.[DEBUG] del strategy group %s,%s", strategyKey, key)
 						}
 					}
 				}
