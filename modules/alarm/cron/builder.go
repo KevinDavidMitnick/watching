@@ -108,6 +108,7 @@ func BuildCommonMailContent(event *model.Event) string {
 	var data DataStruct
 	addr := g.Config().CmdbConfig.Addr + "/" + event.Endpoint
 	endpoint := "Endpoint(Uuid):" + event.Endpoint
+	position := "位置信息(Position):"
 
 	request, _ := http.NewRequest("GET", addr, nil)
 	request.Header.Set("Content-Type", "application/json")
@@ -121,6 +122,7 @@ func BuildCommonMailContent(event *model.Event) string {
 			err := json.Unmarshal(body, &data)
 			if err == nil && data.Name != nil && data.Name.DisplayName != "" {
 				endpoint = "对象(Object):" + string(data.Name.DisplayName)
+				position = "位置信息(Position):" + string(data.Name.Database) + " " + string(data.Name.Zone_name) + " " + string(data.Name.Parent_name)
 			}
 		}
 	}
@@ -137,7 +139,6 @@ func BuildCommonMailContent(event *model.Event) string {
 	level := fmt.Sprintf("级别(Level):P%d", event.Priority())
 	timestamp := fmt.Sprintf("时间(Timestamp):%s", event.FormattedTime())
 	uuid := "Uuid:" + string(event.Endpoint)
-	position := "位置信息(Position):" + string(data.Name.Database) + " " + string(data.Name.Zone_name) + " " + string(data.Name.Parent_name)
 	metric := "指标(Metric):" + event.Metric()
 	note := "描述(Description):" + event.Note()
 	tags := "标签(Tags):" + utils.SortedTags(event.PushedTags)
