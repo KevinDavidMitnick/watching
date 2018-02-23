@@ -24,7 +24,6 @@ import (
 	cmodel "github.com/open-falcon/falcon-plus/common/model"
 	"github.com/open-falcon/falcon-plus/modules/alarm/g"
 	eventmodel "github.com/open-falcon/falcon-plus/modules/alarm/model/event"
-	"strings"
 )
 
 func ReadHighEvent() {
@@ -106,18 +105,15 @@ func getReisKeyArray(strategyKey string) []string {
 	rc := g.RedisConnPool.Get()
 	defer rc.Close()
 	var keys []string
-	var tempKeys []string
 
 	value, err := rc.Do("HKEYS", strategyKey)
 	if err == nil && value != nil {
-		tempValue := string(value.([]byte))
-		tempKeys = strings.Fields(tempValue)
-		for i, uuid := range tempKeys {
-			if i%2 > 0 {
-				keys = append(keys, uuid)
-			}
+		for _, v := range value.([]interface{}) {
+			data := v.([]byte)
+			keys = append(keys, string(data))
 		}
 	}
+
 	return keys
 }
 
