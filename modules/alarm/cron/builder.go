@@ -18,7 +18,6 @@ import (
 	"fmt"
 
 	"encoding/json"
-	log "github.com/Sirupsen/logrus"
 	"github.com/open-falcon/falcon-plus/common/model"
 	"github.com/open-falcon/falcon-plus/common/utils"
 	"github.com/open-falcon/falcon-plus/modules/alarm/g"
