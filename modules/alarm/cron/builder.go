@@ -81,6 +81,7 @@ func BuildCommonSMSContent(event *model.Event) string {
 
 func BuildCommonIMContent(event *model.Event) string {
 	var data DataStruct
+	endpoint := event.Endpoint
 	addr := g.Config().CmdbConfig.Addr + "/" + event.Endpoint
 	request, _ := http.NewRequest("GET", addr, nil)
 	request.Header.Set("Content-Type", "application/json")
@@ -90,16 +91,13 @@ func BuildCommonIMContent(event *model.Event) string {
 	resp, err := client.Do(request)
 	if err == nil {
 		defer resp.Body.Close()
-		body, err := ioutil.ReadAll(resp.Body)
-		if err == nil {
-			json.Unmarshal(body, &data)
+		if body, err := ioutil.ReadAll(resp.Body); err == nil {
+			err := json.Unmarshal(body, &data)
+			if err == nil && data.Name != nil && data.Name.DisplayName != "" {
+				endpoint = string(data.Name.DisplayName)
+			}
 		}
 	}
-	endpoint := event.Endpoint
-	if &data != nil && data.Name.DisplayName != "" {
-		endpoint = string(data.Name.DisplayName)
-	}
-
 	return fmt.Sprintf(
 		"[P%d][%s][%s][][%s %s %s %s %s%s%s][O%d %s]",
 		event.Priority(),
