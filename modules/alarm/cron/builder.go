@@ -49,9 +49,11 @@ func BuildCommonSMSContent(event *model.Event) string {
 	resp, err := client.Do(request)
 	if err == nil {
 		defer resp.Body.Close()
-		body, err := ioutil.ReadAll(resp.Body)
-		if err == nil {
-			json.Unmarshal(body, &data)
+		if body, err := ioutil.ReadAll(resp.Body); err == nil {
+			err := json.Unmarshal(body, &data)
+			if err == nil && data.Name != nil && data.Name.DisplayName != "" {
+				endpoint = string(data.Name.DisplayName)
+			}
 		}
 	} else {
 		log.Error(err)
@@ -65,9 +67,6 @@ func BuildCommonSMSContent(event *model.Event) string {
 		)
 	}
 
-	if &data != nil && data.Name.DisplayName != "" {
-		endpoint = string(data.Name.DisplayName)
-	}
 	// change by liucong format mail title
 	return fmt.Sprintf(
 		"[P%d][%s][0%d][%s][%s]",
