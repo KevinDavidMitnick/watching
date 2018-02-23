@@ -124,7 +124,7 @@ func getReisKeyArray(strategyKey string) []string {
 func consumeStrategyGroupEvent() {
 	strategyGroup := g.StrategyGroupMap.Get()
 	log.Printf("1.[DEBUG] start consume strategy group event,%v.........", strategyGroup)
-	if len(strategyGroup) > 0 {
+	if strategyGroup != nil && len(strategyGroup) > 0 {
 		rc := g.RedisConnPool.Get()
 		defer rc.Close()
 		for k, v := range strategyGroup {

@@ -21,6 +21,8 @@ func syncStrategyGroup() {
 	if err != nil {
 		log.Println("[ERROR] Hbs.GetGroupStrategies:", err)
 		return
+	} else {
+		log.Println("[DEBUG] Hbs.GetGroupStrategies:%v", strategyGroupResponse.GroupStriges)
 	}
 
 	rebuildStrategyGroupMap(&strategyGroupResponse)
