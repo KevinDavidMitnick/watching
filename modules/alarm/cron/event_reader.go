@@ -24,7 +24,6 @@ import (
 	cmodel "github.com/open-falcon/falcon-plus/common/model"
 	"github.com/open-falcon/falcon-plus/modules/alarm/g"
 	eventmodel "github.com/open-falcon/falcon-plus/modules/alarm/model/event"
-	"strings"
 )
 
 func ReadHighEvent() {
@@ -152,7 +151,9 @@ func consumeStrategyGroupEvent() {
 							}
 							if cnt == len(v) {
 								for k, v := range pushMap {
-									rc.Do("LPUSH", k, strings.Join(v, " "))
+									for _, e := range v {
+										rc.Do("LPUSH", k, e)
+									}
 								}
 								log.Printf("3.[DEBUG] push map is  : %v", pushMap)
 							}
