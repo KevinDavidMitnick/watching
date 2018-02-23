@@ -55,16 +55,6 @@ func BuildCommonSMSContent(event *model.Event) string {
 				endpoint = string(data.Name.DisplayName)
 			}
 		}
-	} else {
-		log.Error(err)
-		return fmt.Sprintf(
-			"[P%d][%s][0%d][%s][%s]",
-			event.Priority(),
-			event.Status,
-			event.CurrentStep,
-			endpoint,
-			event.Metric(),
-		)
 	}
 
 	// change by liucong format mail title
