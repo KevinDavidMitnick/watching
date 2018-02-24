@@ -62,6 +62,7 @@ type APICreateStrategyInput struct {
 	RunBegin   string `json:"run_begin"`
 	RunEnd     string `json:"run_end"`
 	TplId      int64  `json:"tpl_id" binding:"required"`
+	SgrpId     int64  `json:"sgrp_id" gorm:"column:sgrp_id"`
 }
 
 func (this APICreateStrategyInput) CheckFormat() (err error) {
@@ -103,6 +104,7 @@ func CreateStrategy(c *gin.Context) {
 		RunBegin:   inputs.RunBegin,
 		RunEnd:     inputs.RunEnd,
 		TplId:      inputs.TplId,
+		SgrpId:     inputs.SgrpId,
 	}
 	dt := db.Falcon.Save(&strategy)
 	if dt.Error != nil {
@@ -145,6 +147,7 @@ type APIUpdateStrategyInput struct {
 	Note       string `json:"note"`
 	RunBegin   string `json:"run_begin"`
 	RunEnd     string `json:"run_end"`
+	SgrpId     int64  `json:"sgrp_id" gorm:"column:sgrp_id"`
 }
 
 func (this APIUpdateStrategyInput) CheckFormat() (err error) {
@@ -191,7 +194,8 @@ func UpdateStrategy(c *gin.Context) {
 		"RightValue": inputs.RightValue,
 		"Note":       inputs.Note,
 		"RunBegin":   inputs.RunBegin,
-		"RunEnd":     inputs.RunEnd}
+		"RunEnd":     inputs.RunEnd,
+		"SgrpId":     inputs.SgrpId}
 	if dt := db.Falcon.Model(&strategy).Where("id = ?", strategy.ID).Update(ustrategy); dt.Error != nil {
 		h.JSONR(c, expecstatus, dt.Error)
 		return
