@@ -62,7 +62,7 @@ type APICreateStrategyInput struct {
 	RunBegin   string `json:"run_begin"`
 	RunEnd     string `json:"run_end"`
 	TplId      int64  `json:"tpl_id" binding:"required"`
-	SgrpId     int64  `json:"sgrp_id" gorm:"column:sgrp_id"`
+	SgrpId     int64  `json:"sgrp_id"`
 }
 
 func (this APICreateStrategyInput) CheckFormat() (err error) {
@@ -147,7 +147,7 @@ type APIUpdateStrategyInput struct {
 	Note       string `json:"note"`
 	RunBegin   string `json:"run_begin"`
 	RunEnd     string `json:"run_end"`
-	SgrpId     int64  `json:"sgrp_id" gorm:"column:sgrp_id"`
+	SgrpId     int64  `json:"sgrp_id"`
 }
 
 func (this APIUpdateStrategyInput) CheckFormat() (err error) {
