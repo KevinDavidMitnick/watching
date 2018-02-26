@@ -39,7 +39,7 @@ func Routes(r *gin.Engine) {
 	met := r.Group("/api/v1/metric")
 	met.Use(utils.AuthSessionMidd)
 	met.GET("default_list", MetricQuery)
-	sgrp := r.Group("/api/v1/strategy/group")
+	sgrp := r.Group("/api/v1/strategyGroup")
 	sgrp.Use(utils.AuthSessionMidd)
 	sgrp.GET("", GetStrategyGroups)
 	sgrp.GET("/:sgrpid", GetStrategyGroup)
