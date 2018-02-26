@@ -44,6 +44,5 @@ func Routes(r *gin.Engine) {
 	sgrp.GET("", GetStrategyGroups)
 	sgrp.GET("/:sgrpid", GetStrategyGroup)
 	sgrp.POST("", CreateStrategyGroup)
-	sgrp.PUT("", UpdateStrategyGroup)
 	sgrp.DELETE("/:sgrpid", DeleteStrategyGroup)
 }

@@ -304,33 +304,6 @@ func CreateStrategyGroup(c *gin.Context) {
 	return
 }
 
-type APIUpdateStrategyGroupInput struct {
-	ID   int64  `json:"id" binding:"required"`
-	Name string `json:"name" binding:"required"`
-}
-
-func UpdateStrategyGroup(c *gin.Context) {
-	var inputs APIUpdateStrategyGroupInput
-	if err := c.Bind(&inputs); err != nil {
-		h.JSONR(c, badstatus, err)
-		return
-	}
-	strategyGroup := f.StrategyGroup{
-		ID: inputs.ID,
-	}
-	if dt := db.Falcon.Find(&strategyGroup); dt.Error != nil {
-		h.JSONR(c, expecstatus, fmt.Sprintf("find strategy group got error:%v", dt.Error))
-		return
-	}
-	ustrategyGroup := map[string]interface{}{"Name": inputs.Name}
-	if dt := db.Falcon.Model(&strategyGroup).Where("id = ?", strategyGroup.ID).Update(ustrategyGroup); dt.Error != nil {
-		h.JSONR(c, expecstatus, dt.Error)
-		return
-	}
-	h.JSONR(c, fmt.Sprintf("stragtegy group :%d has been updated", strategyGroup.ID))
-	return
-}
-
 func DeleteStrategyGroup(c *gin.Context) {
 	sgrpidtmp := c.Params.ByName("sgrpid")
 	if sgrpidtmp == "" {
