@@ -25,6 +25,7 @@ import (
 	"github.com/shirou/gopsutil/load"
 	"github.com/shirou/gopsutil/mem"
 	"github.com/shirou/gopsutil/net"
+	"github.com/shirou/gopsutil/process"
 	"github.com/toolkits/net/httplib"
 	"os/exec"
 	"strconv"
