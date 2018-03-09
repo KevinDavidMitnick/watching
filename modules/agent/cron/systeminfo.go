@@ -151,6 +151,37 @@ func getDiskInfo() map[string]interface{} {
 	return info
 }
 
+func getProcsInfo() map[string]interface{} {
+	var procs []int32
+	var err1 error
+	procs, err1 = process.Pids()
+	if err1 != nil || len(procs) <= 0 {
+		return info
+	}
+	procInfo := make(map[string]interface{})
+	for pid := range procs {
+		proc, _ := process.NewProcess(int32(pid))
+		processInfo := make(map[string]interface{})
+		processInfo["pid"] = pid
+		processInfo["name"], _ = proc.Name()
+		processInfo["status"], _ = proc.Status()
+		processInfo["cpuPercent"], _ = proc.CPUPercent()
+		if times, err := proc.Times(); err == nil {
+			if times != nil {
+				processInfo["cpuTimes"] = times.Total()
+			}
+		}
+		processInfo["memoryPercent"], _ = proc.MemoryPercent()
+		processInfo["create_time"], _ = proc.CreateTime()
+		processInfo["workspace"], _ = proc.Cwd()
+		processInfo["execPath"], _ = proc.Exe()
+		processInfo["owner"], _ = proc.Username()
+		procInfo[strconv.Itoa(int(pid))] = processInfo
+	}
+	info["procInfo"] = procInfo
+	return info
+}
+
 func GetAllInfo() string {
 	info = make(map[string]interface{})
 	info["status"] = "Passing"
@@ -162,6 +193,7 @@ func GetAllInfo() string {
 	getMemInfo()
 	getInterfaceInfo()
 	getDiskInfo()
+	getProcsInfo()
 
 	var data []byte
 	data, err := json.Marshal(info)
