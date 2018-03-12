@@ -152,6 +152,26 @@ func getDiskInfo() map[string]interface{} {
 	return info
 }
 
+func getProcessInfo(proc *process.Process) map[string]interface{} {
+	processInfo := make(map[string]interface{})
+	processInfo["pid"] = proc.Pid
+	processInfo["name"], _ = proc.Name()
+	processInfo["status"], _ = proc.Status()
+	processInfo["cpuPercent"], _ = proc.CPUPercent()
+	if times, err := proc.Times(); err == nil {
+		if times != nil {
+			processInfo["cpuTimes"] = times.Total()
+		}
+	}
+	processInfo["memoryPercent"], _ = proc.MemoryPercent()
+	processInfo["create_time"], _ = proc.CreateTime()
+	processInfo["workspace"], _ = proc.Cwd()
+	processInfo["execPath"], _ = proc.Exe()
+	processInfo["owner"], _ = proc.Username()
+	processInfo["cmdLine"], _ = proc.Cmdline()
+	return processInfo
+}
+
 func getProcsInfo() map[string]interface{} {
 	var procs []int32
 	var err1 error
@@ -160,24 +180,14 @@ func getProcsInfo() map[string]interface{} {
 		return info
 	}
 	procInfo := make(map[string]interface{})
-	for pid := range procs {
+	for _, pid := range procs {
 		proc, _ := process.NewProcess(int32(pid))
-		processInfo := make(map[string]interface{})
-		processInfo["pid"] = pid
-		processInfo["name"], _ = proc.Name()
-		processInfo["status"], _ = proc.Status()
-		processInfo["cpuPercent"], _ = proc.CPUPercent()
-		if times, err := proc.Times(); err == nil {
-			if times != nil {
-				processInfo["cpuTimes"] = times.Total()
-			}
-		}
-		processInfo["memoryPercent"], _ = proc.MemoryPercent()
-		processInfo["create_time"], _ = proc.CreateTime()
-		processInfo["workspace"], _ = proc.Cwd()
-		processInfo["execPath"], _ = proc.Exe()
-		processInfo["owner"], _ = proc.Username()
-		procInfo[strconv.Itoa(int(pid))] = processInfo
+		procInfo[strconv.Itoa(int(pid))] = getProcessInfo(proc)
+		//if childProcesses, err := proc.Children(); err == nil && childProcesses != nil && len(childProcesses) > 0 {
+		//	for _, p := range childProcesses {
+		//		procInfo[strconv.Itoa(int(p.Pid))] = getProcessInfo(p)
+		//	}
+		//}
 	}
 	info["procInfo"] = procInfo
 	return info
