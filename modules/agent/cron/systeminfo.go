@@ -183,11 +183,6 @@ func getProcsInfo() map[string]interface{} {
 	for _, pid := range procs {
 		proc, _ := process.NewProcess(int32(pid))
 		procInfo[strconv.Itoa(int(pid))] = getProcessInfo(proc)
-		//if childProcesses, err := proc.Children(); err == nil && childProcesses != nil && len(childProcesses) > 0 {
-		//	for _, p := range childProcesses {
-		//		procInfo[strconv.Itoa(int(p.Pid))] = getProcessInfo(p)
-		//	}
-		//}
 	}
 	info["procInfo"] = procInfo
 	return info
