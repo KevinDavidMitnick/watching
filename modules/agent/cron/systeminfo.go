@@ -27,6 +27,8 @@ import (
 	"github.com/shirou/gopsutil/net"
 	"github.com/shirou/gopsutil/process"
 	"github.com/toolkits/net/httplib"
+	"log"
+	gonet "net"
 	"os/exec"
 	"strconv"
 	"strings"
@@ -104,18 +106,43 @@ func getCpuInfo() map[string]interface{} {
 	return info
 }
 
+func ipv4MaskString(m []byte) string {
+	if len(m) != 4 {
+		panic("ipv4Mask: len must be 4 bytes")
+	}
+
+	return fmt.Sprintf("%d.%d.%d.%d", m[0], m[1], m[2], m[3])
+}
+
 func getInterfaceInfo() map[string]interface{} {
+	defer func() {
+		if err := recover(); err != nil {
+			fmt.Println(err)
+		}
+	}()
 	interfaceInfo, err := net.Interfaces()
 	infos := make(map[string]map[string]string)
 	if err == nil && len(interfaceInfo) != 0 {
 		for _, info := range interfaceInfo {
-			addrs := ""
+			ipAddr4 := ""
+			ipAddr6 := ""
+			netmask := ""
 			for _, addr := range info.Addrs {
-				addrs += "," + addr.Addr
+				if strings.Contains(addr.Addr, ":") {
+					ipAddr6 = addr.Addr
+				}
+				if strings.Contains(addr.Addr, ".") {
+					ip, ipv4Net, err := gonet.ParseCIDR(addr.Addr)
+					if err != nil {
+						log.Fatal(err)
+					}
+					ipAddr4 = fmt.Sprintf("%s", ip)
+					netmask = ipv4MaskString(ipv4Net.Mask)
+				}
 			}
 			infos[info.Name] = map[string]string{"name": info.Name,
 				"mtu": strconv.Itoa(info.MTU), "hardwareAddr": info.HardwareAddr,
-				"ipAddr": addrs,
+				"ipAddr4": ipAddr4, "ipAddr6": ipAddr6, "netmask": netmask, "flags": strings.Join(info.Flags, ","),
 			}
 		}
 		info["interfaceInfo"] = infos
