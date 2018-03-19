@@ -239,6 +239,41 @@ func MetricQuery(c *gin.Context) {
 	return
 }
 
+func MetricQueryList(c *gin.Context) {
+	filePath := viper.GetString("metric_list_file")
+	if filePath == "" {
+		filePath = "./data/metric"
+	}
+	data, err := ioutil.ReadFile(filePath)
+	if err != nil {
+		h.JSONR(c, badstatus, err)
+		return
+	}
+
+	metricsList := strings.Split(string(data), "\n")
+	metricsMap := make(map[string][]string)
+	for _, v := range metricsList {
+		m := strings.Split(v, ".")
+		fMetric := m[0]
+		sMetric := m[1:]
+		if _, ok := metricsMap[fMetric]; ok {
+			metricsMap[fMetric] = append(metricsMap[fMetric],
+				strings.Join(sMetric, "."))
+		} else {
+			metricsMap[fMetric] = []string{strings.Join(sMetric, ".")}
+		}
+	}
+
+	metrics := make([]map[string][]string, 0)
+	for k, v := range metricsMap {
+		metricItem := make(map[string][]string)
+		metricItem[k] = v
+		metrics = append(metrics, metricItem)
+	}
+	h.JSONR(c, metrics)
+	return
+}
+
 type APICreateStrategyGroupInput struct {
 	Name  string `json:"name" binding:"required"`
 	TplId int64  `json:"tpl_id" binding:"required"`
