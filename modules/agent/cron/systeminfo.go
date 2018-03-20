@@ -226,7 +226,7 @@ func GetAllInfo() string {
 	getMemInfo()
 	getInterfaceInfo()
 	getDiskInfo()
-	getProcsInfo()
+	//getProcsInfo()
 
 	var data []byte
 	data, err := json.Marshal(info)
