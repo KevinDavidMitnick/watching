@@ -260,6 +260,7 @@ func EndpointCounterRegexpQuery(c *gin.Context) {
 				current = ""
 			}
 
+			classification := classify(c.Counter, current)
 			countersResp = append(countersResp, map[string]interface{}{
 				"endpoint_id":      c.EndpointID,
 				"counter":          c.Counter,
@@ -267,6 +268,7 @@ func EndpointCounterRegexpQuery(c *gin.Context) {
 				"step":             c.Step,
 				"type":             c.Type,
 				"counter_alias_id": currid,
+				"classification":   classification,
 			})
 		}
 		h.JSONR(c, countersResp)
@@ -650,4 +652,33 @@ func DeleteCounterAlias(c *gin.Context) {
 	}
 	h.JSONR(c, fmt.Sprintf("counter alias:%v has been deleted", counterID))
 	return
+}
+
+func classify(counter, alias string) map[string]interface{} {
+	counterList := strings.SplitN(counter, "/", 2)
+	metrics := counterList[0]
+	var tags string
+	if len(counterList) > 1 {
+		tags = counterList[1]
+	} else {
+		tags = ""
+	}
+	metricsSlice := strings.Split(metrics, ".")
+	fMetric := metricsSlice[0]
+	sMetric := metricsSlice[1:]
+
+	class := make(map[string]interface{})
+	child := ""
+	if alias != "" {
+		class["name"] = fMetric
+		class["child"] = map[string]string{"name": alias, "child": child}
+	} else {
+		class["name"] = fMetric
+		if tags != "" {
+			child = tags
+		}
+		sMetricStr := strings.Join(sMetric, ".")
+		class["child"] = map[string]string{"name": sMetricStr, "child": child}
+	}
+	return class
 }

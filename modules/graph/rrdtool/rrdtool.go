@@ -71,7 +71,7 @@ func Start() {
 
 // RRA.Point.Size
 const (
-	RRA1PointCnt   = 10080 // 1m一个点存12h *2 *7
+	//RRA1PointCnt   = 4320 // 1m一个点存12h *2 *3
 	RRA5PointCnt   = 576   // 5m一个点存2d
 	RRA20PointCnt  = 504   // 20m一个点存7d
 	RRA180PointCnt = 766   // 3h一个点存3month
@@ -86,8 +86,10 @@ func create(filename string, item *cmodel.GraphItem) error {
 	c := rrdlite.NewCreator(filename, start, step)
 	c.DS("metric", item.DsType, item.Heartbeat, item.Min, item.Max)
 
+	cfg := g.Config()
+	RRA1PointCnt := cfg.RRD.RRA
 	// 设置各种归档策略
-	// 1分钟一个点存 12小时
+	// 默认1分钟一个点存 3d
 	c.RRA("AVERAGE", 0, 1, RRA1PointCnt)
 
 	// 5m一个点存2d

@@ -40,6 +40,7 @@ type RpcConfig struct {
 
 type RRDConfig struct {
 	Storage string `json:"storage"`
+	RRA     int    `json:"rra"`
 }
 
 type DBConfig struct {
