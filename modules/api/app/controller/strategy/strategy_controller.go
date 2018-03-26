@@ -253,6 +253,9 @@ func MetricQueryList(c *gin.Context) {
 	metricsList := strings.Split(string(data), "\n")
 	metricsMap := make(map[string][]string)
 	for _, v := range metricsList {
+		if v == "" {
+			continue
+		}
 		m := strings.Split(v, ".")
 		fMetric := m[0]
 		sMetric := m[1:]
