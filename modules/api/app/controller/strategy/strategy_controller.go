@@ -26,6 +26,7 @@ import (
 	"github.com/gin-gonic/gin"
 	h "github.com/open-falcon/falcon-plus/modules/api/app/helper"
 	f "github.com/open-falcon/falcon-plus/modules/api/app/model/falcon_portal"
+	m "github.com/open-falcon/falcon-plus/modules/api/app/model/graph"
 	"github.com/spf13/viper"
 )
 
@@ -240,17 +241,14 @@ func MetricQuery(c *gin.Context) {
 }
 
 func MetricQueryList(c *gin.Context) {
-	filePath := viper.GetString("metric_list_file")
-	if filePath == "" {
-		filePath = "./data/metric"
-	}
-	data, err := ioutil.ReadFile(filePath)
-	if err != nil {
-		h.JSONR(c, badstatus, err)
-		return
+	var me []m.MetricEndpoint
+	var metricsList []string
+	db.Graph.Table("metric_endpoint").Select("DISTINCT metric").Scan(&me)
+
+	for _, v := range me {
+		metricsList = append(metricsList, v.Metric)
 	}
 
-	metricsList := strings.Split(string(data), "\n")
 	metricsMap := make(map[string][]string)
 	for _, v := range metricsList {
 		if v == "" {
