@@ -249,7 +249,7 @@ func EndpointCounterRegexpQuery(c *gin.Context) {
 			counerIdCache[counter] = counteralias.ID
 		}
 
-		countersResp := []interface{}{}
+		countersResp := make(map[string]interface{})
 		var current string
 		var currid uint = 0
 		for _, c := range counters {
@@ -260,16 +260,36 @@ func EndpointCounterRegexpQuery(c *gin.Context) {
 				current = ""
 			}
 
-			classification := classify(c.Counter, current)
-			countersResp = append(countersResp, map[string]interface{}{
+			counters := map[string]interface{}{
 				"endpoint_id":      c.EndpointID,
 				"counter":          c.Counter,
 				"counter_alias":    current,
 				"step":             c.Step,
 				"type":             c.Type,
 				"counter_alias_id": currid,
-				"classification":   classification,
-			})
+			}
+
+			counterTag := strings.SplitN(c.Counter, "/", 2)
+			cList := strings.SplitN(counterTag[0], ".", 2)
+
+			fName := cList[0]
+			var sName string
+			if len(counterTag) > 1 && len(cList) < 2 {
+				sName = counterTag[1]
+			} else if len(cList) > 1 {
+				sName = strings.SplitN(c.Counter, ".", 2)[1]
+			} else {
+				continue
+			}
+
+			if _, ok := countersResp[fName]; ok {
+				d1 := countersResp[fName].(map[string]interface{})
+				d1[sName] = counters
+			} else {
+				countersResp[fName] = map[string]interface{}{
+					sName: counters,
+				}
+			}
 		}
 		h.JSONR(c, countersResp)
 	}
@@ -652,33 +672,4 @@ func DeleteCounterAlias(c *gin.Context) {
 	}
 	h.JSONR(c, fmt.Sprintf("counter alias:%v has been deleted", counterID))
 	return
-}
-
-func classify(counter, alias string) map[string]interface{} {
-	counterList := strings.SplitN(counter, "/", 2)
-	metrics := counterList[0]
-	var tags string
-	if len(counterList) > 1 {
-		tags = counterList[1]
-	} else {
-		tags = ""
-	}
-	metricsSlice := strings.Split(metrics, ".")
-	fMetric := metricsSlice[0]
-	sMetric := metricsSlice[1:]
-
-	class := make(map[string]interface{})
-	child := ""
-	if alias != "" {
-		class["name"] = fMetric
-		class["child"] = map[string]string{"name": alias, "child": child}
-	} else {
-		class["name"] = fMetric
-		if tags != "" {
-			child = tags
-		}
-		sMetricStr := strings.Join(sMetric, ".")
-		class["child"] = map[string]string{"name": sMetricStr, "child": child}
-	}
-	return class
 }
