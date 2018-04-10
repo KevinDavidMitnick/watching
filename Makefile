@@ -44,7 +44,7 @@ fmt-check:
 	fi;
 
 $(CMD):
-	go build  -o bin/$@/falcon-$@ ./modules/$@
+	go build  -o bin/$@/opsultra-$@ ./modules/$@
 
 .PHONY: $(TARGET)
 $(TARGET): $(GOFILES)
