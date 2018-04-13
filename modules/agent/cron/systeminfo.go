@@ -61,6 +61,7 @@ func getHostInfo() map[string]interface{} {
 	hostInfo, err := host.Info()
 	if err == nil {
 		info["hostInfo"] = hostInfo
+		info["name"] = hostInfo.Hostname
 
 		// add all disk info
 		if os := hostInfo.OS; os != "" {
@@ -217,7 +218,8 @@ func getProcsInfo() map[string]interface{} {
 
 func GetAllInfo() string {
 	info = make(map[string]interface{})
-	info["status"] = "Passing"
+	info["uuid"] = g.Config().Hostname
+	info["tname"] = "Host"
 	info["timeout"] = g.Config().Consul.Timeout
 	info["timestamp"] = time.Now().Unix()
 	getHostInfo()
@@ -239,7 +241,7 @@ func GetAllInfo() string {
 
 func sendSystemInfoToConsul(consulUrl string, nodeId string, data string) {
 	if data != "" {
-		url := fmt.Sprintf("%s/v1/kv/host/%s/system?raw", consulUrl, nodeId)
+		url := fmt.Sprintf("%s/v1/kv/object/%s/system?raw", consulUrl, nodeId)
 		r := httplib.Put(url)
 		r.Body(data)
 		ret, err := r.String()
