@@ -18,6 +18,15 @@ import (
 	"bytes"
 	"encoding/json"
 	"fmt"
+	"log"
+	gonet "net"
+	"os/exec"
+	"strconv"
+	"strings"
+	"time"
+	"errors"
+	"io/ioutil"
+
 	"github.com/open-falcon/falcon-plus/modules/agent/g"
 	"github.com/shirou/gopsutil/cpu"
 	"github.com/shirou/gopsutil/disk"
@@ -27,12 +36,6 @@ import (
 	"github.com/shirou/gopsutil/net"
 	"github.com/shirou/gopsutil/process"
 	"github.com/toolkits/net/httplib"
-	"log"
-	gonet "net"
-	"os/exec"
-	"strconv"
-	"strings"
-	"time"
 )
 
 var (
@@ -60,7 +63,22 @@ func reportSystemInfo() {
 func getHostInfo() map[string]interface{} {
 	hostInfo, err := host.Info()
 	if err == nil {
-		info["hostInfo"] = hostInfo
+		uptime, _ := formatDeltatime(hostInfo.Uptime)
+		host := map[string]interface{}{
+			"hostname":             hostInfo.Hostname,
+			"uptime":               uptime,
+			"bootTime":             hostInfo.BootTime,
+			"procs":                hostInfo.Procs,
+			"os":                   hostInfo.OS,
+			"platform":             hostInfo.Platform,
+			"platformFamily":       hostInfo.PlatformFamily,
+			"platformVersion":      hostInfo.PlatformVersion,
+			"kernelVersion":        hostInfo.KernelVersion,
+			"virtualizationSystem": hostInfo.VirtualizationSystem,
+			"virtualizationRole":   hostInfo.VirtualizationRole,
+			"hostid":               hostInfo.HostID,
+		}
+		info["hostInfo"] = host
 		info["name"] = hostInfo.Hostname
 
 		// add all disk info
@@ -141,9 +159,19 @@ func getInterfaceInfo() map[string]interface{} {
 					netmask = ipv4MaskString(ipv4Net.Mask)
 				}
 			}
-			infos[info.Name] = map[string]string{"name": info.Name,
-				"mtu": strconv.Itoa(info.MTU), "hardwareAddr": info.HardwareAddr,
-				"ipAddr4": ipAddr4, "ipAddr6": ipAddr6, "netmask": netmask, "flags": strings.Join(info.Flags, ","),
+			speed, err := getInterfaceSpeed(info.Name)
+			if err != nil {
+				log.Printf("Failed to get if %s speed.", info.Name)
+			}
+			infos[info.Name] = map[string]string{
+				"name":         info.Name,
+				"mtu":          strconv.Itoa(info.MTU),
+				"hardwareAddr": info.HardwareAddr,
+				"ipAddr4":      ipAddr4,
+				"ipAddr6":      ipAddr6,
+				"netmask":      netmask,
+				"speed":        speed,
+				"flags":        strings.Join(info.Flags, ","),
 			}
 		}
 		info["interfaceInfo"] = infos
@@ -155,6 +183,10 @@ func getMemInfo() map[string]interface{} {
 	memInfo, err := mem.VirtualMemory()
 	if err == nil {
 		info["memInfo"] = memInfo
+	}
+	swapInfo, err := mem.SwapMemory()
+	if err == nil {
+		info["swapInfo"] = swapInfo
 	}
 	return info
 }
@@ -247,4 +279,37 @@ func sendSystemInfoToConsul(consulUrl string, nodeId string, data string) {
 		ret, err := r.String()
 		fmt.Println(ret, err)
 	}
+}
+
+func formatDeltatime(sec uint64) (string, error){
+	if sec < 0 {
+		err := errors.New("The deltatime must be positive.")
+		return "", err
+	}
+	days := sec / (60 * 60 * 24)
+	hours := (sec % (60 * 60 * 24)) / (60 * 60)
+	mins := (sec % (60 * 60)) / 60
+	secs := sec % 60
+	formatTime := fmt.Sprintf("%d days %d:%d:%d", days, hours, mins, secs)
+	return formatTime, nil
+}
+
+func getInterfaceSpeed(inf string) (string, error) {
+	ifSpeedFile := fmt.Sprintf("/sys/class/net/%s/speed", inf)
+
+	data, err := ioutil.ReadFile(ifSpeedFile)
+	if err != nil {
+		fmt.Println(err)
+		return "Not support!", err
+	}
+	//speed := string(data)
+	var speed string
+	s := strings.TrimSpace(string(data))
+	if s == "-1" {
+		speed = "Unknown"
+	} else {
+		speed = s + "Mb/s"
+	}
+	fmt.Println(speed)
+	return speed, err
 }
