@@ -97,7 +97,8 @@ func getHostInfo() map[string]interface{} {
 
 				diskStr := strings.TrimSpace(out.String())
 				if diskTotal, err := strconv.ParseInt(diskStr, 10, 64); err == nil {
-					info["diskTotal"] = diskTotal * 1024
+					//info["diskTotal"] = diskTotal * 1024
+					info["diskTotal"] = fmt.Sprintf("%d kB", diskTotal)
 				}
 			}
 
@@ -121,7 +122,7 @@ func getCpuInfo() map[string]interface{} {
 	cpuInfo, err3 := cpu.Info()
 	if err1 == nil && err2 == nil && err3 == nil {
 		info["cpuInfo"] = map[string]interface{}{
-			"usedPercent": usedPercent[0],
+			"usedPercent": formatPercent(usedPercent[0]),
 			"coreNumber":  coreNumber,
 			"modelName":   cpuInfo[0].ModelName,
 		}
@@ -187,11 +188,40 @@ func getInterfaceInfo() map[string]interface{} {
 func getMemInfo() map[string]interface{} {
 	memInfo, err := mem.VirtualMemory()
 	if err == nil {
-		info["memInfo"] = memInfo
+		mem := map[string]string{
+			"total":        convertByteToKByte(memInfo.Total),
+			"available":    convertByteToKByte(memInfo.Available),
+			"used":         convertByteToKByte(memInfo.Used),
+			"usedPercent":  formatPercent(memInfo.UsedPercent),
+			"free":         convertByteToKByte(memInfo.Free),
+			"active":       convertByteToKByte(memInfo.Active),
+			"inactive":     convertByteToKByte(memInfo.Inactive),
+			"wired":        convertByteToKByte(memInfo.Wired),
+			"buffers":      convertByteToKByte(memInfo.Buffers),
+			"cached":       convertByteToKByte(memInfo.Cached),
+			"writeback":    convertByteToKByte(memInfo.Writeback),
+			"dirty":        convertByteToKByte(memInfo.Dirty),
+			"writebacktmp": convertByteToKByte(memInfo.WritebackTmp),
+			"shared":       convertByteToKByte(memInfo.Shared),
+			"slab":         convertByteToKByte(memInfo.Slab),
+			"pagetables":   convertByteToKByte(memInfo.PageTables),
+			"swapcached":   convertByteToKByte(memInfo.SwapCached),
+			"commitlimit":  convertByteToKByte(memInfo.CommitLimit),
+			"committedas":  convertByteToKByte(memInfo.CommittedAS),
+		}
+		info["memInfo"] = mem
 	}
 	swapInfo, err := mem.SwapMemory()
 	if err == nil {
-		info["swapInfo"] = swapInfo
+		swap := map[string]string{
+			"total": convertByteToKByte(swapInfo.Total),
+			"used":  convertByteToKByte(swapInfo.Used),
+			"free":  convertByteToKByte(swapInfo.Free),
+			"usedPercent": formatPercent(swapInfo.UsedPercent),
+			"sin":   convertByteToKByte(swapInfo.Sin),
+			"sout":  convertByteToKByte(swapInfo.Sout),
+		}
+		info["swapInfo"] = swap
 	}
 	return info
 }
@@ -207,14 +237,14 @@ func getDiskInfo() map[string]interface{} {
 					"device": diskInfo.Device,
 					"mountpoint": diskInfo.Mountpoint,
 					"fstype": diskInfo.Fstype,
-					"total": strconv.FormatUint(usage.Total, 10),
-					"free": strconv.FormatUint(usage.Free, 10),
-					"used": strconv.FormatUint(usage.Used, 10),
-					"usedPercent": strconv.FormatFloat(usage.UsedPercent, 'f', -1, 64),
-					"inodesTotal": strconv.FormatUint(usage.InodesTotal, 10),
-					"inodesUsed": strconv.FormatUint(usage.InodesUsed, 10),
-					"inodesFree": strconv.FormatUint(usage.InodesFree, 10),
-					"inodesUsedPercent": strconv.FormatFloat(usage.InodesUsedPercent, 'f', -1, 64),
+					"total": convertByteToKByte(usage.Total),
+					"free": convertByteToKByte(usage.Free),
+					"used": convertByteToKByte(usage.Used),
+					"usedPercent": formatPercent(usage.UsedPercent),
+					"inodesTotal": convertByteToKByte(usage.InodesTotal),
+					"inodesUsed": convertByteToKByte(usage.InodesUsed),
+					"inodesFree": convertByteToKByte(usage.InodesFree),
+					"inodesUsedPercent": formatPercent(usage.InodesUsedPercent),
 				}
 				infos = append(infos, infoMap)
 			}
@@ -324,4 +354,13 @@ func getInterfaceSpeed(inf string) (string, error) {
 	}
 	fmt.Println(speed)
 	return speed, err
+}
+
+func formatPercent(f float64) string {
+	return fmt.Sprintf("%.2f", f)
+}
+
+func convertByteToKByte(b uint64) string {
+	kb := b / 1024
+	return fmt.Sprintf("%d kB", kb)
 }
