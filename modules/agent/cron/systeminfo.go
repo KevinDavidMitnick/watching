@@ -120,7 +120,11 @@ func getCpuInfo() map[string]interface{} {
 	coreNumber, err2 := cpu.Counts(false)
 	cpuInfo, err3 := cpu.Info()
 	if err1 == nil && err2 == nil && err3 == nil {
-		info["cpuInfo"] = map[string]interface{}{"usedPercent": usedPercent[0], "coreNumber": coreNumber, "modelName": cpuInfo[0].ModelName}
+		info["cpuInfo"] = map[string]interface{}{
+			"usedPercent": usedPercent[0],
+			"coreNumber":  coreNumber,
+			"modelName":   cpuInfo[0].ModelName,
+		}
 	}
 	return info
 }
@@ -140,7 +144,7 @@ func getInterfaceInfo() map[string]interface{} {
 		}
 	}()
 	interfaceInfo, err := net.Interfaces()
-	infos := make(map[string]map[string]string)
+	infos := make([]interface{}, 0)
 	if err == nil && len(interfaceInfo) != 0 {
 		for _, info := range interfaceInfo {
 			ipAddr4 := ""
@@ -163,7 +167,7 @@ func getInterfaceInfo() map[string]interface{} {
 			if err != nil {
 				log.Printf("Failed to get if %s speed.", info.Name)
 			}
-			infos[info.Name] = map[string]string{
+			ifMap := map[string]string{
 				"name":         info.Name,
 				"mtu":          strconv.Itoa(info.MTU),
 				"hardwareAddr": info.HardwareAddr,
@@ -173,6 +177,7 @@ func getInterfaceInfo() map[string]interface{} {
 				"speed":        speed,
 				"flags":        strings.Join(info.Flags, ","),
 			}
+			infos = append(infos, ifMap)
 		}
 		info["interfaceInfo"] = infos
 	}
@@ -193,18 +198,25 @@ func getMemInfo() map[string]interface{} {
 
 func getDiskInfo() map[string]interface{} {
 	diskInfos, err := disk.Partitions(true)
-	infos := make(map[string]map[string]string)
+	infos := make([]interface{}, 0)
 	if err == nil && len(diskInfos) != 0 {
 		for _, diskInfo := range diskInfos {
 			usage, err := disk.Usage(diskInfo.Mountpoint)
 			if err == nil && usage != nil {
-				infos[diskInfo.Mountpoint] = map[string]string{"device": diskInfo.Device,
-					"mountpoint": diskInfo.Mountpoint, "fstype": diskInfo.Fstype,
-					"total": strconv.FormatUint(usage.Total, 10), "free": strconv.FormatUint(usage.Free, 10), "used": strconv.FormatUint(usage.Used, 10),
-					"usedPercent": strconv.FormatFloat(usage.UsedPercent, 'f', -1, 64), "inodesTotal": strconv.FormatUint(usage.InodesTotal, 10),
-					"inodesUsed": strconv.FormatUint(usage.InodesUsed, 10), "inodesFree": strconv.FormatUint(usage.InodesFree, 10),
+				infoMap := map[string]string{
+					"device": diskInfo.Device,
+					"mountpoint": diskInfo.Mountpoint,
+					"fstype": diskInfo.Fstype,
+					"total": strconv.FormatUint(usage.Total, 10),
+					"free": strconv.FormatUint(usage.Free, 10),
+					"used": strconv.FormatUint(usage.Used, 10),
+					"usedPercent": strconv.FormatFloat(usage.UsedPercent, 'f', -1, 64),
+					"inodesTotal": strconv.FormatUint(usage.InodesTotal, 10),
+					"inodesUsed": strconv.FormatUint(usage.InodesUsed, 10),
+					"inodesFree": strconv.FormatUint(usage.InodesFree, 10),
 					"inodesUsedPercent": strconv.FormatFloat(usage.InodesUsedPercent, 'f', -1, 64),
 				}
+				infos = append(infos, infoMap)
 			}
 		}
 	}
