@@ -17,15 +17,15 @@ package cron
 import (
 	"bytes"
 	"encoding/json"
+	"errors"
 	"fmt"
+	"io/ioutil"
 	"log"
 	gonet "net"
 	"os/exec"
 	"strconv"
 	"strings"
 	"time"
-	"errors"
-	"io/ioutil"
 
 	"github.com/open-falcon/falcon-plus/modules/agent/g"
 	"github.com/shirou/gopsutil/cpu"
@@ -214,12 +214,12 @@ func getMemInfo() map[string]interface{} {
 	swapInfo, err := mem.SwapMemory()
 	if err == nil {
 		swap := map[string]string{
-			"total": convertByteToKByte(swapInfo.Total),
-			"used":  convertByteToKByte(swapInfo.Used),
-			"free":  convertByteToKByte(swapInfo.Free),
+			"total":       convertByteToKByte(swapInfo.Total),
+			"used":        convertByteToKByte(swapInfo.Used),
+			"free":        convertByteToKByte(swapInfo.Free),
 			"usedPercent": formatPercent(swapInfo.UsedPercent),
-			"sin":   convertByteToKByte(swapInfo.Sin),
-			"sout":  convertByteToKByte(swapInfo.Sout),
+			"sin":         convertByteToKByte(swapInfo.Sin),
+			"sout":        convertByteToKByte(swapInfo.Sout),
 		}
 		info["swapInfo"] = swap
 	}
@@ -234,16 +234,16 @@ func getDiskInfo() map[string]interface{} {
 			usage, err := disk.Usage(diskInfo.Mountpoint)
 			if err == nil && usage != nil {
 				infoMap := map[string]string{
-					"device": diskInfo.Device,
-					"mountpoint": diskInfo.Mountpoint,
-					"fstype": diskInfo.Fstype,
-					"total": convertByteToKByte(usage.Total),
-					"free": convertByteToKByte(usage.Free),
-					"used": convertByteToKByte(usage.Used),
-					"usedPercent": formatPercent(usage.UsedPercent),
-					"inodesTotal": convertByteToKByte(usage.InodesTotal),
-					"inodesUsed": convertByteToKByte(usage.InodesUsed),
-					"inodesFree": convertByteToKByte(usage.InodesFree),
+					"device":            diskInfo.Device,
+					"mountpoint":        diskInfo.Mountpoint,
+					"fstype":            diskInfo.Fstype,
+					"total":             convertByteToKByte(usage.Total),
+					"free":              convertByteToKByte(usage.Free),
+					"used":              convertByteToKByte(usage.Used),
+					"usedPercent":       formatPercent(usage.UsedPercent),
+					"inodesTotal":       convertByteToKByte(usage.InodesTotal),
+					"inodesUsed":        convertByteToKByte(usage.InodesUsed),
+					"inodesFree":        convertByteToKByte(usage.InodesFree),
 					"inodesUsedPercent": formatPercent(usage.InodesUsedPercent),
 				}
 				infos = append(infos, infoMap)
@@ -315,7 +315,7 @@ func GetAllInfo() string {
 
 func sendSystemInfoToConsul(consulUrl string, nodeId string, data string) {
 	if data != "" {
-		url := fmt.Sprintf("%s/v1/kv/object/%s/system?raw", consulUrl, nodeId)
+		url := fmt.Sprintf("%s/kv/push?url=/v1/kv/object/%s/system", consulUrl, nodeId)
 		r := httplib.Put(url)
 		r.Body(data)
 		ret, err := r.String()
@@ -323,7 +323,7 @@ func sendSystemInfoToConsul(consulUrl string, nodeId string, data string) {
 	}
 }
 
-func formatDeltatime(sec uint64) (string, error){
+func formatDeltatime(sec uint64) (string, error) {
 	if sec < 0 {
 		err := errors.New("The deltatime must be positive.")
 		return "", err
