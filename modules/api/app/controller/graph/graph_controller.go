@@ -215,6 +215,90 @@ func EndpointCounterRegexpQuery(c *gin.Context) {
 		} else {
 			eids = fmt.Sprintf("(%s)", eids)
 		}
+		var counters []m.EndpointCounter
+		dt := db.Graph.Table("endpoint_counter").Select("endpoint_id, counter, step, type").Where(fmt.Sprintf("endpoint_id IN %s", eids))
+		if metricQuery != "" {
+			qs := strings.Split(metricQuery, " ")
+			if len(qs) > 0 {
+				for _, term := range qs {
+					dt = dt.Where("counter regexp ?", strings.TrimSpace(term))
+				}
+			}
+		}
+		dt = dt.Limit(limit).Offset(offset).Scan(&counters)
+		if dt.Error != nil {
+			h.JSONR(c, http.StatusBadRequest, dt.Error)
+			return
+		}
+		/*get counter alias*/
+		var counteraliass []m.CounterAlias
+		var gdt *gorm.DB
+		gdt = db.Graph.Table("counter_alias").Find(&counteraliass)
+		if gdt.Error != nil {
+			h.JSONR(c, expecstatus, dt.Error)
+			return
+		}
+		cache := make(map[string]string, 0)
+		counerIdCache := make(map[string]uint, 0)
+		for _, counteralias := range counteraliass {
+			counter := counteralias.Counters
+			alias := counteralias.Alias
+			cache[counter] = alias
+			counerIdCache[counter] = counteralias.ID
+		}
+		countersResp := []interface{}{}
+		var current string
+		var currid uint = 0
+		for _, c := range counters {
+			if v, ok := cache[c.Counter]; ok {
+				current = v
+				currid = counerIdCache[c.Counter]
+			} else {
+				current = ""
+			}
+			countersResp = append(countersResp, map[string]interface{}{
+				"endpoint_id":      c.EndpointID,
+				"counter":          c.Counter,
+				"counter_alias":    current,
+				"step":             c.Step,
+				"type":             c.Type,
+				"counter_alias_id": currid,
+			})
+		}
+		h.JSONR(c, countersResp)
+	}
+	return
+}
+
+func ClassifyCounterRegexpQuery(c *gin.Context) {
+	eid := c.DefaultQuery("eid", "")
+	metricQuery := c.DefaultQuery("metricQuery", ".+")
+	limitTmp := c.DefaultQuery("limit", "3000")
+	limit, err := strconv.Atoi(limitTmp)
+	if err != nil {
+		h.JSONR(c, http.StatusBadRequest, err)
+		return
+	}
+	pageTmp := c.DefaultQuery("page", "1")
+	page, err := strconv.Atoi(pageTmp)
+	if err != nil {
+		h.JSONR(c, http.StatusBadRequest, err)
+		return
+	}
+	var offset int = 0
+	if page > 1 {
+		offset = (page - 1) * limit
+	}
+	if eid == "" {
+		h.JSONR(c, http.StatusBadRequest, "eid is missing")
+	} else {
+		eids := utils.ConverIntStringToList(eid)
+		if eids == "" {
+			h.JSONR(c, http.StatusBadRequest, "input error, please check your input info.")
+			return
+		} else {
+			eids = fmt.Sprintf("(%s)", eids)
+		}
 
 		var counters []m.EndpointCounter
 		dt := db.Graph.Table("endpoint_counter").Select("endpoint_id, counter, step, type").Where(fmt.Sprintf("endpoint_id IN %s", eids))

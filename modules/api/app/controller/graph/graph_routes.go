@@ -34,6 +34,7 @@ func Routes(r *gin.Engine) {
 	authapi.GET("/graph/endpointobj", EndpointObjGet)
 	authapi.GET("/graph/endpoint", EndpointRegexpQuery)
 	authapi.GET("/graph/endpoint_counter", EndpointCounterRegexpQuery)
+	authapi.GET("/graph/classify_counter", ClassifyCounterRegexpQuery)
 	authapi.POST("/graph/history", QueryGraphDrawData)
 	authapi.POST("/graph/lastpoint", QueryGraphLastPoint)
 	authapi.DELETE("/graph/endpoint", DeleteGraphEndpoint)
