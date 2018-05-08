@@ -20,6 +20,7 @@ import (
 	"net/http"
 	_ "net/http/pprof"
 
+	"github.com/gorilla/mux"
 	"github.com/open-falcon/falcon-plus/modules/gateway/g"
 )
 
@@ -41,12 +42,15 @@ func startHttpServer() {
 	if addr == "" {
 		return
 	}
+	r := mux.NewRouter()
 
 	configCommonRoutes()
 	configProcHttpRoutes()
 	configApiHttpRoutes()
+	configConsulHttpRoutes(r)
 
 	s := &http.Server{
+		Handler:        r,
 		Addr:           addr,
 		MaxHeaderBytes: 1 << 30,
 	}
