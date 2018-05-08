@@ -44,6 +44,7 @@ func startHttpServer() {
 	configCommonRoutes()
 	configProcHttpRoutes()
 	configApiHttpRoutes()
+	configKvHttpRoutes()
 
 	s := &http.Server{
 		Addr:           addr,

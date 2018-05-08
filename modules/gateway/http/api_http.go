@@ -44,3 +44,22 @@ func configApiHttpRoutes() {
 		RenderDataJson(w, reply)
 	})
 }
+
+func configKvHttpRoutes() {
+	http.HandleFunc("/kv/push", func(w http.ResponseWriter, req *http.Request) {
+		if req.ContentLength == 0 {
+			http.Error(w, "blank body", http.StatusBadRequest)
+			return
+		}
+
+		decoder := json.NewDecoder(req.Body)
+		var data string
+		err := decoder.Decode(&data)
+		if err != nil {
+			http.Error(w, "decode error", http.StatusBadRequest)
+			return
+		}
+
+		RenderDataJson(w, data)
+	})
+}
