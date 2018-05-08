@@ -49,12 +49,18 @@ type TransferConfig struct {
 	Cluster     map[string]string `json:"cluster"`
 }
 
+type ConsulConfig struct {
+	Enabled bool   `json:"enabled"`
+	Addr    string `json:"addr"`
+}
+
 type GlobalConfig struct {
 	Debug    bool            `json:"debug"`
 	Http     *HttpConfig     `json:"http"`
 	Rpc      *RpcConfig      `json:"rpc"`
 	Socket   *SocketConfig   `json:"socket"`
 	Transfer *TransferConfig `json:"transfer"`
+	Consul   *ConsulConfig   `json:"consul"`
 }
 
 var (

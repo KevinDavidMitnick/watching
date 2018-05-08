@@ -16,10 +16,13 @@ package http
 
 import (
 	"encoding/json"
+	"github.com/toolkits/net/httplib"
 	"net/http"
+	"strings"
 
 	cmodel "github.com/open-falcon/falcon-plus/common/model"
 
+	"github.com/open-falcon/falcon-plus/modules/gateway/g"
 	trpc "github.com/open-falcon/falcon-plus/modules/gateway/receiver/rpc"
 )
 
@@ -52,6 +55,11 @@ func configKvHttpRoutes() {
 			return
 		}
 
+		if !g.Config().Consul.Enabled {
+			http.Error(w, "not enable consul in gateway", http.StatusBadRequest)
+			return
+		}
+
 		decoder := json.NewDecoder(req.Body)
 		var data string
 		err := decoder.Decode(&data)
@@ -59,7 +67,21 @@ func configKvHttpRoutes() {
 			http.Error(w, "decode error", http.StatusBadRequest)
 			return
 		}
+		err = req.ParseForm()
+		if err != nil {
+			http.Error(w, "param error", http.StatusBadRequest)
+			return
+		}
+		url := req.Form.Get("url")
+		if !strings.Contains(url, "/v1/kv") {
+			http.Error(w, "param pattern error", http.StatusBadRequest)
+			return
+		}
+		url = g.Config().Consul.Addr + url + "?raw"
 
-		RenderDataJson(w, data)
+		r := httplib.Put(url)
+		r.Body(data)
+		ret, _ := r.String()
+		RenderDataJson(w, ret)
 	})
 }
