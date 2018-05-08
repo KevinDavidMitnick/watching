@@ -17,6 +17,7 @@ package http
 import (
 	"encoding/json"
 	"github.com/toolkits/net/httplib"
+	"io/ioutil"
 	"net/http"
 	"strings"
 
@@ -60,11 +61,9 @@ func configKvHttpRoutes() {
 			return
 		}
 
-		decoder := json.NewDecoder(req.Body)
-		var data string
-		err := decoder.Decode(&data)
+		data, err := ioutil.ReadAll(req.Body)
 		if err != nil {
-			http.Error(w, "decode error", http.StatusBadRequest)
+			http.Error(w, "read data error", http.StatusBadRequest)
 			return
 		}
 		err = req.ParseForm()
