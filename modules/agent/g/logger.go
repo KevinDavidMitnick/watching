@@ -18,14 +18,24 @@ import log "github.com/Sirupsen/logrus"
 
 func InitLog(level string) (err error) {
 	switch level {
-	case "info":
-		log.SetLevel(log.InfoLevel)
 	case "debug":
 		log.SetLevel(log.DebugLevel)
+	case "info":
+		log.SetLevel(log.InfoLevel)
 	case "warn":
 		log.SetLevel(log.WarnLevel)
+	case "error":
+		log.SetLevel(log.ErrorLevel)
 	default:
-		log.Fatal("log conf only allow [info, debug, warn], please check your confguire")
+		log.Fatal("log conf only allow [debug, info,warn,error], please check your confguire")
 	}
+
+	file, err := os.OpenFile("logs/opsultra-agent.log", os.O_CREATE|os.O_WRONLY|os.O_APPEND, 0666)
+	if err == nil {
+		log.SetOutput(file)
+	} else {
+		log.Debug("Failed to log to file,using default stderr")
+	}
+
 	return
 }
