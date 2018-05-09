@@ -14,7 +14,10 @@
 
 package config
 
-import log "github.com/Sirupsen/logrus"
+import (
+	log "github.com/Sirupsen/logrus"
+	"os"
+)
 
 func InitLog(level string) (err error) {
 	switch level {
