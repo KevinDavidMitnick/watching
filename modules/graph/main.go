@@ -86,7 +86,7 @@ func main() {
 	if g.Config().Debug {
 		g.InitLog("debug")
 	} else {
-		g.InitLog("info")
+		g.InitLog("error")
 		gin.SetMode(gin.ReleaseMode)
 	}
 
