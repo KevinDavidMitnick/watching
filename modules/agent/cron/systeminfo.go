@@ -19,8 +19,8 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	log "github.com/Sirupsen/logrus"
 	"io/ioutil"
-	"log"
 	gonet "net"
 	"os/exec"
 	"strconv"
@@ -141,7 +141,7 @@ func ipv4MaskString(m []byte) string {
 func getInterfaceInfo() map[string]interface{} {
 	defer func() {
 		if err := recover(); err != nil {
-			fmt.Println(err)
+			log.Println(err)
 		}
 	}()
 	interfaceInfo, err := net.Interfaces()
@@ -319,7 +319,7 @@ func sendSystemInfoToConsul(consulUrl string, nodeId string, data string) {
 		r := httplib.Put(url)
 		r.Body(data)
 		ret, err := r.String()
-		fmt.Println(ret, err)
+		log.Println(ret, err)
 	}
 }
 
@@ -341,7 +341,7 @@ func getInterfaceSpeed(inf string) (string, error) {
 
 	data, err := ioutil.ReadFile(ifSpeedFile)
 	if err != nil {
-		fmt.Println(err)
+		log.Println(err)
 		return "Not support!", err
 	}
 	//speed := string(data)
@@ -352,7 +352,7 @@ func getInterfaceSpeed(inf string) (string, error) {
 	} else {
 		speed = s + "Mb/s"
 	}
-	fmt.Println(speed)
+	log.Println(speed)
 	return speed, err
 }
 
