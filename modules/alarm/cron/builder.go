@@ -37,9 +37,40 @@ type DataStruct struct {
 	Name *NameStruct `json:"data"`
 }
 
+// func BuildCommonSMSContent(event *model.Event) string {
+// 	var data DataStruct
+// 	endpoint := event.Endpoint
+// 	addr := g.Config().CmdbConfig.Addr + "/" + event.Endpoint
+// 	request, _ := http.NewRequest("GET", addr, nil)
+// 	request.Header.Set("Content-Type", "application/json")
+// 	request.Header.Set("TIMEOUT", "10")
+
+// 	client := &http.Client{}
+// 	resp, err := client.Do(request)
+// 	if err == nil {
+// 		defer resp.Body.Close()
+// 		if body, err := ioutil.ReadAll(resp.Body); err == nil {
+// 			err := json.Unmarshal(body, &data)
+// 			if err == nil && data.Name != nil && data.Name.DisplayName != "" {
+// 				endpoint = string(data.Name.DisplayName)
+// 			}
+// 		}
+// 	}
+
+// 	// change by liucong format mail title
+// 	return fmt.Sprintf(
+// 		"[P%d][%s][0%d][%s][%s]",
+// 		event.Priority(),
+// 		event.Status,
+// 		event.CurrentStep,
+// 		endpoint,
+// 		event.Metric(),
+// 	)
+// }
+
 func BuildCommonSMSContent(event *model.Event) string {
 	var data DataStruct
-	endpoint := event.Endpoint
+	region := "unknown"
 	addr := g.Config().CmdbConfig.Addr + "/" + event.Endpoint
 	request, _ := http.NewRequest("GET", addr, nil)
 	request.Header.Set("Content-Type", "application/json")
@@ -52,20 +83,13 @@ func BuildCommonSMSContent(event *model.Event) string {
 		if body, err := ioutil.ReadAll(resp.Body); err == nil {
 			err := json.Unmarshal(body, &data)
 			if err == nil && data.Name != nil && data.Name.DisplayName != "" {
-				endpoint = string(data.Name.DisplayName)
+				region = data.Name.Region_name
 			}
 		}
 	}
 
 	// change by liucong format mail title
-	return fmt.Sprintf(
-		"[P%d][%s][0%d][%s][%s]",
-		event.Priority(),
-		event.Status,
-		event.CurrentStep,
-		endpoint,
-		event.Metric(),
-	)
+	return fmt.Sprintf("%s", region)
 }
 
 func BuildCommonIMContent(event *model.Event) string {
@@ -184,7 +208,7 @@ func BuildCommonMailContent(event *model.Event) string {
 		if body, err := ioutil.ReadAll(resp.Body); err == nil {
 			err := json.Unmarshal(body, &data)
 			if err == nil && data.Name != nil && data.Name.DisplayName != "" {
-				host = "告警主机: " + data.Name.SSH_HOST + " (" + data.Name.DisplayName + ")"
+				host = "告警主机:\t" + data.Name.SSH_HOST + "\t(" + data.Name.DisplayName + ")"
 			}
 		}
 	}
