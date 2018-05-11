@@ -189,9 +189,9 @@ func BuildCommonMailContent(event *model.Event) string {
 		}
 	}
 
-	item := "告警项目: " + event.Metric()
+	item := "告警项目:\t" + event.Metric()
 
-	status := "监控警度: "
+	status := "监控警度:\t"
 	if event.Status == "OK" {
 		status += "恢复"
 	} else {
@@ -199,9 +199,9 @@ func BuildCommonMailContent(event *model.Event) string {
 	}
 	status += "(" + utils.ReadableFloat(event.RightValue()) + ")"
 
-	state := "当前状态: " + event.Metric() + "状态信息" + "(" + utils.ReadableFloat(event.LeftValue) + ")"
+	state := "当前状态:\t" + event.Metric() + "状态信息" + "(" + utils.ReadableFloat(event.LeftValue) + ")"
 
-	timestamp := "监控时间: " + event.FormattedTime()
+	timestamp := "监控时间:\t" + event.FormattedTime()
 	return fmt.Sprintf("%s\r\n%s\r\n%s\r\n%s\r\n%s\r\n", host, item, status, state, timestamp)
 }
 
