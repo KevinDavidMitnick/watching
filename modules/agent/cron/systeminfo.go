@@ -332,7 +332,31 @@ func formatDeltatime(sec uint64) (string, error) {
 	hours := (sec % (60 * 60 * 24)) / (60 * 60)
 	mins := (sec % (60 * 60)) / 60
 	secs := sec % 60
-	formatTime := fmt.Sprintf("%d days %d:%d:%d", days, hours, mins, secs)
+	date := make(map[string]string)
+	if days == 0 {
+		date["d"] = fmt.Sprintf("%s", "")
+		if hours == 0 {
+			date["h"] = fmt.Sprintf("%s", "")
+			if mins == 0 {
+				date["m"] = fmt.Sprintf("%s", "")
+			} else {
+				date["m"] = fmt.Sprintf("%d分钟", mins)
+			}
+			date["s"] = fmt.Sprintf("%d秒", secs)
+		} else {
+			date["h"] = fmt.Sprintf("%d小时", hours)
+			date["m"] = fmt.Sprintf("%d分钟", mins)
+			date["s"] = fmt.Sprintf("%d秒", secs)
+		}
+	} else {
+		date["d"] = fmt.Sprintf("%d天", days)
+		date["h"] = fmt.Sprintf("%d小时", hours)
+		date["m"] = fmt.Sprintf("%d分钟", mins)
+		date["s"] = fmt.Sprintf("%d秒", secs)
+	}
+
+	formatTime := fmt.Sprintf("%s%s%s%s", date["d"], date["h"], date["m"], date["s"])
+	log.Println("Uptime is: ", formatTime)
 	return formatTime, nil
 }
 
