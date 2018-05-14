@@ -62,5 +62,7 @@ func calcSendCacheSize(mapList map[string]*list.SafeListLimited) int64 {
 }
 
 func logConnPoolsProc() {
-	log.Printf("connPools proc: \n%v", strings.Join(GraphConnPools.Proc(), "\n"))
+	if g.Config().Debug == true {
+		log.Printf("connPools proc: \n%v", strings.Join(GraphConnPools.Proc(), "\n"))
+	}
 }

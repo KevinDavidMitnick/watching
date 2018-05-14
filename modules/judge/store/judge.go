@@ -57,7 +57,7 @@ func CheckStrategy(L *SafeLinkedList, firstItem *model.JudgeItem, now int64) {
 
 func judgeItemWithStrategy(L *SafeLinkedList, strategy model.Strategy, firstItem *model.JudgeItem, now int64) {
 	fn, err := ParseFuncFromString(strategy.Func, strategy.Operator, strategy.RightValue)
-	if err != nil {
+	if err != nil && g.Config().Debug == true {
 		log.Printf("[ERROR] parse func %s fail: %v. strategy id: %d", strategy.Func, err, strategy.Id)
 		return
 	}
@@ -84,7 +84,7 @@ func sendEvent(event *model.Event) {
 	g.LastEvents.Set(event.Id, event)
 
 	bs, err := json.Marshal(event)
-	if err != nil {
+	if err != nil && g.Config().Debug == true {
 		log.Printf("json marshal event %v fail: %v", event, err)
 		return
 	}
@@ -100,32 +100,38 @@ func sendEvent(event *model.Event) {
 		if end_value == nil {
 			eventMap[event.StrategyId()] = event
 			bsMap, err := json.Marshal(eventMap)
-			if err != nil {
+			if err != nil && g.Config().Debug == true {
 				log.Printf("1.json marshal event map %v fail: %v", eventMap, err)
 				return
 			}
-			log.Printf("1.[DEBUG] send Event %s to %s, endpoint: %s", string(bs), strategyKey, event.Endpoint)
+			if g.Config().Debug == true {
+				log.Printf("1.[DEBUG] send Event %s to %s, endpoint: %s", string(bs), strategyKey, event.Endpoint)
+			}
 			rc.Do("HSET", strategyKey, event.Endpoint, string(bsMap))
 		} else {
 			temp := end_value.([]byte)
 			err := json.Unmarshal(temp, &eventMap)
-			if err != nil {
+			if err != nil && g.Config().Debug == true {
 				log.Printf("2.json unmarshal event map %s fail: %v", string(temp), err)
 				return
 			}
 			eventMap[event.StrategyId()] = event
 			bsMap, err := json.Marshal(eventMap)
-			if err != nil {
+			if err != nil && g.Config().Debug == true {
 				log.Printf("3.json marshal event map %v fail: %v", eventMap, err)
 				return
 			}
-			log.Printf("2.[DEBUG] send Event %s to %s, endpoint: %s", string(bs), strategyKey, event.Endpoint)
+			if g.Config().Debug == true {
+				log.Printf("2.[DEBUG] send Event %s to %s, endpoint: %s", string(bs), strategyKey, event.Endpoint)
+			}
 			rc.Do("HSET", strategyKey, event.Endpoint, string(bsMap))
 		}
 	} else {
 		// send to redis
 		redisKey := fmt.Sprintf(g.Config().Alarm.QueuePattern, event.Priority())
-		log.Printf("3.[DEBUG] send Event %s to %s", string(bs), redisKey)
+		if g.Config().Debug == true {
+			log.Printf("3.[DEBUG] send Event %s to %s", string(bs), redisKey)
+		}
 		rc.Do("LPUSH", redisKey, string(bs))
 	}
 
@@ -214,7 +220,7 @@ func copyItemTags(item *model.JudgeItem) map[string]string {
 
 func judgeItemWithExpression(L *SafeLinkedList, expression *model.Expression, firstItem *model.JudgeItem, now int64) {
 	fn, err := ParseFuncFromString(expression.Func, expression.Operator, expression.RightValue)
-	if err != nil {
+	if err != nil && g.Config().Debug == true {
 		log.Printf("[ERROR] parse func %s fail: %v. expression id: %d", expression.Func, err, expression.Id)
 		return
 	}

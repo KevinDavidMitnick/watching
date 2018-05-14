@@ -38,7 +38,9 @@ func (t *Agent) MinePlugins(args model.AgentHeartbeatRequest, reply *model.Agent
 	} else {
 		reply.Plugins = ""
 	}
-	log.Println(args.Hostname, "call plugin MinePlugins: ", reply.Plugins)
+	if g.Config().Debug == true {
+		log.Println(args.Hostname, "call plugin MinePlugins: ", reply.Plugins)
+	}
 	reply.Timestamp = time.Now().Unix()
 
 	return nil

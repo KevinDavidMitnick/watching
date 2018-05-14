@@ -19,10 +19,14 @@ func syncStrategyGroup() {
 	var strategyGroupResponse model.GroupStrigesResponse
 	err := g.HbsClient.Call("Hbs.GetGroupStrategies", model.NullRpcRequest{}, &strategyGroupResponse)
 	if err != nil {
-		log.Println("[ERROR] Hbs.GetGroupStrategies:", err)
+		if g.Config().LogLevel == "error" {
+			log.Println("[ERROR] Hbs.GetGroupStrategies:", err)
+		}
 		return
 	} else {
-		log.Println("[DEBUG] Hbs.GetGroupStrategies:%v", strategyGroupResponse.GroupStriges)
+		if g.Config().LogLevel == "debug" {
+			log.Println("[DEBUG] Hbs.GetGroupStrategies:%v", strategyGroupResponse.GroupStriges)
+		}
 	}
 
 	rebuildStrategyGroupMap(&strategyGroupResponse)
