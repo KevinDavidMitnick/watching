@@ -18,7 +18,9 @@ import (
 	"database/sql"
 	_ "github.com/go-sql-driver/mysql"
 	"log"
+	"math"
 	"sync"
+	"time"
 )
 
 // TODO 草草的写了一个db连接池,优化下
@@ -30,14 +32,24 @@ var (
 var DB *sql.DB
 
 func InitDB() {
-	var err error
-	DB, err = makeDbConn()
-	if DB == nil || err != nil {
-		log.Fatalln("g.InitDB, get db conn fail", err)
+	for {
+		var err error
+		times := 1.0
+		DB, err = makeDbConn()
+		if DB == nil || err != nil {
+			log.Println("g.InitDB, get db conn fail,try again.", err)
+			if times >= 60 {
+				times = 60
+			} else {
+				times = math.Pow(2, times)
+			}
+			time.Sleep(time.Duration(times) * time.Second)
+		} else {
+			dbConnMap = make(map[string]*sql.DB)
+			log.Println("g.InitDB ok")
+			break
+		}
 	}
-
-	dbConnMap = make(map[string]*sql.DB)
-	log.Println("g.InitDB ok")
 }
 
 func GetDbConn(connName string) (c *sql.DB, e error) {

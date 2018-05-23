@@ -15,39 +15,21 @@
 package api
 
 import (
-	"fmt"
 	log "github.com/Sirupsen/logrus"
-	"math"
-	"time"
-
 	pfc "github.com/niean/goperfcounter"
 	cmodel "github.com/open-falcon/falcon-plus/common/model"
 	cutils "github.com/open-falcon/falcon-plus/common/utils"
+	"math"
 
 	"github.com/open-falcon/falcon-plus/modules/graph/g"
 	"github.com/open-falcon/falcon-plus/modules/graph/index"
 	"github.com/open-falcon/falcon-plus/modules/graph/proc"
 	"github.com/open-falcon/falcon-plus/modules/graph/rrdtool"
 	"github.com/open-falcon/falcon-plus/modules/graph/store"
+	"time"
 )
 
 type Graph int
-
-func (this *Graph) GetRrd(key string, rrdfile *g.File) (err error) {
-	if md5, dsType, step, err := g.SplitRrdCacheKey(key); err != nil {
-		return err
-	} else {
-		rrdfile.Filename = g.RrdFileName(g.Config().RRD.Storage, md5, dsType, step)
-	}
-
-	items := store.GraphItems.PopAll(key)
-	if len(items) > 0 {
-		rrdtool.FlushFile(rrdfile.Filename, items)
-	}
-
-	rrdfile.Body, err = rrdtool.ReadFile(rrdfile.Filename)
-	return
-}
 
 func (this *Graph) Ping(req cmodel.NullRpcRequest, resp *cmodel.SimpleRpcResponse) error {
 	return nil
@@ -131,8 +113,6 @@ func (this *Graph) Query(param cmodel.GraphQueryParam, resp *cmodel.GraphQueryRe
 	// statistics
 	proc.GraphQueryCnt.Incr()
 
-	cfg := g.Config()
-
 	// form empty response
 	resp.Values = []*cmodel.RRDData{}
 	resp.Endpoint = param.Endpoint
@@ -152,37 +132,21 @@ func (this *Graph) Query(param cmodel.GraphQueryParam, resp *cmodel.GraphQueryRe
 
 	md5 := cutils.Md5(param.Endpoint + "/" + param.Counter)
 	key := g.FormRrdCacheKey(md5, dsType, step)
-	filename := g.RrdFileName(cfg.RRD.Storage, md5, dsType, step)
+	filename := g.RrdFileName(md5, dsType, step)
 
 	// read cached items
-	items, flag := store.GraphItems.FetchAll(key)
+	items, _ := store.GraphItems.FetchAll(key)
 	items_size := len(items)
 
-	if cfg.Migrate.Enabled && flag&g.GRAPH_F_MISS != 0 {
-		node, _ := rrdtool.Consistent.Get(param.Endpoint + "/" + param.Counter)
-		done := make(chan error, 1)
-		res := &cmodel.GraphAccurateQueryResponse{}
-		rrdtool.Net_task_ch[node] <- &rrdtool.Net_task_t{
-			Method: rrdtool.NET_TASK_M_QUERY,
-			Done:   done,
-			Args:   param,
-			Reply:  res,
-		}
-		<-done
-		// fetch data from remote
-		datas = res.Values
-		datas_size = len(datas)
-	} else {
-		// read data from rrd file
-		// 从RRD中获取数据不包含起始时间点
-		// 例: start_ts=1484651400,step=60,则第一个数据时间为1484651460)
-		datas, _ = rrdtool.Fetch(filename, param.ConsolFun, start_ts-int64(step), end_ts, step)
-		datas_size = len(datas)
-	}
+	// read data from rrd file
+	// 从RRD中获取数据不包含起始时间点
+	// 例: start_ts=1484651400,step=60,则第一个数据时间为1484651460)
+	datas, _ = rrdtool.Fetch(filename, param.ConsolFun, start_ts-int64(step), end_ts, step)
+	datas_size = len(datas)
 
 	nowTs := time.Now().Unix()
 	lastUpTs := nowTs - nowTs%int64(step)
-	rra1StartTs := lastUpTs - int64(cfg.RRD.RRA * step)
+	rra1StartTs := lastUpTs - int64(g.Config().Rrd.RRA*step)
 
 	// consolidated, do not merge
 	if start_ts < rra1StartTs {
@@ -343,8 +307,9 @@ func (this *Graph) Info(param cmodel.GraphInfoParam, resp *cmodel.GraphInfoResp)
 		return nil
 	}
 
-	md5 := cutils.Md5(param.Endpoint + "/" + param.Counter)
-	filename := fmt.Sprintf("%s/%s/%s_%s_%d.rrd", g.Config().RRD.Storage, md5[0:2], md5, dsType, step)
+	//md5 := cutils.Md5(param.Endpoint + "/" + param.Counter)
+	//filename := fmt.Sprintf("%s/%s/%s_%s_%d.rrd", g.Config().RRD.Storage, md5[0:2], md5, dsType, step)
+	filename := ""
 
 	resp.ConsolFun = dsType
 	resp.Step = step

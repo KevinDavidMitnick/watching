@@ -15,23 +15,22 @@
 package rrdtool
 
 import (
-	"errors"
-	"log"
-	"math"
-	"sync/atomic"
-	"time"
-
+	"bytes"
+	"encoding/json"
 	cmodel "github.com/open-falcon/falcon-plus/common/model"
-	"github.com/open-falcon/rrdlite"
-	"github.com/toolkits/file"
-
 	"github.com/open-falcon/falcon-plus/modules/graph/g"
 	"github.com/open-falcon/falcon-plus/modules/graph/store"
+	"io/ioutil"
+	"log"
+	"net/http"
+	"sync/atomic"
+	"time"
 )
 
 var (
-	disk_counter uint64
-	net_counter  uint64
+	disk_counter     uint64
+	net_counter      uint64
+	flushrrd_timeout int32
 )
 
 type fetch_t struct {
@@ -48,127 +47,30 @@ type flushfile_t struct {
 	items    []*cmodel.GraphItem
 }
 
-type readfile_t struct {
-	filename string
-	data     []byte
-}
-
 func Start() {
-	cfg := g.Config()
-	var err error
-	// check data dir
-	if err = file.EnsureDirRW(cfg.RRD.Storage); err != nil {
-		log.Fatalln("rrdtool.Start error, bad data dir "+cfg.RRD.Storage+",", err)
-	}
-
-	migrate_start(cfg)
-
 	// sync disk
 	go syncDisk()
 	go ioWorker()
 	log.Println("rrdtool.Start ok")
 }
 
-// RRA.Point.Size
-const (
-	//RRA1PointCnt   = 4320 // 1m一个点存12h *2 *3
-	RRA5PointCnt   = 576   // 5m一个点存2d
-	RRA20PointCnt  = 504   // 20m一个点存7d
-	RRA180PointCnt = 766   // 3h一个点存3month
-	RRA720PointCnt = 730   // 12h一个点存1year
-)
-
-func create(filename string, item *cmodel.GraphItem) error {
-	now := time.Now()
-	start := now.Add(time.Duration(-24) * time.Hour)
-	step := uint(item.Step)
-
-	c := rrdlite.NewCreator(filename, start, step)
-	c.DS("metric", item.DsType, item.Heartbeat, item.Min, item.Max)
-
-	cfg := g.Config()
-	RRA1PointCnt := cfg.RRD.RRA
-	// 设置各种归档策略
-	// 默认1分钟一个点存 3d
-	c.RRA("AVERAGE", 0, 1, RRA1PointCnt)
-
-	// 5m一个点存2d
-	c.RRA("AVERAGE", 0, 5, RRA5PointCnt)
-	c.RRA("MAX", 0, 5, RRA5PointCnt)
-	c.RRA("MIN", 0, 5, RRA5PointCnt)
-
-	// 20m一个点存7d
-	c.RRA("AVERAGE", 0, 20, RRA20PointCnt)
-	c.RRA("MAX", 0, 20, RRA20PointCnt)
-	c.RRA("MIN", 0, 20, RRA20PointCnt)
-
-	// 3小时一个点存3个月
-	c.RRA("AVERAGE", 0, 180, RRA180PointCnt)
-	c.RRA("MAX", 0, 180, RRA180PointCnt)
-	c.RRA("MIN", 0, 180, RRA180PointCnt)
-
-	// 12小时一个点存1year
-	c.RRA("AVERAGE", 0, 720, RRA720PointCnt)
-	c.RRA("MAX", 0, 720, RRA720PointCnt)
-	c.RRA("MIN", 0, 720, RRA720PointCnt)
-
-	return c.Create(true)
-}
-
-func update(filename string, items []*cmodel.GraphItem) error {
-	u := rrdlite.NewUpdater(filename)
-
-	for _, item := range items {
-		v := math.Abs(item.Value)
-		if v > 1e+300 || (v < 1e-300 && v > 0) {
-			continue
-		}
-		if item.DsType == "DERIVE" || item.DsType == "COUNTER" {
-			u.Cache(item.Timestamp, int(item.Value))
-		} else {
-			u.Cache(item.Timestamp, item.Value)
-		}
-	}
-
-	return u.Update()
-}
-
 // flush to disk from memory
 // 最新的数据在列表的最后面
 // TODO fix me, filename fmt from item[0], it's hard to keep consistent
 func flushrrd(filename string, items []*cmodel.GraphItem) error {
-	if items == nil || len(items) == 0 {
-		return errors.New("empty items")
+	var data flushfile_t
+	data.filename = filename
+	data.items = items
+
+	if b, err := json.Marshal(data); err == nil {
+		url := g.Config().Rrd.AppendAddr
+		resp, err := http.Post(url, "application/json", bytes.NewReader(b))
+		defer resp.Body.Close()
+		ret, _ := ioutil.ReadAll(resp.Body)
+		log.Println(filename, len(items), string(ret))
+		return err
 	}
-
-	if !g.IsRrdFileExist(filename) {
-		baseDir := file.Dir(filename)
-
-		err := file.InsureDir(baseDir)
-		if err != nil {
-			return err
-		}
-
-		err = create(filename, items[0])
-		if err != nil {
-			return err
-		}
-	}
-
-	return update(filename, items)
-}
-
-func ReadFile(filename string) ([]byte, error) {
-	done := make(chan error, 1)
-	task := &io_task_t{
-		method: IO_TASK_M_READ,
-		args:   &readfile_t{filename: filename},
-		done:   done,
-	}
-
-	io_task_chan <- task
-	err := <-done
-	return task.args.(*readfile_t).data, err
+	return nil
 }
 
 func FlushFile(filename string, items []*cmodel.GraphItem) error {
@@ -204,34 +106,23 @@ func Fetch(filename string, cf string, start, end int64, step int) ([]*cmodel.RR
 }
 
 func fetch(filename string, cf string, start, end int64, step int) ([]*cmodel.RRDData, error) {
-	start_t := time.Unix(start, 0)
-	end_t := time.Unix(end, 0)
-	step_t := time.Duration(step) * time.Second
+	var rrd []*cmodel.RRDData
+	var data fetch_t
+	data.start = start
+	data.end = end
+	data.step = int(time.Duration(step) * time.Second)
+	data.cf = cf
 
-	fetchRes, err := rrdlite.Fetch(filename, cf, start_t, end_t, step_t)
-	if err != nil {
-		return []*cmodel.RRDData{}, err
-	}
-
-	defer fetchRes.FreeValues()
-
-	values := fetchRes.Values()
-	size := len(values)
-	ret := make([]*cmodel.RRDData, size)
-
-	start_ts := fetchRes.Start.Unix()
-	step_s := fetchRes.Step.Seconds()
-
-	for i, val := range values {
-		ts := start_ts + int64(i+1)*int64(step_s)
-		d := &cmodel.RRDData{
-			Timestamp: ts,
-			Value:     cmodel.JsonFloat(val),
+	if b, err := json.Marshal(data); err == nil {
+		url := g.Config().Rrd.QueryAddr
+		resp, _ := http.Post(url, "application/json", bytes.NewReader(b))
+		defer resp.Body.Close()
+		if ret, err1 := ioutil.ReadAll(resp.Body); err1 == nil {
+			json.Unmarshal(ret, &rrd)
+			log.Printf("fetch dat: %v", rrd)
 		}
-		ret[i] = d
 	}
-
-	return ret, nil
+	return rrd, nil
 }
 
 func FlushAll(force bool) {
@@ -247,13 +138,11 @@ func FlushAll(force bool) {
 }
 
 func CommitByKey(key string) {
-
 	md5, dsType, step, err := g.SplitRrdCacheKey(key)
 	if err != nil {
 		return
 	}
-	filename := g.RrdFileName(g.Config().RRD.Storage, md5, dsType, step)
-
+	filename := g.RrdFileName(md5, dsType, step)
 	items := store.GraphItems.PopAll(key)
 	if len(items) == 0 {
 		return
@@ -261,61 +150,20 @@ func CommitByKey(key string) {
 	FlushFile(filename, items)
 }
 
-func PullByKey(key string) {
-	done := make(chan error)
-
-	item := store.GraphItems.First(key)
-	if item == nil {
-		return
-	}
-	node, err := Consistent.Get(item.PrimaryKey())
-	if err != nil {
-		return
-	}
-	Net_task_ch[node] <- &Net_task_t{
-		Method: NET_TASK_M_PULL,
-		Key:    key,
-		Done:   done,
-	}
-	// net_task slow, shouldn't block syncDisk() or FlushAll()
-	// warning: recev sigout when migrating, maybe lost memory data
-	go func() {
-		err := <-done
-		if err != nil {
-			log.Printf("get %s from remote err[%s]\n", key, err)
-			return
-		}
-		atomic.AddUint64(&net_counter, 1)
-		//todo: flushfile after getfile? not yet
-	}()
-}
-
 func FlushRRD(idx int, force bool) {
-	begin := time.Now()
 	atomic.StoreInt32(&flushrrd_timeout, 0)
-
 	keys := store.GraphItems.KeysByIndex(idx)
 	if len(keys) == 0 {
 		return
 	}
-
 	for _, key := range keys {
-		flag, _ := store.GraphItems.GetFlag(key)
-
-		//write err data to local filename
-		if force == false && g.Config().Migrate.Enabled && flag&g.GRAPH_F_MISS != 0 {
-			if time.Since(begin) > time.Millisecond*g.FLUSH_DISK_STEP {
-				atomic.StoreInt32(&flushrrd_timeout, 1)
-			}
-			PullByKey(key)
-		} else if force || shouldFlush(key) {
+		if force || shouldFlush(key) {
 			CommitByKey(key)
 		}
 	}
 }
 
 func shouldFlush(key string) bool {
-
 	if store.GraphItems.ItemCnt(key) >= g.FLUSH_MIN_COUNT {
 		return true
 	}

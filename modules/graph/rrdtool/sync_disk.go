@@ -15,15 +15,10 @@
 package rrdtool
 
 import (
-	"io"
-	"io/ioutil"
-	"log"
-	"os"
-	"time"
-
 	"github.com/open-falcon/falcon-plus/modules/graph/g"
 	"github.com/open-falcon/falcon-plus/modules/graph/store"
-	"github.com/toolkits/file"
+	"log"
+	"time"
 )
 
 const (
@@ -69,43 +64,12 @@ func syncDisk() {
 	}
 }
 
-// WriteFile writes data to a file named by filename.
-// file must not exist
-func writeFile(filename string, data []byte, perm os.FileMode) error {
-	f, err := os.OpenFile(filename, os.O_WRONLY|os.O_CREATE|os.O_EXCL, perm)
-	if err != nil {
-		return err
-	}
-	n, err := f.Write(data)
-	if err == nil && n < len(data) {
-		err = io.ErrShortWrite
-	}
-	if err1 := f.Close(); err == nil {
-		err = err1
-	}
-	return err
-}
-
 func ioWorker() {
 	var err error
 	for {
 		select {
 		case task := <-io_task_chan:
-			if task.method == IO_TASK_M_READ {
-				if args, ok := task.args.(*readfile_t); ok {
-					args.data, err = ioutil.ReadFile(args.filename)
-					task.done <- err
-				}
-			} else if task.method == IO_TASK_M_WRITE {
-				//filename must not exist
-				if args, ok := task.args.(*g.File); ok {
-					baseDir := file.Dir(args.Filename)
-					if err = file.InsureDir(baseDir); err != nil {
-						task.done <- err
-					}
-					task.done <- writeFile(args.Filename, args.Body, 0644)
-				}
-			} else if task.method == IO_TASK_M_FLUSH {
+			if task.method == IO_TASK_M_FLUSH {
 				if args, ok := task.args.(*flushfile_t); ok {
 					task.done <- flushrrd(args.filename, args.items)
 				}

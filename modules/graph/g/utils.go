@@ -25,8 +25,8 @@ import (
 
 // RRDTOOL UTILS
 // 监控数据对应的rrd文件名称
-func RrdFileName(baseDir string, md5 string, dsType string, step int) string {
-	return fmt.Sprintf("%s/%s/%s_%s_%d.rrd", baseDir, md5[0:2], md5, dsType, step)
+func RrdFileName(md5 string, dsType string, step int) string {
+	return fmt.Sprintf("%s/%s_%s_%d.rrd", md5[0:2], md5, dsType, step)
 }
 
 // rrd文件是否存在

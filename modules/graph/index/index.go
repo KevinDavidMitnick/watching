@@ -20,7 +20,6 @@ import (
 	cmodel "github.com/open-falcon/falcon-plus/common/model"
 	"github.com/open-falcon/falcon-plus/modules/graph/g"
 	"github.com/open-falcon/falcon-plus/modules/graph/store"
-	"github.com/toolkits/file"
 )
 
 // 初始化索引功能模块
@@ -50,14 +49,6 @@ func ReceiveItem(item *cmodel.GraphItem, md5 string) {
 	}
 
 	//流程走到这一块，说明数据没有上报过
-
-	// 针对 mysql索引重建场景 做的优化，是否有rrdtool文件存在,如果有 则认为MySQL中已建立索引；
-	rrdFileName := g.RrdFileName(g.Config().RRD.Storage, md5, item.DsType, item.Step)
-	if g.IsRrdFileExist(rrdFileName) {
-		IndexedItemCache.Put(md5, NewIndexCacheItem(uuid, item))
-		return
-	}
-
 	// 缓存未命中, 放入增量更新队列
 	unIndexedItemCache.Put(md5, NewIndexCacheItem(uuid, item))
 }
@@ -74,7 +65,7 @@ func RemoveItem(item *cmodel.GraphItem) {
 	poped_items := store.GraphItems.PopAll(key)
 	log.Debugf("discard data of item:%v, size:%d", item, len(poped_items))
 
-	rrdFileName := g.RrdFileName(g.Config().RRD.Storage, md5, item.DsType, item.Step)
-	file.Remove(rrdFileName)
-	log.Debug("remove rrdfile:", rrdFileName)
+	rrdFileName := g.RrdFileName(md5, item.DsType, item.Step)
+	// TODO: liucong,删除对应的rrd文件.
+	log.Debug("alert: should remove rrdfile:", rrdFileName)
 }

@@ -178,11 +178,6 @@ func (this *GraphItemMap) PushFront(key string,
 		//log.Println("new key:", key)
 		safeList := &SafeLinkedList{L: list.New()}
 		safeList.L.PushFront(item)
-
-		if cfg.Migrate.Enabled && !g.IsRrdFileExist(g.RrdFileName(
-			cfg.RRD.Storage, md5, item.DsType, item.Step)) {
-			safeList.Flag = g.GRAPH_F_MISS
-		}
 		this.Set(key, safeList)
 	}
 }

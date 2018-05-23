@@ -38,9 +38,11 @@ type RpcConfig struct {
 	Listen  string `json:"listen"`
 }
 
-type RRDConfig struct {
-	Storage string `json:"storage"`
-	RRA     int    `json:"rra"`
+type RrdConfig struct {
+	AppendAddr string `json:"append_addr"`
+	QueryAddr  string `json:"query_addr"`
+	DeleteAddr string `json:"delete_addr"`
+	RRA        int    `json:"rra"`
 }
 
 type DBConfig struct {
@@ -53,15 +55,9 @@ type GlobalConfig struct {
 	Debug       bool        `json:"debug"`
 	Http        *HttpConfig `json:"http"`
 	Rpc         *RpcConfig  `json:"rpc"`
-	RRD         *RRDConfig  `json:"rrd"`
+	Rrd         *RrdConfig  `json:"rrd"`
 	DB          *DBConfig   `json:"db"`
 	CallTimeout int32       `json:"callTimeout"`
-	Migrate     struct {
-		Concurrency int               `json:"concurrency"` //number of multiple worker per node
-		Enabled     bool              `json:"enabled"`
-		Replicas    int               `json:"replicas"`
-		Cluster     map[string]string `json:"cluster"`
-	} `json:"migrate"`
 }
 
 var (
@@ -93,10 +89,6 @@ func ParseConfig(cfg string) {
 	err = json.Unmarshal([]byte(configContent), &c)
 	if err != nil {
 		log.Fatalln("parse config file", cfg, "error:", err.Error())
-	}
-
-	if c.Migrate.Enabled && len(c.Migrate.Cluster) == 0 {
-		c.Migrate.Enabled = false
 	}
 
 	// set config
