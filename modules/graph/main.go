@@ -41,8 +41,6 @@ func start_signal(pid int, cfg *g.GlobalConfig) {
 		switch s {
 		case syscall.SIGINT, syscall.SIGTERM, syscall.SIGQUIT:
 			log.Println("graceful shut down")
-			log.Println("http stop ok")
-
 			if cfg.Rpc.Enabled {
 				api.Close_chan <- 1
 				<-api.Close_done_chan
