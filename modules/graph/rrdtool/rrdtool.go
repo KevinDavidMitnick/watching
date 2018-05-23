@@ -65,7 +65,7 @@ func flushrrd(filename string, items []*cmodel.GraphItem) error {
 	if b, err := json.Marshal(data); err == nil {
 		url := g.Config().Rrd.AppendAddr
 		resp, err := http.Post(url, "application/json", bytes.NewReader(b))
-		if resp == nil || resp.Body == nil {
+		if err != nil {
 			return nil
 		}
 		defer resp.Body.Close()
@@ -119,12 +119,12 @@ func fetch(filename string, cf string, start, end int64, step int) ([]*cmodel.RR
 
 	if b, err := json.Marshal(data); err == nil {
 		url := g.Config().Rrd.QueryAddr
-		resp, _ := http.Post(url, "application/json", bytes.NewReader(b))
-		if resp == nil || resp.Body == nil {
+		resp, err1 := http.Post(url, "application/json", bytes.NewReader(b))
+		if err1 != nil {
 			return rrd, nil
 		}
 		defer resp.Body.Close()
-		if ret, err1 := ioutil.ReadAll(resp.Body); err1 == nil {
+		if ret, err2 := ioutil.ReadAll(resp.Body); err2 == nil {
 			json.Unmarshal(ret, &rrd)
 			log.Printf("fetch dat: %v", rrd)
 		}
