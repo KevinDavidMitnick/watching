@@ -43,11 +43,11 @@ type fetch_t struct {
 }
 
 type Fetch_t struct {
-	Filename string `json:"filename`
+	Filename string `json:"filename"`
 	Cf       string `json:"cf"`
-	Start    int64  `json:"start`
+	Start    int64  `json:"start"`
 	End      int64  `json:"end"`
-	Step     int    `json:"step`
+	Step     int    `json:"step"`
 }
 
 type flushfile_t struct {
