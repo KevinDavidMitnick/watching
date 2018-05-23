@@ -129,6 +129,7 @@ func fetch(filename string, cf string, start, end int64, step int) ([]*cmodel.RR
 	data.End = end
 	data.Step = int(time.Duration(step) * time.Second)
 	data.Cf = cf
+	data.Filename = filename
 
 	if b, err := json.Marshal(data); err == nil {
 		log.Println(string(b))
