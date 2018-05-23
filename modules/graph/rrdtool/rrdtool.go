@@ -42,9 +42,22 @@ type fetch_t struct {
 	data     []*cmodel.RRDData
 }
 
+type Fetch_t struct {
+	Filename string `json:"filename`
+	Cf       string `json:"cf"`
+	Start    int64  `json:"start`
+	End      int64  `json:"end"`
+	Step     int    `json:"step`
+}
+
 type flushfile_t struct {
 	filename string
 	items    []*cmodel.GraphItem
+}
+
+type Flushfile_t struct {
+	Filename string              `json:"filename`
+	Items    []*cmodel.GraphItem `json:items`
 }
 
 func Start() {
@@ -110,17 +123,23 @@ func Fetch(filename string, cf string, start, end int64, step int) ([]*cmodel.RR
 }
 
 func fetch(filename string, cf string, start, end int64, step int) ([]*cmodel.RRDData, error) {
-	var rrd []*cmodel.RRDData = make([]*cmodel.RRDData, 0)
-	var data fetch_t
-	data.start = start
-	data.end = end
-	data.step = int(time.Duration(step) * time.Second)
-	data.cf = cf
+	var rrd []*cmodel.RRDData
+	var data Fetch_t
+	data.Start = start
+	data.End = end
+	data.Step = int(time.Duration(step) * time.Second)
+	data.Cf = cf
 
 	if b, err := json.Marshal(data); err == nil {
+		log.Println(string(b))
 		url := g.Config().Rrd.QueryAddr
 		resp, err1 := http.Post(url, "application/json", bytes.NewReader(b))
 		if err1 != nil {
+			for i := 1; i <= 60; i++ {
+				ts := i * step
+				rrd = append(rrd, &cmodel.RRDData{Timestamp: start + int64(ts), Value: 3.0})
+			}
+			log.Println("start time is:%d,end time is:%d,step is :%d,time_len is:%d", start, end, step, len(rrd))
 			return rrd, nil
 		}
 		defer resp.Body.Close()
