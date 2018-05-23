@@ -56,8 +56,8 @@ type flushfile_t struct {
 }
 
 type Flushfile_t struct {
-	Filename string              `json:"filename`
-	Items    []*cmodel.GraphItem `json:items`
+	Filename string              `json:"filename"`
+	Items    []*cmodel.GraphItem `json:"items"`
 }
 
 func Start() {
@@ -71,11 +71,13 @@ func Start() {
 // 最新的数据在列表的最后面
 // TODO fix me, filename fmt from item[0], it's hard to keep consistent
 func flushrrd(filename string, items []*cmodel.GraphItem) error {
-	var data flushfile_t
-	data.filename = filename
-	data.items = items
+	var data Flushfile_t
+	data.Filename = filename
+	data.Items = items
 
 	if b, err := json.Marshal(data); err == nil {
+		log.Println("-----------------start flush------")
+		log.Println(string(b))
 		url := g.Config().Rrd.AppendAddr
 		resp, err := http.Post(url, "application/json", bytes.NewReader(b))
 		if err != nil {
