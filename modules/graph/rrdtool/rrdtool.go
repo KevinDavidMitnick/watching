@@ -60,6 +60,11 @@ type Flushfile_t struct {
 	Items    []*cmodel.GraphItem `json:"items"`
 }
 
+type Fetch_return struct {
+	Result []*cmodel.GraphItem `json:"results"`
+	Time   float64             `json:"time"`
+}
+
 func Start() {
 	// sync disk
 	go syncDisk()
@@ -126,6 +131,7 @@ func Fetch(filename string, cf string, start, end int64, step int) ([]*cmodel.RR
 
 func fetch(filename string, cf string, start, end int64, step int) ([]*cmodel.RRDData, error) {
 	var rrd []*cmodel.RRDData
+	var fetch_return Fetch_return
 	var data Fetch_t
 	data.Start = start
 	data.End = end
@@ -133,22 +139,22 @@ func fetch(filename string, cf string, start, end int64, step int) ([]*cmodel.RR
 	data.Cf = cf
 	data.Filename = filename
 
+	log.Println("starting fetching data....")
 	if b, err := json.Marshal(data); err == nil {
 		log.Println(string(b))
 		url := g.Config().Rrd.QueryAddr
 		resp, err1 := http.Post(url, "application/json", bytes.NewReader(b))
 		if err1 != nil {
-			for i := 1; i <= 60; i++ {
-				ts := i * step
-				rrd = append(rrd, &cmodel.RRDData{Timestamp: start + int64(ts), Value: 3.0})
-			}
-			log.Println("start time is:%d,end time is:%d,step is :%d,time_len is:%d", start, end, step, len(rrd))
+			log.Printf("fetch error:filename is %s,start time is:%d,end time is:%d,step is :%d,time_len is:%d", filename, start, end, step, len(rrd))
 			return rrd, nil
 		}
 		defer resp.Body.Close()
 		if ret, err2 := ioutil.ReadAll(resp.Body); err2 == nil {
-			json.Unmarshal(ret, &rrd)
-			log.Printf("fetch dat: %v", rrd)
+			if err3 := json.Unmarshal(ret, &fetch_return); err3 == nil {
+				rrd = fetch_return.Result
+				log.Printf("success fetch data: %v", rrd)
+				return rrd, nil
+			}
 		}
 	}
 	return rrd, nil
