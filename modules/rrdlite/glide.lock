@@ -1,0 +1,51 @@
+hash: a5462572ed21c528f31c6f1d3eeff5bdfb922648085e5ad588300d5ae357051f
+updated: 2018-05-21T13:37:09.505874785+08:00
+imports:
+- name: github.com/armon/go-metrics
+  version: 783273d703149aaeb9897cf58613d5af48861c25
+- name: github.com/boltdb/bolt
+  version: fd01fc79c553a8e99d512a07e8e0c63d4a3ccfc5
+- name: github.com/Bowery/prompt
+  version: 94b504f42fdd503acc3b3c79ec2b517d90e0de8a
+- name: github.com/hashicorp/go-immutable-radix
+  version: 7f3cd4390caab3250a57f30efdb2a65dd7649ecf
+- name: github.com/hashicorp/go-msgpack
+  version: fa3f63826f7c23912c15263591e65d54d080b458
+  subpackages:
+  - codec
+- name: github.com/hashicorp/golang-lru
+  version: 0fb14efe8c47ae851c0034ed7a448854d3d34cf3
+  subpackages:
+  - simplelru
+- name: github.com/hashicorp/raft
+  version: 6d14f0c70869faabd9e60ba7ed88a6cbbd6a661f
+- name: github.com/hashicorp/raft-boltdb
+  version: 6e5ba93211eaf8d9a2ad7e41ffad8c6f160f9fe3
+- name: github.com/labstack/gommon
+  version: 0a22a0df01a7c84944c607e8a6e91cfe421ea7ed
+  subpackages:
+  - color
+- name: github.com/mattn/go-colorable
+  version: efa589957cd060542a26d2dd7832fd6a6c6c3ade
+- name: github.com/mattn/go-isatty
+  version: 6ca4dbf54d38eea1a992b3c722a76a5d1c4cb25c
+- name: github.com/mattn/go-sqlite3
+  version: 6c771bb9887719704b210e87e934f08be014bdb1
+- name: github.com/mkideal/cli
+  version: 0bc4738ef26827a45d3b50394d84d283f733ad63
+- name: github.com/mkideal/pkg
+  version: 3e188c9e7ecc83d0fe7040a9161ce3c67885470d
+  subpackages:
+  - debug
+  - expr
+  - textutil
+- name: golang.org/x/crypto
+  version: 1a580b3eff7814fc9b40602fd35256c63b50f491
+  subpackages:
+  - bcrypt
+  - blowfish
+- name: golang.org/x/sys
+  version: 7c87d13f8e835d2fb3a70a2912c811ed0c1d241b
+  subpackages:
+  - unix
+testImports: []
