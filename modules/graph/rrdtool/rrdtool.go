@@ -61,8 +61,8 @@ type Flushfile_t struct {
 }
 
 type Fetch_return struct {
-	Result []*cmodel.GraphItem `json:"results"`
-	Time   float64             `json:"time"`
+	Result []*cmodel.RRDData `json:"results"`
+	Time   float64           `json:"time"`
 }
 
 func Start() {
