@@ -15,6 +15,8 @@ import (
 	"github.com/mattn/go-sqlite3"
 	cmodel "github.com/open-falcon/falcon-plus/common/model"
 	"github.com/open-falcon/falcon-plus/modules/rrdlite/rrdtool"
+	"os"
+	"path/filepath"
 )
 
 const bkDelay = 250
@@ -268,10 +270,12 @@ func (r Rrd) Execute(queries []string, tx, xTime bool) ([]*Result, error) {
 			if q == "" {
 				continue
 			}
+			fmt.Println("## q....", q)
 			result := &Result{}
 			start := time.Now()
         	qList := strings.SplitN(q, " ", 3)
-        	filename = qList[1]
+        	cwd,_ := os.Getwd()
+        	filename = filepath.Join(cwd, "rrd", qList[1])
         	item := []byte(qList[2])
         	var graphItem cmodel.GraphItem
         	if err := json.Unmarshal(item, &graphItem); err != nil {
@@ -284,7 +288,9 @@ func (r Rrd) Execute(queries []string, tx, xTime bool) ([]*Result, error) {
 			}
 			allResults = append(allResults, result)
 		}
+		fmt.Println("## graphitems...", filename, graphItems)
 		err := rrdtool.Flushrrd(filename, graphItems)
+		fmt.Println("## flush ", err)
 		return err
 	}()
 	return allResults, err

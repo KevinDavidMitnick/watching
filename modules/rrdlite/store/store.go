@@ -1023,11 +1023,13 @@ func (s *Store) Apply(l *raft.Log) interface{} {
 		conn, ok := s.conns[d.ConnID]
 		s.connsMu.RUnlock()
 		if !ok {
+			fmt.Println("### Not OK...")
 			return &fsmGenericResponse{error: fmt.Errorf("connection %d does not exist", d.ConnID)}
 		}
 
 		if c.Typ == execute {
 			txChange := NewTxStateChange(conn)
+			fmt.Println("### execute.......")
 			r, err := sdb.Execute(d.Queries, d.Tx, d.Timings)
 			txChange.CheckAndSet()
 			return &fsmExecuteResponse{results: r, error: err}

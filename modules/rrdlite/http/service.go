@@ -580,8 +580,8 @@ func (s *Service) handleExecute(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, err.Error(), http.StatusBadRequest)
 		return
 	}
-	filename := exeReq.Filename
-	exeReq.Filename = filepath.Join(s.store.(*store.Store).RrdPath, filename)
+	//filename := exeReq.Filename
+	//exeReq.Filename = filepath.Join(s.store.(*store.Store).RrdPath, filename)
 	queries, _ = ConvertToSQL(exeReq)
 
 	var resp Response
