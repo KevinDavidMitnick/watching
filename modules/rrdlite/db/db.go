@@ -15,7 +15,10 @@ import (
 	"github.com/mattn/go-sqlite3"
 	cmodel "github.com/open-falcon/falcon-plus/common/model"
 	"github.com/open-falcon/falcon-plus/modules/rrdlite/rrdtool"
-	"os"
+	//"os"
+	//"path/filepath"
+	"github.com/open-falcon/falcon-plus/modules/rrdlite/g"
+	"github.com/toolkits/file"
 	"path/filepath"
 )
 
@@ -270,12 +273,16 @@ func (r Rrd) Execute(queries []string, tx, xTime bool) ([]*Result, error) {
 			if q == "" {
 				continue
 			}
-			fmt.Println("## q....", q)
 			result := &Result{}
 			start := time.Now()
         	qList := strings.SplitN(q, " ", 3)
-        	cwd,_ := os.Getwd()
-        	filename = filepath.Join(cwd, "rrd", qList[1])
+
+        	rrdPath := g.Config().RrdPath
+			err1 := file.InsureDir(rrdPath)
+			if err1 != nil {
+				fmt.Println("insure rrdPath failed, ", err1)
+			}
+        	filename = filepath.Join(rrdPath, qList[1])
         	item := []byte(qList[2])
         	var graphItem cmodel.GraphItem
         	if err := json.Unmarshal(item, &graphItem); err != nil {
@@ -288,9 +295,7 @@ func (r Rrd) Execute(queries []string, tx, xTime bool) ([]*Result, error) {
 			}
 			allResults = append(allResults, result)
 		}
-		fmt.Println("## graphitems...", filename, graphItems)
 		err := rrdtool.Flushrrd(filename, graphItems)
-		fmt.Println("## flush ", err)
 		return err
 	}()
 	return allResults, err
@@ -311,7 +316,12 @@ func (r Rrd) Query(queries []string, tx, xTime bool) ([]*cmodel.RRDData, error) 
 		}
 
 		qList := strings.SplitN(q, " ", 3)
-		filename = qList[1]
+		rrdPath := g.Config().RrdPath
+		err1 := file.InsureDir(rrdPath)
+		if err1 != nil {
+			fmt.Println("insure rrdPath failed, ", err1)
+		}
+		filename = filepath.Join(rrdPath, qList[1])
 		req := []byte(qList[2])
 		var qr QueryReq
 		if err := json.Unmarshal(req, &qr); err != nil {

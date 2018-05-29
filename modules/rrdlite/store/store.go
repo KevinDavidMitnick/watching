@@ -1029,7 +1029,6 @@ func (s *Store) Apply(l *raft.Log) interface{} {
 
 		if c.Typ == execute {
 			txChange := NewTxStateChange(conn)
-			fmt.Println("### execute.......")
 			r, err := sdb.Execute(d.Queries, d.Tx, d.Timings)
 			txChange.CheckAndSet()
 			return &fsmExecuteResponse{results: r, error: err}

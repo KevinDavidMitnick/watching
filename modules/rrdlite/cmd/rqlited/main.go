@@ -19,6 +19,7 @@ import (
 	httpd "github.com/open-falcon/falcon-plus/modules/rrdlite/http"
 	"github.com/open-falcon/falcon-plus/modules/rrdlite/store"
 	"github.com/open-falcon/falcon-plus/modules/rrdlite/tcp"
+	"github.com/open-falcon/falcon-plus/modules/rrdlite/g"
 )
 
 const sqliteDSN = "db.sqlite"
@@ -79,6 +80,7 @@ var raftOpenTimeout string
 var showVersion bool
 var cpuProfile string
 var memProfile string
+var config string
 
 const name = `rqlited`
 const desc = `rqlite is a lightweight, distributed relational database, which uses SQLite as its
@@ -112,6 +114,7 @@ func init() {
 	flag.Uint64Var(&raftSnapThreshold, "raft-snap", 8192, "Number of outstanding log entries that trigger snapshot")
 	flag.StringVar(&cpuProfile, "cpu-profile", "", "Path to file for CPU profiling information")
 	flag.StringVar(&memProfile, "mem-profile", "", "Path to file for memory profiling information")
+	flag.StringVar(&config, "conf", "cfg.json", "specify config file")
 	flag.Usage = func() {
 		fmt.Fprintf(os.Stderr, "\n%s\n\n", desc)
 		fmt.Fprintf(os.Stderr, "Usage: %s [arguments] <data directory>\n", name)
@@ -138,6 +141,9 @@ func main() {
 
 	// Display logo.
 	fmt.Println(logo)
+
+	// global config
+	g.ParseConfig(config)
 
 	// Configure logging and pump out initial message.
 	log.SetFlags(log.LstdFlags)

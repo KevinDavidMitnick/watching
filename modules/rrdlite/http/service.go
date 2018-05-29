@@ -22,9 +22,7 @@ import (
 	"time"
 
 	"github.com/open-falcon/falcon-plus/modules/rrdlite/store"
-	//sdb "github.com/open-falcon/falcon-plus/modules/rrdlite/db"
 	cmodel "github.com/open-falcon/falcon-plus/common/model"
-	"path/filepath"
 )
 
 // Store is the interface the Raft-based database must implement.
@@ -580,8 +578,7 @@ func (s *Service) handleExecute(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, err.Error(), http.StatusBadRequest)
 		return
 	}
-	//filename := exeReq.Filename
-	//exeReq.Filename = filepath.Join(s.store.(*store.Store).RrdPath, filename)
+
 	queries, _ = ConvertToSQL(exeReq)
 
 	var resp Response
@@ -642,7 +639,7 @@ func (s *Service) handleQuery(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// Get the query statement(s), and do tx if necessary.
-	queries, err := requestQueries(r, s)
+	queries, err := requestQueries(r)
 	if err != nil {
 		w.WriteHeader(http.StatusBadRequest)
 		return
@@ -762,7 +759,7 @@ func (s *Service) addBuildVersion(w http.ResponseWriter) {
 	w.Header().Add(VersionHTTPHeader, version)
 }
 
-func requestQueries(r *http.Request, s *Service) ([]string, error) {
+func requestQueries(r *http.Request) ([]string, error) {
 	if r.Method == "GET" {
 		query, err := stmtParam(r)
 		if err != nil || query == "" {
@@ -784,8 +781,7 @@ func requestQueries(r *http.Request, s *Service) ([]string, error) {
 	//if len(qs) == 0 {
 	//	return nil, errors.New("bad query POST request")
 	//}
-	filename := queryReq.Filename
-	queryReq.Filename = filepath.Join(s.store.(*store.Store).RrdPath, filename)
+
 	qs, _ = ConvertToSQL(queryReq)
 
 	return qs, nil

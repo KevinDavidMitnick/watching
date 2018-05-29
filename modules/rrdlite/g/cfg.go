@@ -23,45 +23,8 @@ import (
 	"github.com/toolkits/file"
 )
 
-type File struct {
-	Filename string
-	Body     []byte
-}
-
-type HttpConfig struct {
-	Enabled bool   `json:"enabled"`
-	Listen  string `json:"listen"`
-}
-
-type RpcConfig struct {
-	Enabled bool   `json:"enabled"`
-	Listen  string `json:"listen"`
-}
-
-type RRDConfig struct {
-	Storage string `json:"storage"`
-	RRA     int    `json:"rra"`
-}
-
-type DBConfig struct {
-	Dsn     string `json:"dsn"`
-	MaxIdle int    `json:"maxIdle"`
-}
-
 type GlobalConfig struct {
-	Pid         string      `json:"pid"`
-	Debug       bool        `json:"debug"`
-	Http        *HttpConfig `json:"http"`
-	Rpc         *RpcConfig  `json:"rpc"`
-	RRD         *RRDConfig  `json:"rrd"`
-	DB          *DBConfig   `json:"db"`
-	CallTimeout int32       `json:"callTimeout"`
-	Migrate     struct {
-		Concurrency int               `json:"concurrency"` //number of multiple worker per node
-		Enabled     bool              `json:"enabled"`
-		Replicas    int               `json:"replicas"`
-		Cluster     map[string]string `json:"cluster"`
-	} `json:"migrate"`
+	RrdPath       string `json:"rrd_path"`
 }
 
 var (
@@ -93,10 +56,6 @@ func ParseConfig(cfg string) {
 	err = json.Unmarshal([]byte(configContent), &c)
 	if err != nil {
 		log.Fatalln("parse config file", cfg, "error:", err.Error())
-	}
-
-	if c.Migrate.Enabled && len(c.Migrate.Cluster) == 0 {
-		c.Migrate.Enabled = false
 	}
 
 	// set config
