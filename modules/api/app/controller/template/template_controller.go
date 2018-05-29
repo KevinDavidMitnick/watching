@@ -80,6 +80,36 @@ func GetTemplates(c *gin.Context) {
 	return
 }
 
+func GetSpecialTemplates(c *gin.Context) {
+	var dt *gorm.DB
+	var parentTemplates []f.Template
+	pid := c.DefaultQuery("parent_id", "0")
+	//get all parent template
+	dt = db.Falcon.Where("parent_id=?", pid).Find(&parentTemplates)
+	if dt.Error != nil {
+		log.Infof(dt.Error.Error())
+		h.JSONR(c, badstatus, dt.Error)
+		return
+	}
+	fmt.Printf("%+v", parentTemplates)
+	output := APIGetTemplatesOutput{}
+	output.Templates = []CTemplate{}
+	for _, t := range parentTemplates {
+		var pname string
+		pname, err := t.FindParentName()
+		if err != nil {
+			h.JSONR(c, badstatus, err)
+			return
+		}
+		output.Templates = append(output.Templates, CTemplate{
+			Template:   t,
+			ParentName: pname,
+		})
+	}
+	h.JSONR(c, output)
+	return
+}
+
 func GetTemplatesSimple(c *gin.Context) {
 	var dt *gorm.DB
 	templates := []f.Template{}
