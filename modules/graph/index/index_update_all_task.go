@@ -197,6 +197,19 @@ func updateIndexFromOneItem(item *cmodel.GraphItem, conn *sql.DB) error {
 		proc.IndexUpdateIncrDbTagEndpointInsertCnt.Incr()
 	}
 
+	// metric_endpoint表
+	metric := item.Metric
+	sqlStr = `INSERT INTO metric_endpoint(metric, endpoint_id, ts, t_create)
+		VALUES (?, ?, ?, NOW())
+		ON DUPLICATE KEY UPDATE ts=?, t_modify=NOW()`
+
+	_, err = conn.Exec(sqlStr, metric, endpointId, ts, ts)
+	if err != nil {
+		log.Error(err)
+		return err
+	}
+	proc.IndexUpdateIncrDbMetricEndpointInsertCnt.Incr()
+
 	// endpoint_counter表
 	counter := item.Metric
 	if len(item.Tags) > 0 {

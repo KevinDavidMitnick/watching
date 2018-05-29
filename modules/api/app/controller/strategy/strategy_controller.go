@@ -26,6 +26,7 @@ import (
 	"github.com/gin-gonic/gin"
 	h "github.com/open-falcon/falcon-plus/modules/api/app/helper"
 	f "github.com/open-falcon/falcon-plus/modules/api/app/model/falcon_portal"
+	m "github.com/open-falcon/falcon-plus/modules/api/app/model/graph"
 	"github.com/spf13/viper"
 )
 
@@ -62,6 +63,7 @@ type APICreateStrategyInput struct {
 	RunBegin   string `json:"run_begin"`
 	RunEnd     string `json:"run_end"`
 	TplId      int64  `json:"tpl_id" binding:"required"`
+	SgrpId     int64  `json:"sgrp_id"`
 }
 
 func (this APICreateStrategyInput) CheckFormat() (err error) {
@@ -103,6 +105,7 @@ func CreateStrategy(c *gin.Context) {
 		RunBegin:   inputs.RunBegin,
 		RunEnd:     inputs.RunEnd,
 		TplId:      inputs.TplId,
+		SgrpId:     inputs.SgrpId,
 	}
 	dt := db.Falcon.Save(&strategy)
 	if dt.Error != nil {
@@ -145,6 +148,7 @@ type APIUpdateStrategyInput struct {
 	Note       string `json:"note"`
 	RunBegin   string `json:"run_begin"`
 	RunEnd     string `json:"run_end"`
+	SgrpId     int64  `json:"sgrp_id"`
 }
 
 func (this APIUpdateStrategyInput) CheckFormat() (err error) {
@@ -191,7 +195,8 @@ func UpdateStrategy(c *gin.Context) {
 		"RightValue": inputs.RightValue,
 		"Note":       inputs.Note,
 		"RunBegin":   inputs.RunBegin,
-		"RunEnd":     inputs.RunEnd}
+		"RunEnd":     inputs.RunEnd,
+		"SgrpId":     inputs.SgrpId}
 	if dt := db.Falcon.Model(&strategy).Where("id = ?", strategy.ID).Update(ustrategy); dt.Error != nil {
 		h.JSONR(c, expecstatus, dt.Error)
 		return
@@ -232,5 +237,125 @@ func MetricQuery(c *gin.Context) {
 	}
 	metrics := strings.Split(string(data), "\n")
 	h.JSONR(c, metrics)
+	return
+}
+
+func MetricQueryList(c *gin.Context) {
+	var me []m.MetricEndpoint
+	var metricsList []string
+	db.Graph.Table("metric_endpoint").Select("DISTINCT metric").Scan(&me)
+
+	for _, v := range me {
+		metricsList = append(metricsList, v.Metric)
+	}
+
+	metricsMap := make(map[string][]string)
+	for _, v := range metricsList {
+		if v == "" {
+			continue
+		}
+		m := strings.Split(v, ".")
+		fMetric := m[0]
+		sMetric := m[1:]
+		if _, ok := metricsMap[fMetric]; ok {
+			metricsMap[fMetric] = append(metricsMap[fMetric],
+				strings.Join(sMetric, "."))
+		} else {
+			metricsMap[fMetric] = []string{strings.Join(sMetric, ".")}
+		}
+	}
+
+	metrics := make([]map[string][]string, 0)
+	for k, v := range metricsMap {
+		metricItem := make(map[string][]string)
+		metricItem[k] = v
+		metrics = append(metrics, metricItem)
+	}
+	h.JSONR(c, metrics)
+	return
+}
+
+type APICreateStrategyGroupInput struct {
+	Name  string `json:"name" binding:"required"`
+	TplId int64  `json:"tpl_id" binding:"required"`
+}
+
+func GetStrategyGroups(c *gin.Context) {
+	var strategyGroups []f.StrategyGroup
+	idtmp := c.DefaultQuery("tplId", "")
+	if idtmp == "" {
+		h.JSONR(c, badstatus, "id is missing")
+		return
+	}
+	tpl_id, err := strconv.Atoi(idtmp)
+	if err != nil {
+		h.JSONR(c, badstatus, err)
+		return
+	}
+	dt := db.Falcon.Where("tpl_id = ?", tpl_id).Order("id DESC").Find(&strategyGroups)
+	if dt.Error != nil {
+		h.JSONR(c, badstatus, dt.Error)
+		return
+	}
+	h.JSONR(c, strategyGroups)
+	return
+}
+
+func GetStrategyGroup(c *gin.Context) {
+	sgrpidtmp := c.Params.ByName("sgrpid")
+	if sgrpidtmp == "" {
+		h.JSONR(c, badstatus, "sgrpid is missing")
+		return
+	}
+	sgrpid, err := strconv.Atoi(sgrpidtmp)
+	if err != nil {
+		h.JSONR(c, badstatus, err)
+		return
+	}
+	strategyGroup := f.StrategyGroup{ID: int64(sgrpid)}
+	if dt := db.Falcon.Find(&strategyGroup); dt.Error != nil {
+		h.JSONR(c, badstatus, dt.Error)
+		return
+	}
+	h.JSONR(c, strategyGroup)
+	return
+}
+
+func CreateStrategyGroup(c *gin.Context) {
+	var inputs APICreateStrategyGroupInput
+	if err := c.Bind(&inputs); err != nil {
+		h.JSONR(c, badstatus, err)
+		return
+	}
+	strategyGroup := f.StrategyGroup{
+		Name:  inputs.Name,
+		TplId: inputs.TplId,
+	}
+	dt := db.Falcon.Save(&strategyGroup)
+	if dt.Error != nil {
+		h.JSONR(c, expecstatus, dt.Error)
+		return
+	}
+	h.JSONR(c, "stragtegy group created")
+	return
+}
+
+func DeleteStrategyGroup(c *gin.Context) {
+	sgrpidtmp := c.Params.ByName("sgrpid")
+	if sgrpidtmp == "" {
+		h.JSONR(c, badstatus, "sgrpid is missing")
+		return
+	}
+	sgrpid, err := strconv.Atoi(sgrpidtmp)
+	if err != nil {
+		h.JSONR(c, badstatus, err)
+		return
+	}
+	strategyGroup := f.StrategyGroup{ID: int64(sgrpid)}
+	if dt := db.Falcon.Delete(&strategyGroup); dt.Error != nil {
+		h.JSONR(c, badstatus, dt.Error)
+		return
+	}
+	h.JSONR(c, fmt.Sprintf("strategy group :%d has been deleted", sgrpid))
 	return
 }

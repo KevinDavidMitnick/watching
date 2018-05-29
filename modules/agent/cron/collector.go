@@ -51,41 +51,41 @@ func collect(sec int64, fns []func() []*model.MetricValue) {
 	for {
 		<-t.C
 
-		hostname, err := g.Hostname()
-		if err != nil {
-			continue
-		}
-
-		mvs := []*model.MetricValue{}
-		ignoreMetrics := g.Config().IgnoreMetrics
-
 		for _, fn := range fns {
-			items := fn()
-			if items == nil {
-				continue
-			}
-
-			if len(items) == 0 {
-				continue
-			}
-
-			for _, mv := range items {
-				if b, ok := ignoreMetrics[mv.Metric]; ok && b {
-					continue
-				} else {
-					mvs = append(mvs, mv)
-				}
-			}
+			go collectMetric(sec, fn)
 		}
-
-		now := time.Now().Unix()
-		for j := 0; j < len(mvs); j++ {
-			mvs[j].Step = sec
-			mvs[j].Endpoint = hostname
-			mvs[j].Timestamp = now
-		}
-
-		g.SendToTransfer(mvs)
-
 	}
+}
+
+func collectMetric(sec int64, fn func() []*model.MetricValue) {
+	hostname, err := g.Hostname()
+	if err != nil {
+		return
+	}
+
+	mvs := []*model.MetricValue{}
+	ignoreMetrics := g.Config().IgnoreMetrics
+	items := fn()
+	if items == nil || len(items) == 0 {
+		return
+	}
+
+	for _, mv := range items {
+		if b, ok := ignoreMetrics[mv.Metric]; ok && b {
+			continue
+		} else {
+			mvs = append(mvs, mv)
+		}
+	}
+
+	now := time.Now().Unix()
+	for j := 0; j < len(mvs); j++ {
+		mvs[j].Step = sec
+		if mvs[j].Endpoint == "" {
+			mvs[j].Endpoint = hostname
+		}
+		mvs[j].Timestamp = now
+	}
+
+	g.SendToTransfer(mvs)
 }

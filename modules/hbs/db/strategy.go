@@ -36,7 +36,7 @@ func QueryStrategies(tpls map[int]*model.Template) (map[int]*model.Strategy, err
 		"select %s from strategy as s where (s.run_begin='' and s.run_end='') "+
 			"or (s.run_begin <= '%s' and s.run_end > '%s')"+
 			"or (s.run_begin > s.run_end and !(s.run_begin > '%s' and s.run_end < '%s'))",
-		"s.id, s.metric, s.tags, s.func, s.op, s.right_value, s.max_step, s.priority, s.note, s.tpl_id",
+		"s.id, s.metric, s.tags, s.func, s.op, s.right_value, s.max_step, s.priority, s.note, s.tpl_id,s.sgrp_id",
 		now,
 		now,
 		now,
@@ -54,7 +54,8 @@ func QueryStrategies(tpls map[int]*model.Template) (map[int]*model.Strategy, err
 		s := model.Strategy{}
 		var tags string
 		var tid int
-		err = rows.Scan(&s.Id, &s.Metric, &tags, &s.Func, &s.Operator, &s.RightValue, &s.MaxStep, &s.Priority, &s.Note, &tid)
+		var sgid int
+		err = rows.Scan(&s.Id, &s.Metric, &tags, &s.Func, &s.Operator, &s.RightValue, &s.MaxStep, &s.Priority, &s.Note, &tid, &sgid)
 		if err != nil {
 			log.Println("ERROR:", err)
 			continue
@@ -75,6 +76,7 @@ func QueryStrategies(tpls map[int]*model.Template) (map[int]*model.Strategy, err
 
 		s.Tags = tt
 		s.Tpl = tpls[tid]
+		s.StrategyGroupId = sgid
 		if s.Tpl == nil {
 			log.Printf("WARN: tpl is nil. strategy id=%d, tpl id=%d", s.Id, tid)
 			// 如果Strategy没有对应的Tpl，那就没有action，就没法报警，无需往后传递了

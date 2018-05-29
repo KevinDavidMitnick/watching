@@ -90,6 +90,7 @@ CREATE TABLE IF NOT EXISTS `strategy` (
   `run_begin`   VARCHAR(16)      NOT NULL DEFAULT '',
   `run_end`     VARCHAR(16)      NOT NULL DEFAULT '',
   `tpl_id`      INT(10) UNSIGNED NOT NULL DEFAULT '0',
+  `sgrp_id`     INT(10) UNSIGNED NOT NULL DEFAULT '0',
   PRIMARY KEY (`id`),
   KEY `idx_strategy_tpl_id` (`tpl_id`)
 )
@@ -231,6 +232,17 @@ CREATE TABLE IF NOT EXISTS alert_link
 	  `execute_param` varchar(255) DEFAULT '',
 	  PRIMARY KEY (`id`),
 	  KEY `idx_plugin_params_dir` (`dir`)
+) ENGINE=InnoDB 
+  DEFAULT CHARSET=utf8 
+  COLLATE=utf8_unicode_ci;
+
+/**
+ * add strategy group table .
+ */
+CREATE TABLE IF NOT EXISTS `strategy_group` (
+	  `id` int(10) unsigned NOT NULL AUTO_INCREMENT,
+	  `name` varchar(255) COLLATE utf8_unicode_ci NOT NULL DEFAULT '',
+	  PRIMARY KEY (`id`)
 ) ENGINE=InnoDB 
   DEFAULT CHARSET=utf8 
   COLLATE=utf8_unicode_ci;

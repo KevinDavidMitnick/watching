@@ -18,7 +18,6 @@ import (
 	"fmt"
 
 	"encoding/json"
-	log "github.com/Sirupsen/logrus"
 	"github.com/open-falcon/falcon-plus/common/model"
 	"github.com/open-falcon/falcon-plus/common/utils"
 	"github.com/open-falcon/falcon-plus/modules/alarm/g"
@@ -29,17 +28,49 @@ import (
 type NameStruct struct {
 	DisplayName string `json:"display_name"`
 	Parent_name string `json:"parent_name"`
-	Zone_name   string `json:"zone_name"`
+	Region_name string `json:"region_name"`
 	Database    string `json:"database"`
+	SSH_HOST    string `json:"SSH_HOST"`
 }
 
 type DataStruct struct {
 	Name *NameStruct `json:"data"`
 }
 
+// func BuildCommonSMSContent(event *model.Event) string {
+// 	var data DataStruct
+// 	endpoint := event.Endpoint
+// 	addr := g.Config().CmdbConfig.Addr + "/" + event.Endpoint
+// 	request, _ := http.NewRequest("GET", addr, nil)
+// 	request.Header.Set("Content-Type", "application/json")
+// 	request.Header.Set("TIMEOUT", "10")
+
+// 	client := &http.Client{}
+// 	resp, err := client.Do(request)
+// 	if err == nil {
+// 		defer resp.Body.Close()
+// 		if body, err := ioutil.ReadAll(resp.Body); err == nil {
+// 			err := json.Unmarshal(body, &data)
+// 			if err == nil && data.Name != nil && data.Name.DisplayName != "" {
+// 				endpoint = string(data.Name.DisplayName)
+// 			}
+// 		}
+// 	}
+
+// 	// change by liucong format mail title
+// 	return fmt.Sprintf(
+// 		"[P%d][%s][0%d][%s][%s]",
+// 		event.Priority(),
+// 		event.Status,
+// 		event.CurrentStep,
+// 		endpoint,
+// 		event.Metric(),
+// 	)
+// }
+
 func BuildCommonSMSContent(event *model.Event) string {
 	var data DataStruct
-	endpoint := event.Endpoint
+	region := "unknown"
 	addr := g.Config().CmdbConfig.Addr + "/" + event.Endpoint
 	request, _ := http.NewRequest("GET", addr, nil)
 	request.Header.Set("Content-Type", "application/json")
@@ -49,38 +80,21 @@ func BuildCommonSMSContent(event *model.Event) string {
 	resp, err := client.Do(request)
 	if err == nil {
 		defer resp.Body.Close()
-		body, err := ioutil.ReadAll(resp.Body)
-		if err == nil {
-			json.Unmarshal(body, &data)
+		if body, err := ioutil.ReadAll(resp.Body); err == nil {
+			err := json.Unmarshal(body, &data)
+			if err == nil && data.Name != nil && data.Name.DisplayName != "" {
+				region = data.Name.Region_name
+			}
 		}
-	} else {
-		log.Error(err)
-		return fmt.Sprintf(
-			"[P%d][%s][0%d][%s][%s]",
-			event.Priority(),
-			event.Status,
-			event.CurrentStep,
-			endpoint,
-			event.Metric(),
-		)
 	}
 
-	if &data != nil && data.Name.DisplayName != "" {
-		endpoint = string(data.Name.DisplayName)
-	}
 	// change by liucong format mail title
-	return fmt.Sprintf(
-		"[P%d][%s][0%d][%s][%s]",
-		event.Priority(),
-		event.Status,
-		event.CurrentStep,
-		endpoint,
-		event.Metric(),
-	)
+	return fmt.Sprintf("%s", region)
 }
 
 func BuildCommonIMContent(event *model.Event) string {
 	var data DataStruct
+	endpoint := event.Endpoint
 	addr := g.Config().CmdbConfig.Addr + "/" + event.Endpoint
 	request, _ := http.NewRequest("GET", addr, nil)
 	request.Header.Set("Content-Type", "application/json")
@@ -90,16 +104,13 @@ func BuildCommonIMContent(event *model.Event) string {
 	resp, err := client.Do(request)
 	if err == nil {
 		defer resp.Body.Close()
-		body, err := ioutil.ReadAll(resp.Body)
-		if err == nil {
-			json.Unmarshal(body, &data)
+		if body, err := ioutil.ReadAll(resp.Body); err == nil {
+			err := json.Unmarshal(body, &data)
+			if err == nil && data.Name != nil && data.Name.DisplayName != "" {
+				endpoint = string(data.Name.DisplayName)
+			}
 		}
 	}
-	endpoint := event.Endpoint
-	if &data != nil && data.Name.DisplayName != "" {
-		endpoint = string(data.Name.DisplayName)
-	}
-
 	return fmt.Sprintf(
 		"[P%d][%s][%s][][%s %s %s %s %s%s%s][O%d %s]",
 		event.Priority(),
@@ -117,10 +128,74 @@ func BuildCommonIMContent(event *model.Event) string {
 	)
 }
 
+// func BuildCommonMailContent(event *model.Event) string {
+// 	// get hostname from cmdb ,modify by liucong.
+// 	var data DataStruct
+// 	addr := g.Config().CmdbConfig.Addr + "/" + event.Endpoint
+// 	endpoint := "Endpoint(Uuid):" + event.Endpoint
+// 	position := "位置信息(Position):"
+
+// 	request, _ := http.NewRequest("GET", addr, nil)
+// 	request.Header.Set("Content-Type", "application/json")
+// 	request.Header.Set("TIMEOUT", "10")
+
+// 	client := &http.Client{}
+// 	resp, err := client.Do(request)
+// 	if err == nil {
+// 		defer resp.Body.Close()
+// 		if body, err := ioutil.ReadAll(resp.Body); err == nil {
+// 			err := json.Unmarshal(body, &data)
+// 			if err == nil && data.Name != nil && data.Name.DisplayName != "" {
+// 				endpoint = "对象(Object):" + string(data.Name.DisplayName)
+// 				position = "位置信息(Position):" + string(data.Name.Database) + " " + string(data.Name.Zone_name) + " " + string(data.Name.Parent_name)
+// 			}
+// 		}
+// 	}
+
+// 	link := g.Link(event)
+// 	// change by liucong format mail
+// 	line := "------------------------------------"
+// 	status := "类型(Type)"
+// 	if event.Status == "OK" {
+// 		status += ":" + "恢复"
+// 	} else {
+// 		status += ":" + "告警"
+// 	}
+// 	level := fmt.Sprintf("级别(Level):P%d", event.Priority())
+// 	timestamp := fmt.Sprintf("时间(Timestamp):%s", event.FormattedTime())
+// 	uuid := "Uuid:" + string(event.Endpoint)
+// 	metric := "指标(Metric):" + event.Metric()
+// 	note := "描述(Description):" + event.Note()
+// 	tags := "标签(Tags):" + utils.SortedTags(event.PushedTags)
+// 	meta := "元数据(Meta-data):"
+// 	funcs := "函数(func):" + event.Func() + ":" + utils.ReadableFloat(event.LeftValue) + event.Operator() + utils.ReadableFloat(event.RightValue())
+// 	times := fmt.Sprintf("报警次数(Strategy):最大(max)%d次，当前(current)第%d次", event.MaxStep(), event.CurrentStep)
+// 	tpl := "模板(Tpl):" + link
+// 	return fmt.Sprintf(
+// 		"%s\r\n%s\r\n%s\r\n%s\r\n%s\r\n%s\r\n%s\r\n%s\r\n%s\r\n%s\r\n%s\r\n\t%s\r\n\t%s\r\n\t%s\r\n",
+// 		line,
+// 		status,
+// 		level,
+// 		timestamp,
+// 		endpoint,
+// 		uuid,
+// 		position,
+// 		metric,
+// 		note,
+// 		tags,
+// 		meta,
+// 		funcs,
+// 		times,
+// 		tpl,
+// 	)
+// }
+
 func BuildCommonMailContent(event *model.Event) string {
 	// get hostname from cmdb ,modify by liucong.
 	var data DataStruct
 	addr := g.Config().CmdbConfig.Addr + "/" + event.Endpoint
+
+	host := ""
 
 	request, _ := http.NewRequest("GET", addr, nil)
 	request.Header.Set("Content-Type", "application/json")
@@ -130,56 +205,28 @@ func BuildCommonMailContent(event *model.Event) string {
 	resp, err := client.Do(request)
 	if err == nil {
 		defer resp.Body.Close()
-		body, err := ioutil.ReadAll(resp.Body)
-		if err == nil {
-			json.Unmarshal(body, &data)
+		if body, err := ioutil.ReadAll(resp.Body); err == nil {
+			err := json.Unmarshal(body, &data)
+			if err == nil && data.Name != nil && data.Name.DisplayName != "" {
+				host = "告警主机:\t" + data.Name.SSH_HOST + "\t(" + data.Name.DisplayName + ")"
+			}
 		}
-	} else {
-		log.Error(err)
-		return ""
 	}
 
-	link := g.Link(event)
-	// change by liucong format mail
-	line := "------------------------------------"
-	status := "类型(Type)"
+	item := "告警项目:\t" + event.Metric()
+
+	status := "监控警度:\t"
 	if event.Status == "OK" {
-		status += ":" + "恢复"
+		status += "恢复"
 	} else {
-		status += ":" + "告警"
+		status += "警告"
 	}
-	level := fmt.Sprintf("级别(Level):P%d", event.Priority())
-	timestamp := fmt.Sprintf("时间(Timestamp):%s", event.FormattedTime())
-	endpoint := "Endpoint(Uuid):" + event.Endpoint
-	if &data != nil && data.Name.DisplayName != "" {
-		endpoint = "对象(Object):" + string(data.Name.DisplayName)
-	}
-	uuid := "Uuid:" + string(event.Endpoint)
-	position := "位置信息(Position):" + string(data.Name.Database) + " " + string(data.Name.Zone_name) + " " + string(data.Name.Parent_name)
-	metric := "指标(Metric):" + event.Metric()
-	note := "描述(Description):" + event.Note()
-	tags := "标签(Tags):" + utils.SortedTags(event.PushedTags)
-	meta := "元数据(Meta-data):"
-	funcs := "函数(func):" + event.Func() + ":" + utils.ReadableFloat(event.LeftValue) + event.Operator() + utils.ReadableFloat(event.RightValue())
-	times := fmt.Sprintf("报警次数(Strategy):最大(max)%d次，当前(current)第%d次", event.MaxStep(), event.CurrentStep)
-	tpl := "模板(Tpl):" + link
-	return fmt.Sprintf(
-		"%s\r\n%s\r\n%s\r\n%s\r\n%s\r\n%s\r\n%s\r\n%s\r\n%s\r\n%s\r\n%s\r\n\t%s\r\n\t%s\r\n\t%s\r\n",
-		line,
-		status,
-		level,
-		timestamp,
-		endpoint,
-		uuid,
-		position,
-		metric,
-		note,
-		tags,
-		meta,
-		funcs,
-		times,
-		tpl,
-	)
+	status += "(" + utils.ReadableFloat(event.RightValue()) + ")"
+
+	state := "当前状态:\t" + event.Metric() + "状态信息" + "(" + utils.ReadableFloat(event.LeftValue) + ")"
+
+	timestamp := "监控时间:\t" + event.FormattedTime()
+	return fmt.Sprintf("%s\r\n%s\r\n%s\r\n%s\r\n%s\r\n", host, item, status, state, timestamp)
 }
 
 func GenerateSmsContent(event *model.Event) string {

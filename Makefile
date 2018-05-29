@@ -44,7 +44,7 @@ fmt-check:
 	fi;
 
 $(CMD):
-	go build  -o bin/$@/falcon-$@ ./modules/$@
+	go build  -o bin/$@/opsultra-$@ ./modules/$@
 
 .PHONY: $(TARGET)
 $(TARGET): $(GOFILES)
@@ -68,7 +68,9 @@ pack: checkbin
 	@mkdir out/graph/data
 	@bash ./config/confgen.sh
 	@cp $(TARGET) ./out/$(TARGET)
-	tar -C out -zcf opsultra-v$(VERSION).tar.gz .
+	#tar -C out -zcf opsultra-v$(VERSION).tar.gz .
+	tar -C out -zcf opsultra.tar.gz .
+	tar -C out -zcf agent.tar.gz ./agent
 	@rm -rf out
 
 clean:

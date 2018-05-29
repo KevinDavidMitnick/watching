@@ -63,10 +63,10 @@ type CollectorConfig struct {
 }
 
 type ConsulConfig struct {
-	Enabled    bool     `json:"enabled"`
-	Addr       string   `json:"addr"`
-	MountPoint []string `json:"mountPoint"`
-	Interval   int      `json:"interval"`
+	Enabled  bool   `json:"enabled"`
+	Addr     string `json:"addr"`
+	Interval int    `json:"interval"`
+	Timeout  int    `json:"timeout"`
 }
 
 type GlobalConfig struct {

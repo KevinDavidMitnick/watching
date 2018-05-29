@@ -21,6 +21,7 @@ import (
 	"github.com/open-falcon/falcon-plus/common/utils"
 	"github.com/open-falcon/falcon-plus/modules/hbs/cache"
 	"github.com/open-falcon/falcon-plus/modules/hbs/g"
+	"log"
 	"sort"
 	"strings"
 	"time"
@@ -36,6 +37,9 @@ func (t *Agent) MinePlugins(args model.AgentHeartbeatRequest, reply *model.Agent
 		reply.Plugins = string(ret)
 	} else {
 		reply.Plugins = ""
+	}
+	if g.Config().Debug == true {
+		log.Println(args.Hostname, "call plugin MinePlugins: ", reply.Plugins)
 	}
 	reply.Timestamp = time.Now().Unix()
 

@@ -54,8 +54,10 @@ func main() {
 	g.InitRedisConnPool()
 	model.InitDatabase()
 	cron.InitSenderWorker()
+	g.InitHbsClient()
 
 	go http.Start()
+	go cron.ReadStrategyGroupEvent()
 	go cron.ReadHighEvent()
 	go cron.ReadLowEvent()
 	//go cron.CombineSms()
@@ -64,6 +66,7 @@ func main() {
 	//go cron.ConsumeIM()
 	//go cron.ConsumeSms()
 	go cron.ConsumeMail()
+	go cron.SyncStrategyGroup()
 	go cron.CleanExpiredEvent()
 
 	sigs := make(chan os.Signal, 1)

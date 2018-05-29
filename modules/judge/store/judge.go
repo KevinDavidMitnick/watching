@@ -57,7 +57,7 @@ func CheckStrategy(L *SafeLinkedList, firstItem *model.JudgeItem, now int64) {
 
 func judgeItemWithStrategy(L *SafeLinkedList, strategy model.Strategy, firstItem *model.JudgeItem, now int64) {
 	fn, err := ParseFuncFromString(strategy.Func, strategy.Operator, strategy.RightValue)
-	if err != nil {
+	if err != nil && g.Config().Debug == true {
 		log.Printf("[ERROR] parse func %s fail: %v. strategy id: %d", strategy.Func, err, strategy.Id)
 		return
 	}
@@ -84,17 +84,57 @@ func sendEvent(event *model.Event) {
 	g.LastEvents.Set(event.Id, event)
 
 	bs, err := json.Marshal(event)
-	if err != nil {
+	if err != nil && g.Config().Debug == true {
 		log.Printf("json marshal event %v fail: %v", event, err)
 		return
 	}
 
-	// send to redis
-	redisKey := fmt.Sprintf(g.Config().Alarm.QueuePattern, event.Priority())
 	rc := g.RedisConnPool.Get()
 	defer rc.Close()
-	log.Printf("[ERROR] send Event %s", string(bs))
-	rc.Do("LPUSH", redisKey, string(bs))
+	// if Event.Strategy.StrategyGroupId > 0,表示属于策略组事件，需要alarm单独处理，不放入redisKey队列中.
+	if event.Strategy.StrategyGroupId > 0 {
+		strategyKey := fmt.Sprintf("StrategyGroup_%d", event.Strategy.StrategyGroupId)
+		eventMap := make(map[int]*model.Event)
+		// if not exists endpoint ,set it .
+		end_value, _ := rc.Do("HGET", strategyKey, event.Endpoint)
+		if end_value == nil {
+			eventMap[event.StrategyId()] = event
+			bsMap, err := json.Marshal(eventMap)
+			if err != nil && g.Config().Debug == true {
+				log.Printf("1.json marshal event map %v fail: %v", eventMap, err)
+				return
+			}
+			if g.Config().Debug == true {
+				log.Printf("1.[DEBUG] send Event %s to %s, endpoint: %s", string(bs), strategyKey, event.Endpoint)
+			}
+			rc.Do("HSET", strategyKey, event.Endpoint, string(bsMap))
+		} else {
+			temp := end_value.([]byte)
+			err := json.Unmarshal(temp, &eventMap)
+			if err != nil && g.Config().Debug == true {
+				log.Printf("2.json unmarshal event map %s fail: %v", string(temp), err)
+				return
+			}
+			eventMap[event.StrategyId()] = event
+			bsMap, err := json.Marshal(eventMap)
+			if err != nil && g.Config().Debug == true {
+				log.Printf("3.json marshal event map %v fail: %v", eventMap, err)
+				return
+			}
+			if g.Config().Debug == true {
+				log.Printf("2.[DEBUG] send Event %s to %s, endpoint: %s", string(bs), strategyKey, event.Endpoint)
+			}
+			rc.Do("HSET", strategyKey, event.Endpoint, string(bsMap))
+		}
+	} else {
+		// send to redis
+		redisKey := fmt.Sprintf(g.Config().Alarm.QueuePattern, event.Priority())
+		if g.Config().Debug == true {
+			log.Printf("3.[DEBUG] send Event %s to %s", string(bs), redisKey)
+		}
+		rc.Do("LPUSH", redisKey, string(bs))
+	}
+
 }
 
 func CheckExpression(L *SafeLinkedList, firstItem *model.JudgeItem, now int64) {
@@ -180,7 +220,7 @@ func copyItemTags(item *model.JudgeItem) map[string]string {
 
 func judgeItemWithExpression(L *SafeLinkedList, expression *model.Expression, firstItem *model.JudgeItem, now int64) {
 	fn, err := ParseFuncFromString(expression.Func, expression.Operator, expression.RightValue)
-	if err != nil {
+	if err != nil && g.Config().Debug == true {
 		log.Printf("[ERROR] parse func %s fail: %v. expression id: %d", expression.Func, err, expression.Id)
 		return
 	}

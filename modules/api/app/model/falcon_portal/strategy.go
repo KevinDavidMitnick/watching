@@ -29,6 +29,7 @@ package falcon_portal
 // | run_begin   | varchar(16)      | NO   |     |         |                |
 // | run_end     | varchar(16)      | NO   |     |         |                |
 // | tpl_id      | int(10) unsigned | NO   | MUL | 0       |                |
+// | sgrp_id     | int(10) unsigned | NO   | MUL | 0       |                |
 // +-------------+------------------+------+-----+---------+----------------+
 ////////////////////////////////////////////////////////////////////////////
 
@@ -45,6 +46,7 @@ type Strategy struct {
 	RunBegin   string `json:"run_begin" gorm:"column:run_begin"`
 	RunEnd     string `json:"run_end" gorm:"column:run_end"`
 	TplId      int64  `json:"tpl_id" gorm:"column:tpl_id"`
+	SgrpId     int64  `json:"sgrp_id" gorm:"column:sgrp_id"`
 }
 
 func (this Strategy) TableName() string {

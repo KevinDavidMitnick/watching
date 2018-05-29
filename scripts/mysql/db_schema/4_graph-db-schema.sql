@@ -38,6 +38,17 @@ CREATE TABLE IF NOT EXISTS `graph`.`tag_endpoint` (
   UNIQUE KEY `idx_tag_endpoint_id` (`tag`, `endpoint_id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8;
 
+CREATE TABLE IF NOT EXISTS `graph`.`metric_endpoint` (
+  `id` int(10) unsigned NOT NULL AUTO_INCREMENT,
+  `metric` varchar(255) NOT NULL DEFAULT '',
+  `endpoint_id` int(10) unsigned NOT NULL,
+  `ts` int(11) DEFAULT NULL,
+  `t_create` DATETIME NOT NULL COMMENT 'create time',
+  `t_modify` TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT 'last modify time',
+  PRIMARY KEY (`id`),
+  UNIQUE KEY `idx_metric_endpoint_id` (`metric`, `endpoint_id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8;
+
 CREATE TABLE IF NOT EXISTS `graph`.`counter_alias`(
 	   `id` int(10) unsigned  NOT NULL AUTO_INCREMENT,
 	   `counters` VARCHAR(200) NOT NULL UNIQUE,

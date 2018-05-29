@@ -17,7 +17,16 @@ package cron
 import (
 	"bytes"
 	"encoding/json"
+	"errors"
 	"fmt"
+	log "github.com/Sirupsen/logrus"
+	"io/ioutil"
+	gonet "net"
+	"os/exec"
+	"strconv"
+	"strings"
+	"time"
+
 	"github.com/open-falcon/falcon-plus/modules/agent/g"
 	"github.com/shirou/gopsutil/cpu"
 	"github.com/shirou/gopsutil/disk"
@@ -25,11 +34,8 @@ import (
 	"github.com/shirou/gopsutil/load"
 	"github.com/shirou/gopsutil/mem"
 	"github.com/shirou/gopsutil/net"
+	"github.com/shirou/gopsutil/process"
 	"github.com/toolkits/net/httplib"
-	"os/exec"
-	"strconv"
-	"strings"
-	"time"
 )
 
 var (
@@ -50,14 +56,30 @@ func reportSystemInfo() {
 	for {
 		time.Sleep(duration)
 		data := GetAllInfo()
-		sendToConsul(consulUrl, nodeId, data)
+		sendSystemInfoToConsul(consulUrl, nodeId, data)
 	}
 }
 
 func getHostInfo() map[string]interface{} {
 	hostInfo, err := host.Info()
 	if err == nil {
-		info["hostInfo"] = hostInfo
+		uptime, _ := formatDeltatime(hostInfo.Uptime)
+		host := map[string]interface{}{
+			"hostname":             hostInfo.Hostname,
+			"uptime":               uptime,
+			"bootTime":             hostInfo.BootTime,
+			"procs":                hostInfo.Procs,
+			"os":                   hostInfo.OS,
+			"platform":             hostInfo.Platform,
+			"platformFamily":       hostInfo.PlatformFamily,
+			"platformVersion":      hostInfo.PlatformVersion,
+			"kernelVersion":        hostInfo.KernelVersion,
+			"virtualizationSystem": hostInfo.VirtualizationSystem,
+			"virtualizationRole":   hostInfo.VirtualizationRole,
+			"hostid":               hostInfo.HostID,
+		}
+		info["hostInfo"] = host
+		info["name"] = hostInfo.Hostname
 
 		// add all disk info
 		if os := hostInfo.OS; os != "" {
@@ -75,7 +97,8 @@ func getHostInfo() map[string]interface{} {
 
 				diskStr := strings.TrimSpace(out.String())
 				if diskTotal, err := strconv.ParseInt(diskStr, 10, 64); err == nil {
-					info["diskTotal"] = diskTotal * 1024
+					//info["diskTotal"] = diskTotal * 1024
+					info["diskTotal"] = fmt.Sprintf("%d kB", diskTotal)
 				}
 			}
 
@@ -98,24 +121,64 @@ func getCpuInfo() map[string]interface{} {
 	coreNumber, err2 := cpu.Counts(false)
 	cpuInfo, err3 := cpu.Info()
 	if err1 == nil && err2 == nil && err3 == nil {
-		info["cpuInfo"] = map[string]interface{}{"usedPercent": usedPercent[0], "coreNumber": coreNumber, "modelName": cpuInfo[0].ModelName}
+		info["cpuInfo"] = map[string]interface{}{
+			"usedPercent": formatPercent(usedPercent[0]),
+			"coreNumber":  coreNumber,
+			"modelName":   cpuInfo[0].ModelName,
+		}
 	}
 	return info
 }
 
+func ipv4MaskString(m []byte) string {
+	if len(m) != 4 {
+		panic("ipv4Mask: len must be 4 bytes")
+	}
+
+	return fmt.Sprintf("%d.%d.%d.%d", m[0], m[1], m[2], m[3])
+}
+
 func getInterfaceInfo() map[string]interface{} {
+	defer func() {
+		if err := recover(); err != nil {
+			log.Println(err)
+		}
+	}()
 	interfaceInfo, err := net.Interfaces()
-	infos := make(map[string]map[string]string)
+	infos := make([]interface{}, 0)
 	if err == nil && len(interfaceInfo) != 0 {
 		for _, info := range interfaceInfo {
-			addrs := ""
+			ipAddr4 := ""
+			ipAddr6 := ""
+			netmask := ""
 			for _, addr := range info.Addrs {
-				addrs += "," + addr.Addr
+				if strings.Contains(addr.Addr, ":") {
+					ipAddr6 = addr.Addr
+				}
+				if strings.Contains(addr.Addr, ".") {
+					ip, ipv4Net, err := gonet.ParseCIDR(addr.Addr)
+					if err != nil {
+						log.Fatal(err)
+					}
+					ipAddr4 = fmt.Sprintf("%s", ip)
+					netmask = ipv4MaskString(ipv4Net.Mask)
+				}
 			}
-			infos[info.Name] = map[string]string{"name": info.Name,
-				"mtu": strconv.Itoa(info.MTU), "hardwareAddr": info.HardwareAddr,
-				"ipAddr": addrs,
+			speed, err := getInterfaceSpeed(info.Name)
+			if err != nil {
+				log.Printf("Failed to get if %s speed.", info.Name)
 			}
+			ifMap := map[string]string{
+				"name":         info.Name,
+				"mtu":          strconv.Itoa(info.MTU),
+				"hardwareAddr": info.HardwareAddr,
+				"ipAddr4":      ipAddr4,
+				"ipAddr6":      ipAddr6,
+				"netmask":      netmask,
+				"speed":        speed,
+				"flags":        strings.Join(info.Flags, ","),
+			}
+			infos = append(infos, ifMap)
 		}
 		info["interfaceInfo"] = infos
 	}
@@ -125,25 +188,65 @@ func getInterfaceInfo() map[string]interface{} {
 func getMemInfo() map[string]interface{} {
 	memInfo, err := mem.VirtualMemory()
 	if err == nil {
-		info["memInfo"] = memInfo
+		mem := map[string]string{
+			"total":        convertByteToKByte(memInfo.Total),
+			"available":    convertByteToKByte(memInfo.Available),
+			"used":         convertByteToKByte(memInfo.Used),
+			"usedPercent":  formatPercent(memInfo.UsedPercent),
+			"free":         convertByteToKByte(memInfo.Free),
+			"active":       convertByteToKByte(memInfo.Active),
+			"inactive":     convertByteToKByte(memInfo.Inactive),
+			"wired":        convertByteToKByte(memInfo.Wired),
+			"buffers":      convertByteToKByte(memInfo.Buffers),
+			"cached":       convertByteToKByte(memInfo.Cached),
+			"writeback":    convertByteToKByte(memInfo.Writeback),
+			"dirty":        convertByteToKByte(memInfo.Dirty),
+			"writebacktmp": convertByteToKByte(memInfo.WritebackTmp),
+			"shared":       convertByteToKByte(memInfo.Shared),
+			"slab":         convertByteToKByte(memInfo.Slab),
+			"pagetables":   convertByteToKByte(memInfo.PageTables),
+			"swapcached":   convertByteToKByte(memInfo.SwapCached),
+			"commitlimit":  convertByteToKByte(memInfo.CommitLimit),
+			"committedas":  convertByteToKByte(memInfo.CommittedAS),
+		}
+		info["memInfo"] = mem
+	}
+	swapInfo, err := mem.SwapMemory()
+	if err == nil {
+		swap := map[string]string{
+			"total":       convertByteToKByte(swapInfo.Total),
+			"used":        convertByteToKByte(swapInfo.Used),
+			"free":        convertByteToKByte(swapInfo.Free),
+			"usedPercent": formatPercent(swapInfo.UsedPercent),
+			"sin":         convertByteToKByte(swapInfo.Sin),
+			"sout":        convertByteToKByte(swapInfo.Sout),
+		}
+		info["swapInfo"] = swap
 	}
 	return info
 }
 
 func getDiskInfo() map[string]interface{} {
 	diskInfos, err := disk.Partitions(true)
-	infos := make(map[string]map[string]string)
+	infos := make([]interface{}, 0)
 	if err == nil && len(diskInfos) != 0 {
 		for _, diskInfo := range diskInfos {
 			usage, err := disk.Usage(diskInfo.Mountpoint)
 			if err == nil && usage != nil {
-				infos[diskInfo.Mountpoint] = map[string]string{"device": diskInfo.Device,
-					"mountpoint": diskInfo.Mountpoint, "fstype": diskInfo.Fstype,
-					"total": strconv.FormatUint(usage.Total, 10), "free": strconv.FormatUint(usage.Free, 10), "used": strconv.FormatUint(usage.Used, 10),
-					"usedPercent": strconv.FormatFloat(usage.UsedPercent, 'f', -1, 64), "inodesTotal": strconv.FormatUint(usage.InodesTotal, 10),
-					"inodesUsed": strconv.FormatUint(usage.InodesUsed, 10), "inodesFree": strconv.FormatUint(usage.InodesFree, 10),
-					"inodesUsedPercent": strconv.FormatFloat(usage.InodesUsedPercent, 'f', -1, 64),
+				infoMap := map[string]string{
+					"device":            diskInfo.Device,
+					"mountpoint":        diskInfo.Mountpoint,
+					"fstype":            diskInfo.Fstype,
+					"total":             convertByteToKByte(usage.Total),
+					"free":              convertByteToKByte(usage.Free),
+					"used":              convertByteToKByte(usage.Used),
+					"usedPercent":       formatPercent(usage.UsedPercent),
+					"inodesTotal":       convertByteToKByte(usage.InodesTotal),
+					"inodesUsed":        convertByteToKByte(usage.InodesUsed),
+					"inodesFree":        convertByteToKByte(usage.InodesFree),
+					"inodesUsedPercent": formatPercent(usage.InodesUsedPercent),
 				}
+				infos = append(infos, infoMap)
 			}
 		}
 	}
@@ -151,15 +254,55 @@ func getDiskInfo() map[string]interface{} {
 	return info
 }
 
+func getProcessInfo(proc *process.Process) map[string]interface{} {
+	processInfo := make(map[string]interface{})
+	processInfo["pid"] = proc.Pid
+	processInfo["name"], _ = proc.Name()
+	processInfo["status"], _ = proc.Status()
+	processInfo["cpuPercent"], _ = proc.CPUPercent()
+	if times, err := proc.Times(); err == nil {
+		if times != nil {
+			processInfo["cpuTimes"] = times.Total()
+		}
+	}
+	processInfo["memoryPercent"], _ = proc.MemoryPercent()
+	processInfo["create_time"], _ = proc.CreateTime()
+	processInfo["workspace"], _ = proc.Cwd()
+	processInfo["execPath"], _ = proc.Exe()
+	processInfo["owner"], _ = proc.Username()
+	processInfo["cmdLine"], _ = proc.Cmdline()
+	return processInfo
+}
+
+func getProcsInfo() map[string]interface{} {
+	var procs []int32
+	var err1 error
+	procs, err1 = process.Pids()
+	if err1 != nil || len(procs) <= 0 {
+		return info
+	}
+	procInfo := make(map[string]interface{})
+	for _, pid := range procs {
+		proc, _ := process.NewProcess(int32(pid))
+		procInfo[strconv.Itoa(int(pid))] = getProcessInfo(proc)
+	}
+	info["procInfo"] = procInfo
+	return info
+}
+
 func GetAllInfo() string {
 	info = make(map[string]interface{})
-	info["status"] = "Passing"
+	info["uuid"] = g.Config().Hostname
+	info["tname"] = "Host"
+	info["timeout"] = g.Config().Consul.Timeout
+	info["timestamp"] = time.Now().Unix()
 	getHostInfo()
 	getLoadInfo()
 	getCpuInfo()
 	getMemInfo()
 	getInterfaceInfo()
 	getDiskInfo()
+	//getProcsInfo()
 
 	var data []byte
 	data, err := json.Marshal(info)
@@ -170,12 +313,78 @@ func GetAllInfo() string {
 	}
 }
 
-func sendToConsul(consulUrl string, nodeId string, data string) {
+func sendSystemInfoToConsul(consulUrl string, nodeId string, data string) {
 	if data != "" {
-		url := fmt.Sprintf("%s/v1/kv/host/%s?raw", consulUrl, nodeId)
+		url := fmt.Sprintf("%s/kv/push?url=/v1/kv/object/%s/system", consulUrl, nodeId)
 		r := httplib.Put(url)
 		r.Body(data)
 		ret, err := r.String()
-		fmt.Println(ret, err)
+		log.Println(ret, err)
 	}
+}
+
+func formatDeltatime(sec uint64) (string, error) {
+	if sec < 0 {
+		err := errors.New("The deltatime must be positive.")
+		return "", err
+	}
+	days := sec / (60 * 60 * 24)
+	hours := (sec % (60 * 60 * 24)) / (60 * 60)
+	mins := (sec % (60 * 60)) / 60
+	secs := sec % 60
+	date := make(map[string]string)
+	if days == 0 {
+		date["d"] = fmt.Sprintf("%s", "")
+		if hours == 0 {
+			date["h"] = fmt.Sprintf("%s", "")
+			if mins == 0 {
+				date["m"] = fmt.Sprintf("%s", "")
+			} else {
+				date["m"] = fmt.Sprintf("%d分钟", mins)
+			}
+			date["s"] = fmt.Sprintf("%d秒", secs)
+		} else {
+			date["h"] = fmt.Sprintf("%d小时", hours)
+			date["m"] = fmt.Sprintf("%d分钟", mins)
+			date["s"] = fmt.Sprintf("%d秒", secs)
+		}
+	} else {
+		date["d"] = fmt.Sprintf("%d天", days)
+		date["h"] = fmt.Sprintf("%d小时", hours)
+		date["m"] = fmt.Sprintf("%d分钟", mins)
+		date["s"] = fmt.Sprintf("%d秒", secs)
+	}
+
+	formatTime := fmt.Sprintf("%s%s%s%s", date["d"], date["h"], date["m"], date["s"])
+	log.Println("Uptime is: ", formatTime)
+	return formatTime, nil
+}
+
+func getInterfaceSpeed(inf string) (string, error) {
+	ifSpeedFile := fmt.Sprintf("/sys/class/net/%s/speed", inf)
+
+	data, err := ioutil.ReadFile(ifSpeedFile)
+	if err != nil {
+		log.Println(err)
+		return "Not support!", err
+	}
+	//speed := string(data)
+	var speed string
+	s := strings.TrimSpace(string(data))
+	if s == "-1" {
+		speed = "Unknown"
+	} else {
+		speed = s + "Mb/s"
+	}
+	log.Println(speed)
+	return speed, err
+}
+
+func formatPercent(f float64) string {
+	return fmt.Sprintf("%.2f", f)
+}
+
+func convertByteToKByte(b uint64) string {
+	kb := b / 1024
+	return fmt.Sprintf("%d kB", kb)
 }

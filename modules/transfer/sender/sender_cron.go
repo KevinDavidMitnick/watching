@@ -15,6 +15,7 @@
 package sender
 
 import (
+	"github.com/open-falcon/falcon-plus/modules/transfer/g"
 	"github.com/open-falcon/falcon-plus/modules/transfer/proc"
 	"github.com/toolkits/container/list"
 	"log"
@@ -62,5 +63,7 @@ func calcSendCacheSize(mapList map[string]*list.SafeListLimited) int64 {
 }
 
 func logConnPoolsProc() {
-	log.Printf("connPools proc: \n%v", strings.Join(GraphConnPools.Proc(), "\n"))
+	if g.Config().Debug == true {
+		log.Printf("connPools proc: \n%v", strings.Join(GraphConnPools.Proc(), "\n"))
+	}
 }

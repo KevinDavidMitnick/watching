@@ -40,6 +40,8 @@ func init() {
 	configPushRoutes()
 	configRunRoutes()
 	configSystemRoutes()
+	configDockerRoutes()
+
 }
 
 func RenderJson(w http.ResponseWriter, v interface{}) {

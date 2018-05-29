@@ -182,7 +182,7 @@ func (this *Graph) Query(param cmodel.GraphQueryParam, resp *cmodel.GraphQueryRe
 
 	nowTs := time.Now().Unix()
 	lastUpTs := nowTs - nowTs%int64(step)
-	rra1StartTs := lastUpTs - int64(rrdtool.RRA1PointCnt*step)
+	rra1StartTs := lastUpTs - int64(cfg.RRD.RRA * step)
 
 	// consolidated, do not merge
 	if start_ts < rra1StartTs {

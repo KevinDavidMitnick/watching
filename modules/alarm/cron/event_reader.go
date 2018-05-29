@@ -18,6 +18,7 @@ import (
 	"encoding/json"
 	"time"
 
+	"fmt"
 	log "github.com/Sirupsen/logrus"
 	"github.com/garyburd/redigo/redis"
 	cmodel "github.com/open-falcon/falcon-plus/common/model"
@@ -91,4 +92,77 @@ func popEvent(queues []string) (*cmodel.Event, error) {
 	// events no longer saved in memory
 
 	return &event, nil
+}
+
+func ReadStrategyGroupEvent() {
+	for {
+		consumeStrategyGroupEvent()
+		time.Sleep(time.Second)
+	}
+}
+
+func getReisKeyArray(strategyKey string) []string {
+	rc := g.RedisConnPool.Get()
+	defer rc.Close()
+	var keys []string
+
+	value, err := rc.Do("HKEYS", strategyKey)
+	if err == nil && value != nil {
+		for _, v := range value.([]interface{}) {
+			data := v.([]byte)
+			keys = append(keys, string(data))
+		}
+	}
+
+	return keys
+}
+
+func consumeStrategyGroupEvent() {
+	strategyGroup := g.StrategyGroupMap.Get()
+	log.Printf("1.[DEBUG] start consume strategy group event,%v.........", strategyGroup)
+	if strategyGroup != nil && len(strategyGroup) > 0 {
+		rc := g.RedisConnPool.Get()
+		defer rc.Close()
+		for k, v := range strategyGroup {
+			strategyKey := fmt.Sprintf("StrategyGroup_%d", k)
+			keyArray := getReisKeyArray(strategyKey)
+			log.Printf("2.[DEBUG] strategy group event key array is : %v", keyArray)
+			for _, key := range keyArray {
+				lastValue, err := rc.Do("HGET", strategyKey, key)
+				if (err == nil) && (lastValue != nil) {
+					if strValue, ok := lastValue.([]byte); ok {
+						value := make(map[int]*cmodel.Event)
+						if err := json.Unmarshal(strValue, &value); (err == nil) && (len(v) == len(value)) {
+							pushMap := make(map[string][]string)
+							cnt := 0
+							var eventTime int64
+							for _, id := range v {
+								if tmpEvent, flag := value[id]; flag {
+									if eventTime == 0 {
+										eventTime = tmpEvent.EventTime
+									}
+									diffTime := tmpEvent.EventTime - eventTime
+									if eventStr, err := json.Marshal(tmpEvent); diffTime < 60 && err == nil {
+										cnt = cnt + 1
+										redisKey := fmt.Sprintf("event:p%v", tmpEvent.Priority())
+										pushMap[redisKey] = append(pushMap[redisKey], string(eventStr))
+									}
+								}
+							}
+							if cnt == len(v) {
+								for k, v := range pushMap {
+									for _, e := range v {
+										rc.Do("LPUSH", k, e)
+									}
+								}
+								log.Printf("3.[DEBUG] push map is  : %v", pushMap)
+							}
+							rc.Do("HDEL", strategyKey, key)
+							log.Printf("4.[DEBUG] del strategy group %s,%s", strategyKey, key)
+						}
+					}
+				}
+			}
+		}
+	}
 }
