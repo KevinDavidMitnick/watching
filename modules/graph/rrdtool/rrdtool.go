@@ -135,7 +135,7 @@ func fetch(filename string, cf string, start, end int64, step int) ([]*cmodel.RR
 	var data Fetch_t
 	data.Start = start
 	data.End = end
-	data.Step = int(time.Duration(step) * time.Second)
+	data.Step = int(step)
 	data.Cf = cf
 	data.Filename = filename
 
