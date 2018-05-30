@@ -39,6 +39,9 @@ func Routes(r *gin.Engine) {
 	tmpr.POST("/action", CreateActionToTmplate)
 	tmpr.PUT("/action", UpdateActionToTmplate)
 
+	tmpt := r.Group("/api/v1/tpl")
+	tmpt.GET("/specifytpl", GetSpecialTemplates)
+
 	actr := r.Group("/api/v1/action")
 	actr.GET("/:act_id", GetActionByID)
 	actr.POST("/action", CreateAction)
