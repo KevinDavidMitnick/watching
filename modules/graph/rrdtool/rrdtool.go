@@ -23,6 +23,7 @@ import (
 	"io/ioutil"
 	"log"
 	"net/http"
+	"strings"
 	"sync/atomic"
 	"time"
 )
@@ -65,11 +66,48 @@ type Fetch_return struct {
 	Time   float64           `json:"time"`
 }
 
+type HttpStat struct {
+	Redirect string `json:"redirect"`
+}
+
+type RaftStat struct {
+	State string `json:"state"`
+}
+
+type StoreStat struct {
+	Raft *RaftStat `json:"raft"`
+}
+
+type RrdClusterStat struct {
+	Http  *HttpStat  `json:"http"`
+	Store *StoreStat `json:"store"`
+}
+
 func Start() {
 	// sync disk
 	go syncDisk()
 	go ioWorker()
 	log.Println("rrdtool.Start ok")
+}
+
+func getRrdLeader(addr string) string {
+	var clusterStat RrdClusterStat
+	url := "http://" + addr + "/status"
+	if resp, err := http.Get(url); err == nil {
+		defer resp.Body.Close()
+		if err1 := json.NewDecoder(resp.Body).Decode(&clusterStat); err1 == nil {
+			if clusterStat.Store.Raft.State == "Leader" {
+				return addr
+			}
+			redirect := strings.Split(clusterStat.Http.Redirect, ":")
+			if redirect[0] == "" || redirect[0] == "localhost" || redirect[0] == "127.0.0.1" {
+				return strings.Split(addr, ":")[0] + ":" + redirect[1]
+			} else {
+				return clusterStat.Http.Redirect
+			}
+		}
+	}
+	return ""
 }
 
 // flush to disk from memory
@@ -80,16 +118,20 @@ func flushrrd(filename string, items []*cmodel.GraphItem) error {
 	data.Filename = filename
 	data.Items = items
 
-	if b, err := json.Marshal(data); err == nil {
+	url := getRrdLeader(g.Config().Rrd.Addr)
+	if url == "" {
+		return nil
+	}
+	url = url + "/db/execute?pretty&timings"
+	if b, err := json.Marshal(data); err == nil && url != "" {
 		log.Println("-----------------start flush------")
 		log.Println(string(b))
-		url := g.Config().Rrd.AppendAddr
 		resp, err := http.Post(url, "application/json", bytes.NewReader(b))
 		if err != nil {
 			return nil
 		}
 		defer resp.Body.Close()
-		if ret, err1 := ioutil.ReadAll(resp.Body); err == nil {
+		if ret, err1 := ioutil.ReadAll(resp.Body); err1 == nil {
 			log.Println(filename, len(items), string(ret))
 			return err1
 		}
@@ -142,7 +184,11 @@ func fetch(filename string, cf string, start, end int64, step int) ([]*cmodel.RR
 	log.Println("starting fetching data....")
 	if b, err := json.Marshal(data); err == nil {
 		log.Println(string(b))
-		url := g.Config().Rrd.QueryAddr
+		url := getRrdLeader(g.Config().Rrd.Addr)
+		if url == "" {
+			return rrd, nil
+		}
+		url = url + "/db/query?pretty&timings"
 		resp, err1 := http.Post(url, "application/json", bytes.NewReader(b))
 		if err1 != nil {
 			log.Printf("fetch error:filename is %s,start time is:%d,end time is:%d,step is :%d,time_len is:%d", filename, start, end, step, len(rrd))
