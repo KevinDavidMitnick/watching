@@ -122,7 +122,7 @@ func flushrrd(filename string, items []*cmodel.GraphItem) error {
 	if url == "" {
 		return nil
 	}
-	url = url + "/db/execute?pretty&timings"
+	url = "http://" + url + "/db/execute?pretty&timings"
 	if b, err := json.Marshal(data); err == nil && url != "" {
 		log.Println("-----------------start flush------")
 		log.Println(string(b))
@@ -188,7 +188,7 @@ func fetch(filename string, cf string, start, end int64, step int) ([]*cmodel.RR
 		if url == "" {
 			return rrd, nil
 		}
-		url = url + "/db/query?pretty&timings"
+		url = "http://" + url + "/db/query?pretty&timings"
 		resp, err1 := http.Post(url, "application/json", bytes.NewReader(b))
 		if err1 != nil {
 			log.Printf("fetch error:filename is %s,start time is:%d,end time is:%d,step is :%d,time_len is:%d", filename, start, end, step, len(rrd))
