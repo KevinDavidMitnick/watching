@@ -20,6 +20,7 @@ import (
 	"github.com/open-falcon/falcon-plus/modules/rrdlite/store"
 	"github.com/open-falcon/falcon-plus/modules/rrdlite/tcp"
 	"github.com/open-falcon/falcon-plus/modules/rrdlite/g"
+	"github.com/toolkits/file"
 )
 
 const sqliteDSN = "db.sqlite"
@@ -82,13 +83,13 @@ var cpuProfile string
 var memProfile string
 var config string
 
-const name = `rqlited`
+const name = `rrdlited`
 const desc = `rqlite is a lightweight, distributed relational database, which uses SQLite as its
 storage engine. It provides an easy-to-use, fault-tolerant store for relational data.`
 
 func init() {
 	flag.StringVar(&nodeID, "node-id", "", "Unique name for node. If not set, set to hostname")
-	flag.StringVar(&httpAddr, "http-addr", "localhost:4001", "HTTP server bind address. For HTTPS, set X.509 cert and key")
+	//flag.StringVar(&httpAddr, "http-addr", "localhost:4001", "HTTP server bind address. For HTTPS, set X.509 cert and key")
 	flag.StringVar(&httpAdv, "http-adv-addr", "", "Advertised HTTP address. If not set, same as HTTP server")
 	flag.StringVar(&x509Cert, "http-cert", "", "Path to X.509 certificate for HTTP endpoint")
 	flag.StringVar(&x509Key, "http-key", "", "Path to X.509 private key for HTTP endpoint")
@@ -98,9 +99,9 @@ func init() {
 	flag.StringVar(&nodeX509Key, "node-key", "key.pem", "Path to X.509 private key for node-to-node encryption")
 	flag.BoolVar(&noNodeVerify, "node-no-verify", false, "Skip verification of a remote node cert")
 	flag.StringVar(&authFile, "auth", "", "Path to authentication and authorization file. If not set, not enabled")
-	flag.StringVar(&raftAddr, "raft-addr", "localhost:4002", "Raft communication bind address")
+	//flag.StringVar(&raftAddr, "raft-addr", "localhost:4002", "Raft communication bind address")
 	flag.StringVar(&raftAdv, "raft-adv-addr", "", "Advertised Raft communication address. If not set, same as Raft bind")
-	flag.StringVar(&joinAddr, "join", "", "Comma-delimited list of nodes, through which a cluster can be joined (proto://host:port)")
+	//flag.StringVar(&joinAddr, "join", "", "Comma-delimited list of nodes, through which a cluster can be joined (proto://host:port)")
 	flag.StringVar(&discoURL, "disco-url", "http://discovery.rqlite.com", "Set Discovery Service URL")
 	flag.StringVar(&discoID, "disco-id", "", "Set Discovery ID. If not set, Discovery Service not used")
 	flag.BoolVar(&expvar, "expvar", true, "Serve expvar data on HTTP server")
@@ -114,7 +115,7 @@ func init() {
 	flag.Uint64Var(&raftSnapThreshold, "raft-snap", 8192, "Number of outstanding log entries that trigger snapshot")
 	flag.StringVar(&cpuProfile, "cpu-profile", "", "Path to file for CPU profiling information")
 	flag.StringVar(&memProfile, "mem-profile", "", "Path to file for memory profiling information")
-	flag.StringVar(&config, "conf", "cfg.json", "specify config file")
+	flag.StringVar(&config, "config", "cfg.json", "specify config file")
 	flag.Usage = func() {
 		fmt.Fprintf(os.Stderr, "\n%s\n\n", desc)
 		fmt.Fprintf(os.Stderr, "Usage: %s [arguments] <data directory>\n", name)
@@ -131,23 +132,24 @@ func main() {
 		os.Exit(0)
 	}
 
-	// Ensure the data path is set.
-	if flag.NArg() == 0 {
-		flag.Usage()
-		os.Exit(1)
-	}
-
-	dataPath := flag.Arg(0)
-
-	// Display logo.
-	fmt.Println(logo)
-
 	// global config
 	g.ParseConfig(config)
 
+	//dataPath := flag.Arg(0)
+	dataPath := g.Config().DataPath
+	httpAddr = g.Config().HttpAddr
+	raftAddr = g.Config().RaftAddr
+	joinAddr = g.Config().JoinAddr
+	logPath :=  g.Config().LogPath
+
+	// Display logo.
+	//fmt.Println(logo)
+
 	// Configure logging and pump out initial message.
-	log.SetFlags(log.LstdFlags)
-	log.SetOutput(os.Stderr)
+	log.SetFlags(log.LstdFlags | log.Lshortfile)
+	logFile := file.MustOpenLogFile(logPath)
+
+	log.SetOutput(logFile)
 	log.SetPrefix(fmt.Sprintf("[%s] ", name))
 	log.Printf("%s starting, version %s, commit %s, branch %s", name, version, commit, branch)
 	log.Printf("%s, target architecture is %s, operating system target is %s", runtime.Version(), runtime.GOARCH, runtime.GOOS)

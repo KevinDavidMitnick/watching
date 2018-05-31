@@ -268,36 +268,41 @@ func (r Rrd) Execute(queries []string, tx, xTime bool) ([]*Result, error) {
 	var allResults []*Result
 	var graphItems []*cmodel.GraphItem
 	var filename string
-	err := func() error {
-		for _, q := range queries {
-			if q == "" {
-				continue
-			}
-			result := &Result{}
-			start := time.Now()
-        	qList := strings.SplitN(q, " ", 3)
-
-        	rrdPath := g.Config().RrdPath
-			err1 := file.InsureDir(rrdPath)
-			if err1 != nil {
-				fmt.Println("insure rrdPath failed, ", err1)
-			}
-        	filename = filepath.Join(rrdPath, qList[1])
-        	item := []byte(qList[2])
-        	var graphItem cmodel.GraphItem
-        	if err := json.Unmarshal(item, &graphItem); err != nil {
-        		return err
-			}
-
-			graphItems = append(graphItems, &graphItem)
-			if xTime {
-				result.Time = time.Now().Sub(start).Seconds()
-			}
-			allResults = append(allResults, result)
+	var method string
+    var err error
+	for _, q := range queries {
+		if q == "" {
+			continue
 		}
-		err := rrdtool.Flushrrd(filename, graphItems)
-		return err
-	}()
+		result := &Result{}
+		start := time.Now()
+		qList := strings.SplitN(q, " ", 3)
+
+		rrdPath := g.Config().RrdPath
+		err1 := file.InsureDir(rrdPath)
+		if err1 != nil {
+			fmt.Println("insure rrdPath failed, ", err1)
+		}
+		method = qList[0]
+		filename = filepath.Join(rrdPath, qList[1])
+		item := []byte(qList[2])
+		var graphItem cmodel.GraphItem
+		if err := json.Unmarshal(item, &graphItem); err != nil {
+			return nil, err
+		}
+
+		graphItems = append(graphItems, &graphItem)
+		if xTime {
+			result.Time = time.Now().Sub(start).Seconds()
+		}
+		allResults = append(allResults, result)
+	}
+	if method == "INSERT" {
+		err = rrdtool.Flushrrd(filename, graphItems)
+	} else if method == "DELETE" {
+		err = rrdtool.Remove(filename)
+	}
+
 	return allResults, err
 }
 

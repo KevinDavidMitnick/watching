@@ -9,10 +9,11 @@ import (
 	"log"
 	"net"
 	"net/http"
-	"os"
 	"time"
 
 	httpd "github.com/open-falcon/falcon-plus/modules/rrdlite/http"
+	"github.com/open-falcon/falcon-plus/modules/rrdlite/g"
+	"github.com/toolkits/file"
 )
 
 const numAttempts int = 3
@@ -25,8 +26,8 @@ const attemptInterval time.Duration = 5 * time.Second
 func Join(joinAddr []string, id, addr string, meta map[string]string, skip bool) (string, error) {
 	var err error
 	var j string
-	logger := log.New(os.Stderr, "[cluster-join] ", log.LstdFlags)
-
+	logFile := file.MustOpenLogFile(g.Config().LogPath)
+	logger := log.New(logFile, "[cluster-join] ", log.LstdFlags|log.Lshortfile)
 	for i := 0; i < numAttempts; i++ {
 		for _, a := range joinAddr {
 			j, err = join(a, id, addr, meta, skip)

@@ -206,3 +206,6 @@ func Fetch(filename string, cf string, start, end int64, step int) ([]*cmodel.RR
 	return ret, nil
 }
 
+func Remove(filename string) error {
+	return 	file.Remove(filename)
+}

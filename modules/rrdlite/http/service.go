@@ -15,7 +15,6 @@ import (
 	"net"
 	"net/http"
 	"net/http/pprof"
-	"os"
 	"runtime"
 	"strings"
 	"sync"
@@ -23,6 +22,8 @@ import (
 
 	"github.com/open-falcon/falcon-plus/modules/rrdlite/store"
 	cmodel "github.com/open-falcon/falcon-plus/common/model"
+	"github.com/open-falcon/falcon-plus/modules/rrdlite/g"
+	"github.com/toolkits/file"
 )
 
 // Store is the interface the Raft-based database must implement.
@@ -83,6 +84,7 @@ type ExeRequest struct {
 	Start     int64 `json:"start,omitempty"`
 	End       int64 `json:"end,omitempty"`
 	Step      int   `json:"step,omitempty"`
+	Method    string `json:"method,omitempty"`
 }
 
 // stats captures stats for the HTTP service.
@@ -151,13 +153,14 @@ type Service struct {
 // New returns an uninitialized HTTP service. If credentials is nil, then
 // the service performs no authentication and authorization checks.
 func New(addr string, store Store, credentials CredentialStore) *Service {
+	logFile := file.MustOpenLogFile(g.Config().LogPath)
 	return &Service{
 		addr:            addr,
 		store:           store,
 		start:           time.Now(),
 		statuses:        make(map[string]Statuser),
 		credentialStore: credentials,
-		logger:          log.New(os.Stderr, "[http] ", log.LstdFlags),
+		logger:          log.New(logFile, "[http] ", log.LstdFlags|log.Lshortfile),
 	}
 }
 
@@ -915,16 +918,22 @@ func NormalizeAddr(addr string) string {
 func ConvertToSQL(execReq ExeRequest) ([]string, error) {
 	filename := execReq.Filename
 	items := execReq.Items
+	method := execReq.Method
 	var queries []string
-	if items !=nil {
+
+	if method == "insert" {
 		for _, item := range items {
 			itemStr, _ := json.Marshal(item)
-			sql := fmt.Sprintf("APPEND %s %s", filename, itemStr)
+			sql := fmt.Sprintf("INSERT %s %s", filename, itemStr)
 			queries = append(queries, sql)
 		}
-	} else {
+	} else if method == "query" {
 		req, _ := json.Marshal(execReq)
 		sql := fmt.Sprintf("QUERY %s %s", filename, req)
+		queries = append(queries, sql)
+	} else 	if method == "delete" {
+		req, _ := json.Marshal(execReq)
+		sql := fmt.Sprintf("DELETE %s %s", filename, req)
 		queries = append(queries, sql)
 	}
 

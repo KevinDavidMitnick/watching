@@ -24,7 +24,12 @@ import (
 )
 
 type GlobalConfig struct {
-	RrdPath       string `json:"rrd_path"`
+	RrdPath       string `json:"rrdPath"`
+	DataPath      string `json:"dataPath"`
+	HttpAddr      string `json:"httpAddr"`
+	RaftAddr	  string `json:"raftAddr"`
+	JoinAddr      string `json:"joinAddr"`
+	LogPath       string `json:"logPath"`
 }
 
 var (
@@ -37,29 +42,31 @@ func Config() *GlobalConfig {
 }
 
 func ParseConfig(cfg string) {
+	logFile := file.MustOpenLogFile("logs/opsultra-rrdlite.log")
+	logger := log.New(logFile, "[config] ", log.LstdFlags|log.Lshortfile)
 	if cfg == "" {
-		log.Fatalln("config file not specified: use -c $filename")
+		logger.Fatalln("config file not specified: use -c $filename")
 	}
 
 	if !file.IsExist(cfg) {
-		log.Fatalln("config file specified not found:", cfg)
+		logger.Fatalln("config file specified not found:", cfg)
 	}
 
 	ConfigFile = cfg
 
 	configContent, err := file.ToTrimString(cfg)
 	if err != nil {
-		log.Fatalln("read config file", cfg, "error:", err.Error())
+		logger.Fatalln("read config file", cfg, "error:", err.Error())
 	}
 
 	var c GlobalConfig
 	err = json.Unmarshal([]byte(configContent), &c)
 	if err != nil {
-		log.Fatalln("parse config file", cfg, "error:", err.Error())
+		logger.Fatalln("parse config file", cfg, "error:", err.Error())
 	}
 
 	// set config
 	atomic.StorePointer(&ptr, unsafe.Pointer(&c))
 
-	log.Println("g.ParseConfig ok, file", cfg)
+	logger.Println("g.ParseConfig ok, file", cfg)
 }

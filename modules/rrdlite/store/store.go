@@ -24,6 +24,8 @@ import (
 	"github.com/hashicorp/raft-boltdb"
 	sdb "github.com/open-falcon/falcon-plus/modules/rrdlite/db"
 	cmodel "github.com/open-falcon/falcon-plus/common/model"
+	"github.com/open-falcon/falcon-plus/modules/rrdlite/g"
+	"github.com/toolkits/file"
 )
 
 var (
@@ -228,7 +230,8 @@ type StoreConfig struct {
 func New(ln Listener, c *StoreConfig) *Store {
 	logger := c.Logger
 	if logger == nil {
-		logger = log.New(os.Stderr, "[store] ", log.LstdFlags)
+		logFile := file.MustOpenLogFile(g.Config().LogPath)
+		logger = log.New(logFile, "[store] ", log.LstdFlags|log.Lshortfile)
 	}
 
 	return &Store{
@@ -272,14 +275,18 @@ func (s *Store) Open(enableSingle bool) error {
 	// Is this a brand new node?
 	newNode := !pathExists(filepath.Join(s.raftDir, "raft.db"))
 
+	logFile := file.MustOpenLogFile(g.Config().LogPath)
 	// Create Raft-compatible network layer.
-	s.raftTn = raft.NewNetworkTransport(NewTransport(s.ln),
-		connectionPoolCount, connectionTimeout, nil)
+	//s.raftTn = raft.NewNetworkTransport(NewTransport(s.ln),
+	//	connectionPoolCount, connectionTimeout, nil)
+	raftTnLogger := log.New(logFile, "[raft-net] ", log.LstdFlags|log.Lshortfile)
+	s.raftTn = raft.NewNetworkTransportWithLogger(NewTransport(s.ln),
+		connectionPoolCount, connectionTimeout, raftTnLogger)
 
 	// Get the Raft configuration for this store.
 	config := s.raftConfig()
 	config.LocalID = raft.ServerID(s.raftID)
-	config.Logger = log.New(os.Stderr, "[raft] ", log.LstdFlags)
+	config.Logger = log.New(logFile, "[raft] ", log.LstdFlags|log.Lshortfile)
 
 	// Create the snapshot store. This allows Raft to truncate the log.
 	snapshots, err := raft.NewFileSnapshotStore(s.raftDir, retainSnapshotCount, os.Stderr)
@@ -1023,7 +1030,6 @@ func (s *Store) Apply(l *raft.Log) interface{} {
 		conn, ok := s.conns[d.ConnID]
 		s.connsMu.RUnlock()
 		if !ok {
-			fmt.Println("### Not OK...")
 			return &fsmGenericResponse{error: fmt.Errorf("connection %d does not exist", d.ConnID)}
 		}
 
