@@ -39,8 +39,8 @@ type RpcConfig struct {
 }
 
 type RrdConfig struct {
-	Addr string `json:"addr"`
-	RRA  int    `json:"rra"`
+	Addr []string `json:"addr"`
+	RRA  int      `json:"rra"`
 }
 
 type DBConfig struct {
