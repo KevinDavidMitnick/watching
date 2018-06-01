@@ -17,10 +17,20 @@ package index
 import (
 	log "github.com/Sirupsen/logrus"
 
+	"bytes"
+	"encoding/json"
 	cmodel "github.com/open-falcon/falcon-plus/common/model"
 	"github.com/open-falcon/falcon-plus/modules/graph/g"
+	"github.com/open-falcon/falcon-plus/modules/graph/rrdtool"
 	"github.com/open-falcon/falcon-plus/modules/graph/store"
+	"io/ioutil"
+	"net/http"
 )
+
+type Deletefile_t struct {
+	Filename string `json:"filename"`
+	Method   string `json:"method"`
+}
 
 // 初始化索引功能模块
 func Start() {
@@ -67,5 +77,28 @@ func RemoveItem(item *cmodel.GraphItem) {
 
 	rrdFileName := g.RrdFileName(md5, item.DsType, item.Step)
 	// TODO: liucong,删除对应的rrd文件.
-	log.Debug("alert: should remove rrdfile:", rrdFileName)
+	log.Debug("alert: start to remove rrdfile:", rrdFileName)
+	leader := rrdtool.GetRrdLeader()
+	if leader == "" {
+		log.Debug("rrd leader is empty...")
+		return
+	}
+	var data Deletefile_t
+	data.Filename = rrdFileName
+	data.Method = "delete"
+
+	url := "http://" + leader + "/db/execute?pretty&timings"
+	if b, err := json.Marshal(data); err == nil && url != "" {
+		log.Println("-----------------start delete------")
+		log.Println(string(b))
+		resp, err := http.Post(url, "application/json", bytes.NewReader(b))
+		if err != nil {
+			return
+		}
+		defer resp.Body.Close()
+		if ret, err1 := ioutil.ReadAll(resp.Body); err1 == nil {
+			log.Println(rrdFileName, string(ret))
+			return
+		}
+	}
 }

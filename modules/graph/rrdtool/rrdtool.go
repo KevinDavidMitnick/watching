@@ -48,6 +48,7 @@ type Fetch_t struct {
 	Start    int64  `json:"start"`
 	End      int64  `json:"end"`
 	Step     int    `json:"step"`
+	Method   string `json:"method"`
 }
 
 type flushfile_t struct {
@@ -58,6 +59,7 @@ type flushfile_t struct {
 type Flushfile_t struct {
 	Filename string              `json:"filename"`
 	Items    []*cmodel.GraphItem `json:"items"`
+	Method   string              `json:"method"`
 }
 
 type Fetch_return struct {
@@ -84,6 +86,11 @@ func Start() {
 	log.Println("rrdtool.Start ok")
 }
 
+func GetRrdLeader() string {
+	addrs := g.Config().Rrd.Addr
+	return getRrdLeader(addrs)
+}
+
 func getRrdLeader(addrs []string) string {
 	var clusterStat RrdClusterStat
 	for _, addr := range addrs {
@@ -107,6 +114,7 @@ func flushrrd(filename string, items []*cmodel.GraphItem) error {
 	var data Flushfile_t
 	data.Filename = filename
 	data.Items = items
+	data.Method = "insert"
 
 	url := getRrdLeader(g.Config().Rrd.Addr)
 	if url == "" {
@@ -171,6 +179,7 @@ func fetch(filename string, cf string, start, end int64, step int) ([]*cmodel.RR
 	data.Step = int(step)
 	data.Cf = cf
 	data.Filename = filename
+	data.Method = "query"
 
 	log.Println("starting fetching data....")
 	if b, err := json.Marshal(data); err == nil {
