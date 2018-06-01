@@ -1,0 +1,8 @@
+{
+    "rrdPath": "./node0/rrd",
+    "dataPath": "node0/",
+    "httpAddr": ":4001",
+    "raftAddr": ":4002",
+    "joinAddr": "",
+    "logPath": "logs/opsultra-rrdlite.log"
+}

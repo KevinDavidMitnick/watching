@@ -1,0 +1,19 @@
+package: github.com/rqlite/rqlite
+import:
+- package: github.com/Bowery/prompt
+- package: github.com/hashicorp/raft
+  version: ^1.0.0
+- package: github.com/hashicorp/raft-boltdb
+- package: github.com/mattn/go-sqlite3
+  version: ^1.6.0
+- package: github.com/mkideal/cli
+  version: ^0.0.1
+- package: github.com/mkideal/pkg
+  subpackages:
+  - textutil
+- package: golang.org/x/crypto
+  subpackages:
+  - bcrypt
+- package: golang.org/x/sys
+  subpackages:
+  - unix
