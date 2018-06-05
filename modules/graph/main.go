@@ -17,16 +17,17 @@ package main
 import (
 	"flag"
 	"fmt"
+	"github.com/gin-gonic/gin"
+	"github.com/open-falcon/falcon-plus/modules/graph/api"
+	"github.com/open-falcon/falcon-plus/modules/graph/cron"
+	"github.com/open-falcon/falcon-plus/modules/graph/g"
+	"github.com/open-falcon/falcon-plus/modules/graph/http"
+	"github.com/open-falcon/falcon-plus/modules/graph/index"
+	"github.com/open-falcon/falcon-plus/modules/graph/rrdtool"
 	"log"
 	"os"
 	"os/signal"
 	"syscall"
-
-	"github.com/open-falcon/falcon-plus/modules/graph/api"
-	"github.com/open-falcon/falcon-plus/modules/graph/cron"
-	"github.com/open-falcon/falcon-plus/modules/graph/g"
-	"github.com/open-falcon/falcon-plus/modules/graph/index"
-	"github.com/open-falcon/falcon-plus/modules/graph/rrdtool"
 )
 
 func start_signal(pid int, cfg *g.GlobalConfig) {
@@ -41,11 +42,19 @@ func start_signal(pid int, cfg *g.GlobalConfig) {
 		switch s {
 		case syscall.SIGINT, syscall.SIGTERM, syscall.SIGQUIT:
 			log.Println("graceful shut down")
+
+			if cfg.Http.Enabled {
+				http.Close_chan <- 1
+				<-http.Close_done_chan
+			}
+			log.Println("http stop ok")
+
 			if cfg.Rpc.Enabled {
 				api.Close_chan <- 1
 				<-api.Close_done_chan
 			}
 			log.Println("rpc stop ok")
+
 			rrdtool.Out_done_chan <- 1
 			rrdtool.FlushAll(true)
 			log.Println("rrdtool stop ok")
@@ -78,6 +87,7 @@ func main() {
 		g.InitLog("debug")
 	} else {
 		g.InitLog("error")
+		gin.SetMode(gin.ReleaseMode)
 	}
 
 	// init db
@@ -89,6 +99,7 @@ func main() {
 	// start indexing
 	index.Start()
 	// start http server
+	go http.Start()
 	go cron.CleanCache()
 
 	start_signal(os.Getpid(), g.Config())
