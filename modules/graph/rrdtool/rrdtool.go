@@ -17,11 +17,11 @@ package rrdtool
 import (
 	"bytes"
 	"encoding/json"
+	log "github.com/Sirupsen/logrus"
 	cmodel "github.com/open-falcon/falcon-plus/common/model"
 	"github.com/open-falcon/falcon-plus/modules/graph/g"
 	"github.com/open-falcon/falcon-plus/modules/graph/store"
 	"io/ioutil"
-	"log"
 	"net/http"
 	"sync/atomic"
 	"time"
@@ -48,6 +48,7 @@ type Fetch_t struct {
 	Start    int64  `json:"start"`
 	End      int64  `json:"end"`
 	Step     int    `json:"step"`
+	Method   string `json:"method"`
 }
 
 type flushfile_t struct {
@@ -58,11 +59,24 @@ type flushfile_t struct {
 type Flushfile_t struct {
 	Filename string              `json:"filename"`
 	Items    []*cmodel.GraphItem `json:"items"`
+	Method   string              `json:"method"`
 }
 
 type Fetch_return struct {
 	Result []*cmodel.RRDData `json:"results"`
 	Time   float64           `json:"time"`
+}
+
+type RaftStat struct {
+	State string `json:"state"`
+}
+
+type StoreStat struct {
+	Raft *RaftStat `json:"raft"`
+}
+
+type RrdClusterStat struct {
+	Store *StoreStat `json:"store"`
 }
 
 func Start() {
@@ -72,6 +86,27 @@ func Start() {
 	log.Println("rrdtool.Start ok")
 }
 
+func GetRrdLeader() string {
+	addrs := g.Config().Rrd.Addr
+	return getRrdLeader(addrs)
+}
+
+func getRrdLeader(addrs []string) string {
+	var clusterStat RrdClusterStat
+	for _, addr := range addrs {
+		url := "http://" + addr + "/status"
+		if resp, err := http.Get(url); err == nil {
+			defer resp.Body.Close()
+			if err1 := json.NewDecoder(resp.Body).Decode(&clusterStat); err1 == nil {
+				if clusterStat.Store.Raft.State == "Leader" {
+					return addr
+				}
+			}
+		}
+	}
+	return ""
+}
+
 // flush to disk from memory
 // 最新的数据在列表的最后面
 // TODO fix me, filename fmt from item[0], it's hard to keep consistent
@@ -79,17 +114,23 @@ func flushrrd(filename string, items []*cmodel.GraphItem) error {
 	var data Flushfile_t
 	data.Filename = filename
 	data.Items = items
+	data.Method = "insert"
 
-	if b, err := json.Marshal(data); err == nil {
+	url := getRrdLeader(g.Config().Rrd.Addr)
+	if url == "" {
+		log.Println("get rrd leader failed...")
+		return nil
+	}
+	url = "http://" + url + "/db/execute?pretty&timings"
+	if b, err := json.Marshal(data); err == nil && url != "" {
 		log.Println("-----------------start flush------")
 		log.Println(string(b))
-		url := g.Config().Rrd.AppendAddr
 		resp, err := http.Post(url, "application/json", bytes.NewReader(b))
 		if err != nil {
 			return nil
 		}
 		defer resp.Body.Close()
-		if ret, err1 := ioutil.ReadAll(resp.Body); err == nil {
+		if ret, err1 := ioutil.ReadAll(resp.Body); err1 == nil {
 			log.Println(filename, len(items), string(ret))
 			return err1
 		}
@@ -135,14 +176,20 @@ func fetch(filename string, cf string, start, end int64, step int) ([]*cmodel.RR
 	var data Fetch_t
 	data.Start = start
 	data.End = end
-	data.Step = int(time.Duration(step) * time.Second)
+	data.Step = int(step)
 	data.Cf = cf
 	data.Filename = filename
+	data.Method = "query"
 
 	log.Println("starting fetching data....")
 	if b, err := json.Marshal(data); err == nil {
 		log.Println(string(b))
-		url := g.Config().Rrd.QueryAddr
+		url := getRrdLeader(g.Config().Rrd.Addr)
+		if url == "" {
+			log.Println("get rrd leader failed...")
+			return rrd, nil
+		}
+		url = "http://" + url + "/db/query?pretty&timings"
 		resp, err1 := http.Post(url, "application/json", bytes.NewReader(b))
 		if err1 != nil {
 			log.Printf("fetch error:filename is %s,start time is:%d,end time is:%d,step is :%d,time_len is:%d", filename, start, end, step, len(rrd))

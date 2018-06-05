@@ -39,10 +39,8 @@ type RpcConfig struct {
 }
 
 type RrdConfig struct {
-	AppendAddr string `json:"append_addr"`
-	QueryAddr  string `json:"query_addr"`
-	DeleteAddr string `json:"delete_addr"`
-	RRA        int    `json:"rra"`
+	Addr []string `json:"addr"`
+	RRA  int      `json:"rra"`
 }
 
 type DBConfig struct {
