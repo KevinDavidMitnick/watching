@@ -49,7 +49,14 @@ func GetDbConn(connName string) (c *sql.DB, e error) {
 	var err error
 	var dbConn *sql.DB
 	dbConn = dbConnMap[connName]
-	if dbConn == nil {
+	if dbConn != nil {
+		err = dbConn.Ping()
+		if err != nil {
+			closeDbConn(dbConn)
+			delete(dbConnMap, connName)
+		}
+	}
+	if dbConn == nil || err != nil {
 		dbConn, err = makeDbConn()
 		if dbConn == nil || err != nil {
 			closeDbConn(dbConn)
