@@ -124,14 +124,15 @@ func flushrrd(filename string, items []*cmodel.GraphItem) error {
 	url = "http://" + url + "/db/execute?pretty&timings"
 	if b, err := json.Marshal(data); err == nil && url != "" {
 		log.Println("-----------------start flush------")
-		log.Println(string(b))
+		//log.Println(string(b))
 		resp, err := http.Post(url, "application/json", bytes.NewReader(b))
 		if err != nil {
+			log.Println("fail to flush", filename, len(items))
 			return nil
 		}
 		defer resp.Body.Close()
 		if ret, err1 := ioutil.ReadAll(resp.Body); err1 == nil {
-			log.Println(filename, len(items), string(ret))
+			log.Println("success to flush", filename, len(items))
 			return err1
 		}
 	}
