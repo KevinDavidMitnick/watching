@@ -42,7 +42,8 @@ var (
 
 func init() {
 	Out_done_chan = make(chan int, 1)
-	io_task_chan = make(chan *io_task_t, 16)
+	// chan len up to 1600,allow 1600 metric sync disk the same time.
+	io_task_chan = make(chan *io_task_t, 1600)
 }
 
 func syncDisk() {
