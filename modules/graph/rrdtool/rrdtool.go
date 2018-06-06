@@ -200,7 +200,7 @@ func fetch(filename string, cf string, start, end int64, step int) ([]*cmodel.RR
 		if ret, err2 := ioutil.ReadAll(resp.Body); err2 == nil {
 			if err3 := json.Unmarshal(ret, &fetch_return); err3 == nil {
 				rrd = fetch_return.Result
-				log.Printf("success fetch data: %v", rrd)
+				log.Printf("success fetch data,len is: %d", len(rrd))
 				return rrd, nil
 			}
 		}
