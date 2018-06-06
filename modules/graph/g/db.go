@@ -45,7 +45,7 @@ func GetDbConn(connName string) (c *sql.DB, e error) {
 	dbLock.Lock()
 	defer dbLock.Unlock()
 
-	log.Println("start to get db conn.")
+	log.Println("start to get db conn:", connName)
 	var err error
 	var dbConn *sql.DB
 	dbConn = dbConnMap[connName]

@@ -27,7 +27,7 @@ import (
 )
 
 const (
-	IndexUpdateIncrTaskSleepInterval = time.Duration(1) * time.Second // 增量更新间隔时间, 默认30s
+	IndexUpdateIncrTaskSleepInterval = time.Duration(1) * time.Second * 60 // 增量更新间隔时间, 默认60s
 )
 
 var (
@@ -56,6 +56,7 @@ func updateIndexIncr() int {
 		return ret
 	}
 
+	log.Println("start to get UpdateIndexIncrTask conn in updateIndexIncr....")
 	dbConn, err := g.GetDbConn("UpdateIndexIncrTask")
 	if err != nil {
 		log.Error("[ERROR] get dbConn fail", err)
