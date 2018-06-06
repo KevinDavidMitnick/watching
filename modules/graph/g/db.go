@@ -18,7 +18,6 @@ import (
 	"database/sql"
 	_ "github.com/go-sql-driver/mysql"
 	"log"
-	"math"
 	"sync"
 	"time"
 )
@@ -32,23 +31,13 @@ var (
 var DB *sql.DB
 
 func InitDB() {
-	for {
-		var err error
-		times := 1.0
-		DB, err = makeDbConn()
-		if DB == nil || err != nil {
-			log.Println("g.InitDB, get db conn fail,try again.", err)
-			if times >= 60 {
-				times = 60
-			} else {
-				times = math.Pow(2, times)
-			}
-			time.Sleep(time.Duration(times) * time.Second)
-		} else {
-			dbConnMap = make(map[string]*sql.DB)
-			log.Println("g.InitDB ok")
-			break
-		}
+	var err error
+	DB, err = makeDbConn()
+	if DB == nil || err != nil {
+		log.Panicln("g.InitDB failed., get db conn fail:", err)
+	} else {
+		dbConnMap = make(map[string]*sql.DB)
+		log.Println("g.InitDB ok")
 	}
 }
 
@@ -80,15 +69,24 @@ func GetDbConn(connName string) (c *sql.DB, e error) {
 
 // 创建一个新的mysql连接
 func makeDbConn() (conn *sql.DB, err error) {
-	conn, err = sql.Open("mysql", Config().DB.Dsn)
-	if err != nil {
-		return nil, err
+	for {
+		times := 1.0
+		conn, err = sql.Open("mysql", Config().DB.Dsn)
+		if conn == nil || err != nil {
+			log.Printf("get db conn fail: %s,try again,times:%d", err.Error(), times)
+			if times >= 60 {
+				log.Println("too may times try get db conn,give up.....")
+				return conn, err
+			} else {
+				times += 1
+			}
+			time.Sleep(time.Duration(times) * time.Second)
+		} else {
+			conn.SetMaxIdleConns(Config().DB.MaxIdle)
+			err = conn.Ping()
+			return conn, err
+		}
 	}
-
-	conn.SetMaxIdleConns(Config().DB.MaxIdle)
-	err = conn.Ping()
-
-	return conn, err
 }
 
 func closeDbConn(conn *sql.DB) {
