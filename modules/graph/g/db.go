@@ -45,6 +45,7 @@ func GetDbConn(connName string) (c *sql.DB, e error) {
 	dbLock.Lock()
 	defer dbLock.Unlock()
 
+	log.Println("start to get db conn.")
 	var err error
 	var dbConn *sql.DB
 	dbConn = dbConnMap[connName]
@@ -56,9 +57,9 @@ func GetDbConn(connName string) (c *sql.DB, e error) {
 		}
 		dbConnMap[connName] = dbConn
 	}
-
 	err = dbConn.Ping()
 	if err != nil {
+		log.Println("get db conn is not nil,ping failed.")
 		closeDbConn(dbConn)
 		delete(dbConnMap, connName)
 		return nil, err
@@ -69,8 +70,8 @@ func GetDbConn(connName string) (c *sql.DB, e error) {
 
 // 创建一个新的mysql连接
 func makeDbConn() (conn *sql.DB, err error) {
+	times := 1.0
 	for {
-		times := 1.0
 		conn, err = sql.Open("mysql", Config().DB.Dsn)
 		if conn == nil || err != nil {
 			log.Printf("get db conn fail: %s,try again,times:%d", err.Error(), times)
