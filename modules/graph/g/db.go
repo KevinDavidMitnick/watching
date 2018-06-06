@@ -71,6 +71,7 @@ func GetDbConn(connName string) (c *sql.DB, e error) {
 		delete(dbConnMap, connName)
 		return nil, err
 	}
+	log.Println("success to get db conn.")
 
 	return dbConn, err
 }
@@ -79,9 +80,10 @@ func GetDbConn(connName string) (c *sql.DB, e error) {
 func makeDbConn() (conn *sql.DB, err error) {
 	times := 1.0
 	for {
+		log.Printf("in make db connting,times:%f", times)
 		conn, err = sql.Open("mysql", Config().DB.Dsn)
 		if conn == nil || err != nil {
-			log.Printf("get db conn fail: %s,try again,times:%d", err.Error(), times)
+			log.Printf("get db conn fail: %s,try again,times:%f", err.Error(), times)
 			if times >= 60 {
 				log.Println("too may times try get db conn,give up.....")
 				return conn, err
