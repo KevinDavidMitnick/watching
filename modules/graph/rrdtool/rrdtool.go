@@ -131,7 +131,7 @@ func flushrrd(filename string, items []*cmodel.GraphItem) error {
 			return nil
 		}
 		defer resp.Body.Close()
-		if ret, err1 := ioutil.ReadAll(resp.Body); err1 == nil {
+		if _, err1 := ioutil.ReadAll(resp.Body); err1 == nil {
 			log.Println("success to flush", filename, len(items))
 			return err1
 		}
