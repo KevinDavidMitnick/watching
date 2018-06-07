@@ -23,7 +23,7 @@ import (
 	"github.com/open-falcon/falcon-plus/modules/graph/g"
 	"github.com/open-falcon/falcon-plus/modules/graph/http"
 	"github.com/open-falcon/falcon-plus/modules/graph/index"
-	"github.com/open-falcon/falcon-plus/modules/graph/rrdtool"
+	// "github.com/open-falcon/falcon-plus/modules/graph/rrdtool"
 	"log"
 	"os"
 	"os/signal"
@@ -55,9 +55,9 @@ func start_signal(pid int, cfg *g.GlobalConfig) {
 			}
 			log.Println("rpc stop ok")
 
-			rrdtool.Out_done_chan <- 1
-			rrdtool.FlushAll(true)
-			log.Println("rrdtool stop ok")
+			//rrdtool.Out_done_chan <- 1
+			//rrdtool.FlushAll(true)
+			//log.Println("rrdtool stop ok")
 
 			log.Println(pid, "exit")
 			os.Exit(0)

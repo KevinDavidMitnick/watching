@@ -153,25 +153,25 @@ func FlushFile(filename string, items []*cmodel.GraphItem) error {
 	return <-done
 }
 
-func Fetch(filename string, cf string, start, end int64, step int) ([]*cmodel.RRDData, error) {
-	done := make(chan error, 1)
-	task := &io_task_t{
-		method: IO_TASK_M_FETCH,
-		args: &fetch_t{
-			filename: filename,
-			cf:       cf,
-			start:    start,
-			end:      end,
-			step:     step,
-		},
-		done: done,
-	}
-	io_task_chan <- task
-	err := <-done
-	return task.args.(*fetch_t).data, err
-}
+// func Fetch(filename string, cf string, start, end int64, step int) ([]*cmodel.RRDData, error) {
+// 	done := make(chan error, 1)
+// 	task := &io_task_t{
+// 		method: IO_TASK_M_FETCH,
+// 		args: &fetch_t{
+// 			filename: filename,
+// 			cf:       cf,
+// 			start:    start,
+// 			end:      end,
+// 			step:     step,
+// 		},
+// 		done: done,
+// 	}
+// 	io_task_chan <- task
+// 	err := <-done
+// 	return task.args.(*fetch_t).data, err
+// }
 
-func fetch(filename string, cf string, start, end int64, step int) ([]*cmodel.RRDData, error) {
+func Fetch(filename string, cf string, start, end int64, step int) ([]*cmodel.RRDData, error) {
 	var rrd []*cmodel.RRDData
 	var fetch_return Fetch_return
 	var data Fetch_t
