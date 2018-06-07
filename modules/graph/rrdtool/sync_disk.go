@@ -46,6 +46,25 @@ func init() {
 	io_task_chan = make(chan *io_task_t, 1600)
 }
 
+// func syncDisk() {
+// 	time.Sleep(time.Second * g.CACHE_DELAY)
+// 	ticker := time.NewTicker(time.Millisecond * g.FLUSH_DISK_STEP)
+// 	defer ticker.Stop()
+// 	var idx int = 0
+
+// 	for {
+// 		select {
+// 		case <-ticker.C:
+// 			idx = idx % store.GraphItems.Size
+// 			FlushRRD(idx, false)
+// 			idx += 1
+// 		case <-Out_done_chan:
+// 			log.Println("cron recv sigout and exit...")
+// 			return
+// 		}
+// 	}
+// }
+
 func syncDisk() {
 	time.Sleep(time.Second * g.CACHE_DELAY)
 	ticker := time.NewTicker(time.Millisecond * g.FLUSH_DISK_STEP)
@@ -56,7 +75,7 @@ func syncDisk() {
 		select {
 		case <-ticker.C:
 			idx = idx % store.GraphItems.Size
-			FlushRRD(idx, false)
+			go FlushRRD(idx, false)
 			idx += 1
 		case <-Out_done_chan:
 			log.Println("cron recv sigout and exit...")
