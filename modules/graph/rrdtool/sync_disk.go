@@ -75,6 +75,7 @@ func syncDisk() {
 		select {
 		case <-ticker.C:
 			idx = idx % store.GraphItems.Size
+			log.Printf("graph item size is : %d,commit flush index is: %d", store.GraphItems.Size, idx)
 			go FlushRRD(idx, false)
 			idx += 1
 		case <-Out_done_chan:
@@ -84,21 +85,42 @@ func syncDisk() {
 	}
 }
 
+// func ioWorker() {
+// 	var err error
+// 	for {
+// 		select {
+// 		case task := <-io_task_chan:
+// 			if task.method == IO_TASK_M_FLUSH {
+// 				if args, ok := task.args.(*flushfile_t); ok {
+// 					task.done <- flushrrd(args.filename, args.items)
+// 				}
+// 			} else if task.method == IO_TASK_M_FETCH {
+// 				if args, ok := task.args.(*fetch_t); ok {
+// 					args.data, err = fetch(args.filename, args.cf, args.start, args.end, args.step)
+// 					task.done <- err
+// 				}
+// 			}
+// 		}
+// 	}
+// }
+
 func ioWorker() {
 	var err error
 	for {
 		select {
 		case task := <-io_task_chan:
-			if task.method == IO_TASK_M_FLUSH {
-				if args, ok := task.args.(*flushfile_t); ok {
-					task.done <- flushrrd(args.filename, args.items)
+			go func() {
+				if task.method == IO_TASK_M_FLUSH {
+					if args, ok := task.args.(*flushfile_t); ok {
+						task.done <- flushrrd(args.filename, args.items)
+					}
+				} else if task.method == IO_TASK_M_FETCH {
+					if args, ok := task.args.(*fetch_t); ok {
+						args.data, err = fetch(args.filename, args.cf, args.start, args.end, args.step)
+						task.done <- err
+					}
 				}
-			} else if task.method == IO_TASK_M_FETCH {
-				if args, ok := task.args.(*fetch_t); ok {
-					args.data, err = fetch(args.filename, args.cf, args.start, args.end, args.step)
-					task.done <- err
-				}
-			}
+			}()
 		}
 	}
 }
