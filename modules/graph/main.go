@@ -93,7 +93,7 @@ func main() {
 	// init db
 	g.InitDB()
 	// rrdtool before api for disable loopback connection
-	rrdtool.Start()
+	// rrdtool.Start()
 	// start api
 	go api.Start()
 	// start indexing

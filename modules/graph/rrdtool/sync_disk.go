@@ -48,8 +48,7 @@ func init() {
 
 // func syncDisk() {
 // 	time.Sleep(time.Second * g.CACHE_DELAY)
-// 	ticker := time.NewTicker(time.Millisecond * g.FLUSH_DISK_STEP)
-// 	defer ticker.Stop()
+// 	ticker := time.NewTicker(time.Millisecond * g.FLUSH_DISK_STEP) // 	defer ticker.Stop()
 // 	var idx int = 0
 
 // 	for {
@@ -112,7 +111,7 @@ func ioWorker() {
 			go func() {
 				if task.method == IO_TASK_M_FLUSH {
 					if args, ok := task.args.(*flushfile_t); ok {
-						task.done <- flushrrd(args.filename, args.items)
+						task.done <- Flushrrd(args.filename, args.items)
 					}
 				} else if task.method == IO_TASK_M_FETCH {
 					if args, ok := task.args.(*fetch_t); ok {

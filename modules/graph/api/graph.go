@@ -46,6 +46,64 @@ func HandleItems(items []*cmodel.GraphItem) error {
 	return nil
 }
 
+// func handleItems(items []*cmodel.GraphItem) {
+// 	if items == nil {
+// 		return
+// 	}
+
+// 	count := len(items)
+// 	if count == 0 {
+// 		return
+// 	}
+
+// 	cfg := g.Config()
+
+// 	for i := 0; i < count; i++ {
+// 		if items[i] == nil {
+// 			continue
+// 		}
+
+// 		endpoint := items[i].Endpoint
+// 		if !g.IsValidString(endpoint) {
+// 			if cfg.Debug {
+// 				log.Printf("invalid endpoint: %s", endpoint)
+// 			}
+// 			pfc.Meter("invalidEnpoint", 1)
+// 			continue
+// 		}
+
+// 		counter := cutils.Counter(items[i].Metric, items[i].Tags)
+// 		if !g.IsValidString(counter) {
+// 			if cfg.Debug {
+// 				log.Printf("invalid counter: %s/%s", endpoint, counter)
+// 			}
+// 			pfc.Meter("invalidCounter", 1)
+// 			continue
+// 		}
+
+// 		dsType := items[i].DsType
+// 		step := items[i].Step
+// 		checksum := items[i].Checksum()
+// 		key := g.FormRrdCacheKey(checksum, dsType, step)
+
+// 		//statistics
+// 		proc.GraphRpcRecvCnt.Incr()
+
+// 		// To Graph
+// 		first := store.GraphItems.First(key)
+// 		if first != nil && items[i].Timestamp <= first.Timestamp {
+// 			continue
+// 		}
+// 		store.GraphItems.PushFront(key, items[i], checksum, cfg)
+
+// 		// To Index
+// 		index.ReceiveItem(items[i], checksum)
+
+// 		// To History
+// 		store.AddItem(checksum, items[i])
+// 	}
+// }
+
 func handleItems(items []*cmodel.GraphItem) {
 	if items == nil {
 		return
@@ -84,23 +142,26 @@ func handleItems(items []*cmodel.GraphItem) {
 		dsType := items[i].DsType
 		step := items[i].Step
 		checksum := items[i].Checksum()
-		key := g.FormRrdCacheKey(checksum, dsType, step)
+		filename := g.RrdFileName(checksum, dsType, step)
 
 		//statistics
 		proc.GraphRpcRecvCnt.Incr()
 
 		// To Graph
-		first := store.GraphItems.First(key)
-		if first != nil && items[i].Timestamp <= first.Timestamp {
-			continue
-		}
-		store.GraphItems.PushFront(key, items[i], checksum, cfg)
+		//first := store.GraphItems.First(key)
+		//if first != nil && items[i].Timestamp <= first.Timestamp {
+		//	continue
+		//}
+		//store.GraphItems.PushFront(key, items[i], checksum, cfg)
 
 		// To Index
 		index.ReceiveItem(items[i], checksum)
 
 		// To History
 		store.AddItem(checksum, items[i])
+
+		// flush to disk
+		rrdtool.Flushrrd(filename, []*cmodel.GraphItem{items[i]})
 	}
 }
 

@@ -110,7 +110,7 @@ func getRrdLeader(addrs []string) string {
 // flush to disk from memory
 // 最新的数据在列表的最后面
 // TODO fix me, filename fmt from item[0], it's hard to keep consistent
-func flushrrd(filename string, items []*cmodel.GraphItem) error {
+func Flushrrd(filename string, items []*cmodel.GraphItem) error {
 	var data Flushfile_t
 	data.Filename = filename
 	data.Items = items
