@@ -49,7 +49,7 @@ const (
 	CLEAN_CACHE     = 86400   //s the step that clean GraphItems/historyCache Cache
 	CACHE_DELAY     = 60      //s,from 1800 to 60,by liucong.
 	CACHE_TIME      = 1800000 //ms
-	FLUSH_DISK_STEP = 1000    //ms
+	FLUSH_DISK_STEP = 10      //ms, from 1000 to 10.
 	FLUSH_MIN_COUNT = 1       //  flush counter to disk when its number of monitoring data greater than FLUSH_MIN_COUNT,from 6 to 1,flush right now.
 	FLUSH_MAX_WAIT  = 86400   //s flush counter to disk if it not be flushed within FLUSH_MAX_WAIT seconds
 )
