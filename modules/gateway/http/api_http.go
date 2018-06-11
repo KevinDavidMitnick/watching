@@ -20,6 +20,7 @@ import (
 	"io/ioutil"
 	"net/http"
 	"strings"
+	"time"
 
 	cmodel "github.com/open-falcon/falcon-plus/common/model"
 
@@ -78,7 +79,7 @@ func configKvHttpRoutes() {
 		}
 		url = g.Config().Consul.Addr + url + "?raw"
 
-		r := httplib.Put(url)
+		r := httplib.Put(url).SetTimeout(5*time.Second, 30*time.Second)
 		r.Body(data)
 		ret, _ := r.String()
 		RenderDataJson(w, ret)
