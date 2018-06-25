@@ -183,7 +183,7 @@ func (this *Graph) Query(param cmodel.GraphQueryParam, resp *cmodel.GraphQueryRe
 	resp.Step = step
 
 	start_ts := param.Start - param.Start%int64(step)
-	end_ts := param.End - param.End%int64(step) + int64(step)
+	end_ts := param.End - param.End%int64(step) - int64(step)
 	if end_ts-start_ts-int64(step) < 1 {
 		return nil
 	}
