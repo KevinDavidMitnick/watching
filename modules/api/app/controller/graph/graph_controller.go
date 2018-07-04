@@ -189,7 +189,7 @@ func getNameRelUuid(url string) (map[string]string, error) {
 func EndpointCounterRegexpQuery(c *gin.Context) {
 	eid := c.DefaultQuery("eid", "")
 	metricQuery := c.DefaultQuery("metricQuery", ".+")
-	limitTmp := c.DefaultQuery("limit", "3000")
+	limitTmp := c.DefaultQuery("limit", "10000")
 	limit, err := strconv.Atoi(limitTmp)
 	if err != nil {
 		h.JSONR(c, http.StatusBadRequest, err)
@@ -273,7 +273,7 @@ func EndpointCounterRegexpQuery(c *gin.Context) {
 func ClassifyCounterRegexpQuery(c *gin.Context) {
 	eid := c.DefaultQuery("eid", "")
 	metricQuery := c.DefaultQuery("metricQuery", ".+")
-	limitTmp := c.DefaultQuery("limit", "3000")
+	limitTmp := c.DefaultQuery("limit", "10000")
 	limit, err := strconv.Atoi(limitTmp)
 	if err != nil {
 		h.JSONR(c, http.StatusBadRequest, err)
