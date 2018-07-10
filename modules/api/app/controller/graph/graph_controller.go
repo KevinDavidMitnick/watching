@@ -85,7 +85,7 @@ type APIEndpointRegexpQueryInputs struct {
 func EndpointRegexpQuery(c *gin.Context) {
 	inputs := APIEndpointRegexpQueryInputs{
 		//set default is 500
-		Limit: 500,
+		Limit: 50000,
 		Page:  1,
 	}
 	if err := c.Bind(&inputs); err != nil {
