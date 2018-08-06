@@ -800,7 +800,6 @@ func writeResponse(w http.ResponseWriter, r *http.Request, j *Response) {
 	} else {
 		b, err = json.Marshal(j)
 	}
-
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
