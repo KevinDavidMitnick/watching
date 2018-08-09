@@ -181,7 +181,6 @@ func Fetch(filename string, cf string, start, end int64, step int) ([]*cmodel.RR
 	data.Cf = cf
 	data.Filename = filename
 	data.Method = "query"
-
 	log.Println("starting fetching data....")
 	if b, err := json.Marshal(data); err == nil {
 		log.Println(string(b))

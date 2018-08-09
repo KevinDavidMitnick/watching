@@ -25,6 +25,7 @@ import (
 	"github.com/toolkits/file"
 
 	"github.com/open-falcon/falcon-plus/modules/rrdlite/g"
+	//"fmt"
 )
 
 var (
@@ -189,7 +190,8 @@ func Fetch(filename string, cf string, start, end int64, step int) ([]*cmodel.RR
 
 	values := fetchRes.Values()
 	size := len(values)
-	ret := make([]*cmodel.RRDData, size)
+	values = values[:size-1]
+	ret := make([]*cmodel.RRDData, size-1)
 
 	start_ts := fetchRes.Start.Unix()
 	step_s := fetchRes.Step.Seconds()
