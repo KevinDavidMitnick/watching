@@ -54,6 +54,11 @@ type ConsulConfig struct {
 	Addr    string `json:"addr"`
 }
 
+type RrdConfig struct {
+	Addr []string `json:"addr"`
+	RRA  int      `json:"rra"`
+}
+
 type GlobalConfig struct {
 	Debug    bool            `json:"debug"`
 	Http     *HttpConfig     `json:"http"`
@@ -61,6 +66,7 @@ type GlobalConfig struct {
 	Socket   *SocketConfig   `json:"socket"`
 	Transfer *TransferConfig `json:"transfer"`
 	Consul   *ConsulConfig   `json:"consul"`
+	Rrd      *RrdConfig      `json:"rrd"`
 }
 
 var (

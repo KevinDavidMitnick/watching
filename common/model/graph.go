@@ -19,6 +19,7 @@ import (
 	"math"
 
 	MUtils "github.com/open-falcon/falcon-plus/common/utils"
+	"strconv"
 )
 
 // DsType 即RRD中的Datasource的类型：GAUGE|COUNTER|DERIVE
@@ -109,13 +110,26 @@ type GraphAccurateQueryResponse struct {
 
 type JsonFloat float64
 
-func (v JsonFloat) MarshalJSON() ([]byte, error) {
-	f := float64(v)
+func (v *JsonFloat) MarshalJSON() ([]byte, error) {
+	f := float64(*v)
 	if math.IsNaN(f) || math.IsInf(f, 0) {
 		return []byte("null"), nil
 	} else {
 		return []byte(fmt.Sprintf("%f", f)), nil
 	}
+}
+
+func (v *JsonFloat) UnmarshalJSON(data []byte) error {
+	str := string(data)
+	var f float64
+	var err error
+	if str == "null" {
+		f = float64(math.NaN())
+	} else {
+		f, err = strconv.ParseFloat(str, 64)
+	}
+	*v = JsonFloat(f)
+	return err
 }
 
 type RRDData struct {

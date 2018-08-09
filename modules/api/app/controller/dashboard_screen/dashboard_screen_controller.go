@@ -108,7 +108,7 @@ func ScreenGetsByPid(c *gin.Context) {
 }
 
 func ScreenGetsAll(c *gin.Context) {
-	limit := c.DefaultQuery("limit", "500")
+	limit := c.DefaultQuery("limit", "50000")
 	screens := []m.DashboardScreen{}
 	dt := db.Dashboard.Table("dashboard_screen").Limit(limit).Find(&screens)
 	if dt.Error != nil {
