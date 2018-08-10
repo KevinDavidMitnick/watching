@@ -17,9 +17,11 @@ package cron
 import (
 	"time"
 
+	"encoding/json"
 	"github.com/open-falcon/falcon-plus/common/model"
 	"github.com/open-falcon/falcon-plus/modules/agent/funcs"
 	"github.com/open-falcon/falcon-plus/modules/agent/g"
+	"github.com/open-falcon/falcon-plus/modules/agent/store"
 )
 
 func InitDataHistory() {
@@ -87,5 +89,17 @@ func collectMetric(sec int64, fn func() []*model.MetricValue) {
 		mvs[j].Timestamp = now
 	}
 
-	g.SendToTransfer(mvs)
+	if store.GetStoreStatus() {
+		g.SendToTransfer(mvs)
+		return
+	}
+
+	if len(mvs) > 0 {
+		buf, err := json.Marshal(mvs)
+		if err != nil || len(buf) == 0 {
+			return
+		}
+		store := store.GetStore()
+		store.Update(buf)
+	}
 }

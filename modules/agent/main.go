@@ -64,6 +64,7 @@ func main() {
 	cron.SyncTrustableIps()
 	cron.Collect()
 	cron.ReportSystemInfo()
+	go cron.FlushStore()
 
 	go http.Start()
 

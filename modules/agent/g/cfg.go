@@ -68,6 +68,12 @@ type ConsulConfig struct {
 	Interval int    `json:"interval"`
 	Timeout  int    `json:"timeout"`
 }
+type BackendConfig struct {
+	Enabled bool   `json:"enabled"`
+	Backup  string `json:"backup"`
+	Check   string `json:"check"`
+	Expire  int64  `json:"expire"`
+}
 
 type GlobalConfig struct {
 	Debug         bool              `json:"debug"`
@@ -81,6 +87,7 @@ type GlobalConfig struct {
 	DefaultTags   map[string]string `json:"default_tags"`
 	IgnoreMetrics map[string]bool   `json:"ignore"`
 	Consul        *ConsulConfig     `json:"consul"`
+	Backend       *BackendConfig    `json:"backend"`
 }
 
 var (
