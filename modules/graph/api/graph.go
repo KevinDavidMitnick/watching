@@ -16,7 +16,7 @@ package api
 
 import (
 	//"fmt"
-	"math"
+	//"math"
 	log "github.com/Sirupsen/logrus"
 	pfc "github.com/niean/goperfcounter"
 	cmodel "github.com/open-falcon/falcon-plus/common/model"
@@ -168,7 +168,6 @@ func handleItems(items []*cmodel.GraphItem) {
 func (this *Graph) Query(param cmodel.GraphQueryParam, resp *cmodel.GraphQueryResponse) error {
 	var (
 		datas       []*cmodel.RRDData
-		datas_size  int
 	)
 
 	// statistics
@@ -199,41 +198,8 @@ func (this *Graph) Query(param cmodel.GraphQueryParam, resp *cmodel.GraphQueryRe
 	// 例: start_ts=1484651400,step=60,则第一个数据时间为1484651460)
 	datas, _ = rrdtool.Fetch(filename, param.ConsolFun, start_ts-int64(step), end_ts, step)
 	//fmt.Println(datas)
-	datas_size = len(datas)
 
-	// merge
-	{
-		// do merging
-		merged := make([]*cmodel.RRDData, 0)
-		if datas_size > 0 {
-			for _, val := range datas {
-				if val.Timestamp >= start_ts && val.Timestamp <= end_ts {
-					merged = append(merged, val) //rrdtool返回的数据,时间戳是连续的、不会有跳点的情况
-				}
-			}
-		}
-		mergedSize := len(merged)
-
-		// fmt result
-		ret_size := int((end_ts - start_ts) / int64(step))
-		if dsType == g.GAUGE {
-			ret_size += 1
-		}
-		ret := make([]*cmodel.RRDData, ret_size, ret_size)
-		mergedIdx := 0
-		ts := start_ts
-		for i := 0; i < ret_size; i++ {
-			if mergedIdx < mergedSize && ts == merged[mergedIdx].Timestamp {
-				ret[i] = merged[mergedIdx]
-				mergedIdx++
-			} else {
-				ret[i] = &cmodel.RRDData{Timestamp: ts, Value: cmodel.JsonFloat(math.NaN())}
-			}
-			ts += int64(step)
-		}
-		resp.Values = ret
-	}
-
+	resp.Values = datas
 	// statistics
 	proc.GraphQueryItemCnt.IncrBy(int64(len(resp.Values)))
 	return nil
