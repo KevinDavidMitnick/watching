@@ -3,6 +3,7 @@ package g
 import (
 	"bytes"
 	"encoding/json"
+	"fmt"
 	log "github.com/Sirupsen/logrus"
 	cmodel "github.com/open-falcon/falcon-plus/common/model"
 	"io/ioutil"
@@ -27,13 +28,45 @@ type Flushfile_t struct {
 	Method   string              `json:"method"`
 }
 
+func postData(addr string, buf []byte) ([]byte, error) {
+	log.Infof("send :%s,data :%s", addr, bytes.NewBuffer(buf).String())
+	request, _ := http.NewRequest("POST", addr, bytes.NewBuffer(buf))
+	request.Header.Set("Content-Type", "application/json;charset=UTF-8")
+	request.Header.Set("TIMEOUT", "10")
+
+	client := &http.Client{}
+	resp, err := client.Do(request)
+	if err == nil {
+		defer resp.Body.Close()
+		return ioutil.ReadAll(resp.Body)
+	}
+	return nil, err
+}
+
+func getData(addr string) ([]byte, error) {
+	log.Infof("send :%s", addr)
+	request, _ := http.NewRequest("GET", addr, nil)
+	request.Header.Set("Content-Type", "application/json;charset=UTF-8")
+	request.Header.Set("TIMEOUT", "10")
+
+	client := &http.Client{}
+	resp, err := client.Do(request)
+	if err == nil {
+		defer resp.Body.Close()
+		if resp.StatusCode/100 != 2 {
+			return nil, fmt.Errorf("get response err.")
+		}
+		return ioutil.ReadAll(resp.Body)
+	}
+	return nil, err
+}
+
 func getRrdLeader(addrs []string) string {
 	var clusterStat RrdClusterStat
 	for _, addr := range addrs {
 		url := "http://" + addr + "/status"
-		if resp, err := http.Get(url); err == nil {
-			defer resp.Body.Close()
-			if err1 := json.NewDecoder(resp.Body).Decode(&clusterStat); err1 == nil {
+		if resp, err := getData(url); err == nil {
+			if err1 := json.Unmarshal(resp, &clusterStat); err1 == nil {
 				if clusterStat.Store.Raft.State == "Leader" {
 					return addr
 				}
@@ -54,23 +87,19 @@ func Flushrrd(filename string, items []*cmodel.GraphItem) error {
 
 	url := getRrdLeader(Config().Rrd.Addr)
 	if url == "" {
-		log.Println("get rrd leader failed...")
+		log.Errorln("get rrd leader failed...")
 		return nil
 	}
 	url = "http://" + url + "/db/execute?pretty&timings"
 	if b, err := json.Marshal(data); err == nil && url != "" {
-		log.Println("-----------------start flush------")
-		//log.Println(string(b))
-		resp, err := http.Post(url, "application/json", bytes.NewReader(b))
+		log.Infoln("-----------------start flush------")
+		//log.Infoln(string(b))
+		_, err := postData(url, b)
 		if err != nil {
-			log.Println("fail to flush", filename, len(items))
+			log.Errorln("fail to flush", filename, len(items))
 			return nil
 		}
-		defer resp.Body.Close()
-		if _, err1 := ioutil.ReadAll(resp.Body); err1 == nil {
-			log.Println("success to flush", filename, len(items))
-			return err1
-		}
+		log.Infoln("success to flush", filename, len(items))
 	}
 	return nil
 }
