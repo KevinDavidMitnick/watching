@@ -17,6 +17,7 @@ package rrdtool
 import (
 	"bytes"
 	"encoding/json"
+	"fmt"
 	log "github.com/Sirupsen/logrus"
 	cmodel "github.com/open-falcon/falcon-plus/common/model"
 	"github.com/open-falcon/falcon-plus/modules/graph/g"
@@ -91,13 +92,45 @@ func GetRrdLeader() string {
 	return getRrdLeader(addrs)
 }
 
+func postData(addr string, buf []byte) ([]byte, error) {
+	log.Infof("send :%s,data :%s", addr, bytes.NewBuffer(buf).String())
+	request, _ := http.NewRequest("POST", addr, bytes.NewBuffer(buf))
+	request.Header.Set("Content-Type", "application/json;charset=UTF-8")
+	request.Header.Set("TIMEOUT", "10")
+
+	client := &http.Client{}
+	resp, err := client.Do(request)
+	if err == nil {
+		defer resp.Body.Close()
+		return ioutil.ReadAll(resp.Body)
+	}
+	return nil, err
+}
+
+func getData(addr string) ([]byte, error) {
+	log.Infof("send :%s", addr)
+	request, _ := http.NewRequest("GET", addr, nil)
+	request.Header.Set("Content-Type", "application/json;charset=UTF-8")
+	request.Header.Set("TIMEOUT", "10")
+
+	client := &http.Client{}
+	resp, err := client.Do(request)
+	if err == nil {
+		defer resp.Body.Close()
+		if resp.StatusCode/100 != 2 {
+			return nil, fmt.Errorf("get response err.")
+		}
+		return ioutil.ReadAll(resp.Body)
+	}
+	return nil, err
+}
+
 func getRrdLeader(addrs []string) string {
 	var clusterStat RrdClusterStat
 	for _, addr := range addrs {
 		url := "http://" + addr + "/status"
-		if resp, err := http.Get(url); err == nil {
-			defer resp.Body.Close()
-			if err1 := json.NewDecoder(resp.Body).Decode(&clusterStat); err1 == nil {
+		if resp, err := getData(url); err == nil {
+			if err1 := json.Unmarshal(resp, &clusterStat); err1 == nil {
 				if clusterStat.Store.Raft.State == "Leader" {
 					return addr
 				}
@@ -118,23 +151,19 @@ func Flushrrd(filename string, items []*cmodel.GraphItem) error {
 
 	url := getRrdLeader(g.Config().Rrd.Addr)
 	if url == "" {
-		log.Println("get rrd leader failed...")
+		log.Errorln("get rrd leader failed...")
 		return nil
 	}
 	url = "http://" + url + "/db/execute?pretty&timings"
 	if b, err := json.Marshal(data); err == nil && url != "" {
-		log.Println("-----------------start flush------")
-		//log.Println(string(b))
-		resp, err := http.Post(url, "application/json", bytes.NewReader(b))
+		log.Infoln("-----------------start flush------")
+		//log.Infoln(string(b))
+		_, err := postData(url, b)
 		if err != nil {
-			log.Println("fail to flush", filename, len(items))
+			log.Errorln("fail to flush", filename, len(items))
 			return nil
 		}
-		defer resp.Body.Close()
-		if _, err1 := ioutil.ReadAll(resp.Body); err1 == nil {
-			log.Println("success to flush", filename, len(items))
-			return err1
-		}
+		log.Infoln("success to flush", filename, len(items))
 	}
 	return nil
 }
@@ -186,22 +215,19 @@ func Fetch(filename string, cf string, start, end int64, step int) ([]*cmodel.RR
 		log.Println(string(b))
 		url := getRrdLeader(g.Config().Rrd.Addr)
 		if url == "" {
-			log.Println("get rrd leader failed...")
+			log.Infoln("get rrd leader failed...")
 			return rrd, nil
 		}
 		url = "http://" + url + "/db/query?pretty&timings"
-		resp, err1 := http.Post(url, "application/json", bytes.NewReader(b))
+		resp, err1 := postData(url, b)
 		if err1 != nil {
-			log.Printf("fetch error:filename is %s,start time is:%d,end time is:%d,step is :%d,time_len is:%d", filename, start, end, step, len(rrd))
+			log.Infof("fetch error:filename is %s,start time is:%d,end time is:%d,step is :%d,time_len is:%d", filename, start, end, step, len(rrd))
 			return rrd, nil
 		}
-		defer resp.Body.Close()
-		if ret, err2 := ioutil.ReadAll(resp.Body); err2 == nil {
-			if err3 := json.Unmarshal(ret, &fetch_return); err3 == nil {
-				rrd = fetch_return.Result
-				log.Printf("success fetch data,len is: %d", len(rrd))
-				return rrd, nil
-			}
+		if err3 := json.Unmarshal(resp, &fetch_return); err3 == nil {
+			rrd = fetch_return.Result
+			log.Infof("success fetch data,len is: %d", len(rrd))
+			return rrd, nil
 		}
 	}
 	return rrd, nil
@@ -212,11 +238,11 @@ func FlushAll(force bool) {
 	for i := 0; i < store.GraphItems.Size; i++ {
 		FlushRRD(i, force)
 		if i%n == 0 {
-			log.Printf("flush hash idx:%03d size:%03d disk:%08d net:%08d\n",
+			log.Infof("flush hash idx:%03d size:%03d disk:%08d net:%08d\n",
 				i, store.GraphItems.Size, disk_counter, net_counter)
 		}
 	}
-	log.Printf("flush hash done (disk:%08d net:%08d)\n", disk_counter, net_counter)
+	log.Infof("flush hash done (disk:%08d net:%08d)\n", disk_counter, net_counter)
 }
 
 func CommitByKey(key string) {
