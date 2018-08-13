@@ -20,6 +20,7 @@ import (
 	"log"
 	"net/http"
 	_ "net/http/pprof"
+	"time"
 )
 
 type Dto struct {
@@ -85,6 +86,8 @@ func Start() {
 	s := &http.Server{
 		Addr:           addr,
 		MaxHeaderBytes: 1 << 30,
+		ReadTimeout:    10 * time.Second,
+		WriteTimeout:   10 * time.Second,
 	}
 
 	log.Println("listening", addr)
