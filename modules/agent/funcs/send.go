@@ -2,10 +2,9 @@ package funcs
 
 import (
 	"bytes"
-	"fmt"
-	log "github.com/sirupsen/logrus"
 	"io/ioutil"
 	"net/http"
+	"time"
 )
 
 // GetData from url,use method get
@@ -19,7 +18,7 @@ func GetData(url string) ([]byte, error) {
 	}
 	client := &http.Client{
 		Transport: &transport,
-		Timeout:   10,
+		Timeout:   time.Duration(10) * time.Second,
 	}
 	resp, err := client.Do(request)
 	if err != nil {
@@ -46,7 +45,7 @@ func SubmitData(url string, data []byte, method string) ([]byte, error) {
 	}
 	client := &http.Client{
 		Transport: &transport,
-		Timeout:   10,
+		Timeout:   time.Duration(10) * time.Second,
 	}
 	resp, err := client.Do(request)
 	if err != nil {
