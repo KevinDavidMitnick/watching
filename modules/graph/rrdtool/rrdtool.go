@@ -149,7 +149,7 @@ func getRrdLeader(addrs []string) string {
 	var clusterStat RrdClusterStat
 	for _, addr := range addrs {
 		url := "http://" + addr + "/status"
-		resp, err := getData(url)
+		resp, err := GetData(url)
 		if err == nil {
 			if err1 := json.Unmarshal(resp, &clusterStat); err1 == nil {
 				if clusterStat.Store.Raft.State == "Leader" {
@@ -180,7 +180,7 @@ func Flushrrd(filename string, items []*cmodel.GraphItem) error {
 	if b, err := json.Marshal(data); err == nil && url != "" {
 		log.Infoln("-----------------start flush------")
 		//log.Infoln(string(b))
-		_, err := submitData(url, b, "POST")
+		_, err := SubmitData(url, b, "POST")
 		if err != nil {
 			log.Errorln("fail to flush", filename, len(items))
 			return nil
@@ -241,7 +241,7 @@ func Fetch(filename string, cf string, start, end int64, step int) ([]*cmodel.RR
 			return rrd, nil
 		}
 		url = "http://" + url + "/db/query?pretty&timings"
-		resp, err1 := submitData(url, b, "POST")
+		resp, err1 := SubmitData(url, b, "POST")
 		if err1 != nil {
 			log.Infof("fetch error:filename is %s,start time is:%d,end time is:%d,step is :%d,time_len is:%d", filename, start, end, step, len(rrd))
 			return rrd, nil
