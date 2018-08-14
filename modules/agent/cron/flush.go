@@ -8,11 +8,52 @@ import (
 )
 
 func UpdateStoreStatus() {
-	_, err := funcs.GetData(g.Config().Backend.Check)
-	if err == nil {
-		store.UpdateStoreStatus(true)
-	} else {
-		store.UpdateStoreStatus(false)
+	ticker := time.NewTicker(time.Duration(g.Config().Transfer.Interval) * time.Second)
+	for {
+		select {
+		case <-ticker.C:
+			_, err := funcs.GetData(g.Config().Backend.Check)
+			if err == nil {
+				store.UpdateStoreStatus(true)
+			} else {
+				store.UpdateStoreStatus(false)
+			}
+		}
+	}
+}
+
+func consumeStore(queue chan string) {
+	for {
+		select {
+		case data := <-queue:
+			funcs.SubmitData(g.Config().Backend.Backup, []byte(data), "POST")
+		}
+	}
+}
+
+func cleanStale() {
+	ticker := time.NewTicker(time.Duration(g.Config().Backend.Expire) * time.Second)
+	for {
+		select {
+		case <-ticker.C:
+			s := store.GetStore()
+			timestamp := time.Now().Unix() - int64(g.Config().Backend.Expire)
+			s.CleanStale(timestamp)
+		}
+	}
+}
+
+func eatStore(queue chan string) {
+	ticker := time.NewTicker(time.Duration(g.Config().Transfer.Interval) * time.Second)
+
+	for {
+		select {
+		case <-ticker.C:
+			s := store.GetStore()
+			for data := s.Read(); store.GetStoreStatus() && data != ""; data = s.Read() {
+				queue <- data
+			}
+		}
 	}
 }
 
@@ -20,32 +61,8 @@ func FlushStore() {
 	if !g.Config().Backend.Enabled {
 		return
 	}
-	interval := time.Duration(g.Config().Transfer.Interval)
-	s := store.GetStore()
-	defer s.Close()
-	for {
-		timestamp := time.Now().Unix() - int64(g.Config().Backend.Expire)
-		data := make([]map[string]interface{}, 0)
-		queue := make(chan string, g.Config().Transfer.Interval)
-		s.CleanStale(timestamp, data)
-		s = store.GetStore()
-		UpdateStoreStatus()
-
-		go func() {
-			for {
-				select {
-				case data := <-queue:
-					if data == "" {
-						break
-					}
-					funcs.SubmitData(g.Config().Backend.Backup, []byte(data), "POST")
-				}
-			}
-		}()
-		for data := s.Read(); store.GetStoreStatus() && data != ""; data = s.Read() {
-			queue <- data
-		}
-		close(queue)
-		time.Sleep(interval * time.Second)
-	}
+	queue := make(chan string, g.Config().Transfer.Interval)
+	go eatStore(queue)
+	go consumeStore(queue)
+	go cleanStale()
 }
