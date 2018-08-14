@@ -27,6 +27,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/open-falcon/falcon-plus/modules/agent/funcs"
 	"github.com/open-falcon/falcon-plus/modules/agent/g"
 	"github.com/shirou/gopsutil/cpu"
 	"github.com/shirou/gopsutil/disk"
@@ -35,7 +36,6 @@ import (
 	"github.com/shirou/gopsutil/mem"
 	"github.com/shirou/gopsutil/net"
 	"github.com/shirou/gopsutil/process"
-	"github.com/toolkits/net/httplib"
 )
 
 var (
@@ -316,10 +316,8 @@ func GetAllInfo() string {
 func sendSystemInfoToConsul(consulUrl string, nodeId string, data string) {
 	if data != "" {
 		url := fmt.Sprintf("%s/kv/push?url=/v1/kv/object/%s/system", consulUrl, nodeId)
-		r := httplib.Put(url).SetTimeout(5*time.Second, 30*time.Second)
-		r.Body(data)
-		ret, err := r.String()
-		log.Println(ret, err)
+		ret, err := funcs.GetData(url)
+		log.Info(string(ret), err)
 	}
 }
 

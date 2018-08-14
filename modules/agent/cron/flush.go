@@ -38,7 +38,7 @@ func FlushStore() {
 					if data == "" {
 						break
 					}
-					funcs.PushToFalcon(g.Config().Backend.Backup, []byte(data))
+					funcs.SubmitData(g.Config().Backend.Backup, []byte(data))
 				}
 			}
 		}()
