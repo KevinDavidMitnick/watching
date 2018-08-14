@@ -168,6 +168,8 @@ func New(addr string, store Store, credentials CredentialStore) *Service {
 func (s *Service) Start() error {
 	server := http.Server{
 		Handler: s,
+		ReadTimeout:    10 * time.Second,
+ 		WriteTimeout:   10 * time.Second,
 	}
 
 	var ln net.Listener
