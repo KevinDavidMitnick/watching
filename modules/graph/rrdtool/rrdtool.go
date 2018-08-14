@@ -91,20 +91,19 @@ func GetRrdLeader() string {
 	return getRrdLeader(addrs)
 }
 
-func getData(url string) ([]byte, error) {
+// GetData from url,use method get
+func GetData(url string) ([]byte, error) {
 	request, _ := http.NewRequest("GET", url, nil)
-	request.Header.Set("TIMEOUT", "10")
 	request.Header.Set("Content-Type", "application/json;charset=UTF-8")
 	request.Close = true
 
 	transport := http.Transport{
-        DisableKeepAlives: true,
+		DisableKeepAlives: true,
 	}
-
-	client := http.Client{
-        Transport: &transport,
+	client := &http.Client{
+		Transport: &transport,
+		Timeout:   time.Duration(10) * time.Second,
 	}
-
 	resp, err := client.Do(request)
 	if err != nil {
 		return nil, err
@@ -119,20 +118,19 @@ func getData(url string) ([]byte, error) {
 	return body, nil
 }
 
-func submitData(url string, data []byte, method string) ([]byte, error) {
+// SubmitData from url,use method submit
+func SubmitData(url string, data []byte, method string) ([]byte, error) {
 	request, _ := http.NewRequest(method, url, bytes.NewBuffer(data))
-	request.Header.Set("Content-Type", "application/json")
-	request.Header.Set("TIMEOUT", "10")
+	request.Header.Set("Content-Type", "application/json;charset=UTF-8")
 	request.Close = true
 
 	transport := http.Transport{
-        DisableKeepAlives: true,
+		DisableKeepAlives: true,
 	}
-
-	client := http.Client{
-        Transport: &transport,
+	client := &http.Client{
+		Transport: &transport,
+		Timeout:   time.Duration(10) * time.Second,
 	}
-
 	resp, err := client.Do(request)
 	if err != nil {
 		return nil, err
@@ -182,7 +180,7 @@ func Flushrrd(filename string, items []*cmodel.GraphItem) error {
 	if b, err := json.Marshal(data); err == nil && url != "" {
 		log.Infoln("-----------------start flush------")
 		//log.Infoln(string(b))
-		_, err := submitData(url, b,"POST")
+		_, err := submitData(url, b, "POST")
 		if err != nil {
 			log.Errorln("fail to flush", filename, len(items))
 			return nil
@@ -243,7 +241,7 @@ func Fetch(filename string, cf string, start, end int64, step int) ([]*cmodel.RR
 			return rrd, nil
 		}
 		url = "http://" + url + "/db/query?pretty&timings"
-		resp, err1 := submitData(url, b,"POST")
+		resp, err1 := submitData(url, b, "POST")
 		if err1 != nil {
 			log.Infof("fetch error:filename is %s,start time is:%d,end time is:%d,step is :%d,time_len is:%d", filename, start, end, step, len(rrd))
 			return rrd, nil

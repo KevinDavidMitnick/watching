@@ -7,6 +7,7 @@ import (
 	cmodel "github.com/open-falcon/falcon-plus/common/model"
 	"io/ioutil"
 	"net/http"
+	"time"
 )
 
 type RaftStat struct {
@@ -27,13 +28,19 @@ type Flushfile_t struct {
 	Method   string              `json:"method"`
 }
 
-func getData(url string) ([]byte, error) {
+// GetData from url,use method get
+func GetData(url string) ([]byte, error) {
 	request, _ := http.NewRequest("GET", url, nil)
-	request.Header.Set("TIMEOUT", "10")
 	request.Header.Set("Content-Type", "application/json;charset=UTF-8")
 	request.Close = true
 
-	client := &http.Client{}
+	transport := http.Transport{
+		DisableKeepAlives: true,
+	}
+	client := &http.Client{
+		Transport: &transport,
+		Timeout:   time.Duration(10) * time.Second,
+	}
 	resp, err := client.Do(request)
 	if err != nil {
 		return nil, err
@@ -48,13 +55,19 @@ func getData(url string) ([]byte, error) {
 	return body, nil
 }
 
-func submitData(url string, data []byte, method string) ([]byte, error) {
+// SubmitData from url,use method submit
+func SubmitData(url string, data []byte, method string) ([]byte, error) {
 	request, _ := http.NewRequest(method, url, bytes.NewBuffer(data))
-	request.Header.Set("Content-Type", "application/json")
-	request.Header.Set("TIMEOUT", "10")
+	request.Header.Set("Content-Type", "application/json;charset=UTF-8")
 	request.Close = true
 
-	client := &http.Client{}
+	transport := http.Transport{
+		DisableKeepAlives: true,
+	}
+	client := &http.Client{
+		Transport: &transport,
+		Timeout:   time.Duration(10) * time.Second,
+	}
 	resp, err := client.Do(request)
 	if err != nil {
 		return nil, err
@@ -73,7 +86,7 @@ func getRrdLeader(addrs []string) string {
 	var clusterStat RrdClusterStat
 	for _, addr := range addrs {
 		url := "http://" + addr + "/status"
-		if resp, err := getData(url); err == nil {
+		if resp, err := GetData(url); err == nil {
 			if err1 := json.Unmarshal(resp, &clusterStat); err1 == nil {
 				if clusterStat.Store.Raft.State == "Leader" {
 					return addr
@@ -102,7 +115,7 @@ func Flushrrd(filename string, items []*cmodel.GraphItem) error {
 	if b, err := json.Marshal(data); err == nil && url != "" {
 		log.Infoln("-----------------start flush------")
 		//log.Infoln(string(b))
-		_, err := submitData(url, b,"POST")
+		_, err := SubmitData(url, b, "POST")
 		if err != nil {
 			log.Errorln("fail to flush", filename, len(items))
 			return nil
