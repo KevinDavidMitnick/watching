@@ -113,7 +113,7 @@ func getData(url string) ([]byte, error) {
 	return body, nil
 }
 
-func postData(url string, data []byte, method string) ([]byte, error) {
+func submitData(url string, data []byte, method string) ([]byte, error) {
 	request, _ := http.NewRequest(method, url, bytes.NewBuffer(data))
 	request.Header.Set("Content-Type", "application/json")
 	request.Header.Set("TIMEOUT", "10")
@@ -167,7 +167,7 @@ func Flushrrd(filename string, items []*cmodel.GraphItem) error {
 	if b, err := json.Marshal(data); err == nil && url != "" {
 		log.Infoln("-----------------start flush------")
 		//log.Infoln(string(b))
-		_, err := postData(url, b)
+		_, err := submitData(url, b,"POST")
 		if err != nil {
 			log.Errorln("fail to flush", filename, len(items))
 			return nil
@@ -228,7 +228,7 @@ func Fetch(filename string, cf string, start, end int64, step int) ([]*cmodel.RR
 			return rrd, nil
 		}
 		url = "http://" + url + "/db/query?pretty&timings"
-		resp, err1 := postData(url, b)
+		resp, err1 := submitData(url, b,"POST")
 		if err1 != nil {
 			log.Infof("fetch error:filename is %s,start time is:%d,end time is:%d,step is :%d,time_len is:%d", filename, start, end, step, len(rrd))
 			return rrd, nil
