@@ -92,37 +92,46 @@ func GetRrdLeader() string {
 	return getRrdLeader(addrs)
 }
 
-func postData(addr string, buf []byte) ([]byte, error) {
-	log.Infof("send :%s,data :%s", addr, bytes.NewBuffer(buf).String())
-	request, _ := http.NewRequest("POST", addr, bytes.NewBuffer(buf))
-	request.Header.Set("Content-Type", "application/json;charset=UTF-8")
+func getData(url string) ([]byte, error) {
+	request, _ := http.NewRequest("GET", url, nil)
 	request.Header.Set("TIMEOUT", "10")
+	request.Header.Set("Content-Type", "application/json;charset=UTF-8")
+	request.Close = true
 
 	client := &http.Client{}
 	resp, err := client.Do(request)
-	if err == nil {
-		defer resp.Body.Close()
-		return ioutil.ReadAll(resp.Body)
+	if err != nil {
+		return nil, err
 	}
-	return nil, err
+	defer resp.Body.Close()
+
+	body, err := ioutil.ReadAll(resp.Body)
+	if err != nil {
+		return nil, err
+	}
+
+	return body, nil
 }
 
-func getData(addr string) ([]byte, error) {
-	log.Infof("send :%s", addr)
-	request, _ := http.NewRequest("GET", addr, nil)
-	request.Header.Set("Content-Type", "application/json;charset=UTF-8")
+func postData(url string, data []byte, method string) ([]byte, error) {
+	request, _ := http.NewRequest(method, url, bytes.NewBuffer(data))
+	request.Header.Set("Content-Type", "application/json")
 	request.Header.Set("TIMEOUT", "10")
+	request.Close = true
 
 	client := &http.Client{}
 	resp, err := client.Do(request)
-	if err == nil {
-		defer resp.Body.Close()
-		if resp.StatusCode/100 != 2 {
-			return nil, fmt.Errorf("get response err.")
-		}
-		return ioutil.ReadAll(resp.Body)
+	if err != nil {
+		return nil, err
 	}
-	return nil, err
+	defer resp.Body.Close()
+
+	body, err := ioutil.ReadAll(resp.Body)
+	if err != nil {
+		return nil, err
+	}
+
+	return body, nil
 }
 
 func getRrdLeader(addrs []string) string {
