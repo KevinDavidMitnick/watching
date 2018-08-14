@@ -17,7 +17,6 @@ package rrdtool
 import (
 	"bytes"
 	"encoding/json"
-	"fmt"
 	log "github.com/Sirupsen/logrus"
 	cmodel "github.com/open-falcon/falcon-plus/common/model"
 	"github.com/open-falcon/falcon-plus/modules/graph/g"
