@@ -97,7 +97,14 @@ func getData(url string) ([]byte, error) {
 	request.Header.Set("Content-Type", "application/json;charset=UTF-8")
 	request.Close = true
 
-	client := &http.Client{}
+	transport := http.Transport{
+        DisableKeepAlives: true,
+	}
+
+	client := http.Client{
+        Transport: &transport,
+	}
+
 	resp, err := client.Do(request)
 	if err != nil {
 		return nil, err
@@ -118,7 +125,14 @@ func submitData(url string, data []byte, method string) ([]byte, error) {
 	request.Header.Set("TIMEOUT", "10")
 	request.Close = true
 
-	client := &http.Client{}
+	transport := http.Transport{
+        DisableKeepAlives: true,
+	}
+
+	client := http.Client{
+        Transport: &transport,
+	}
+
 	resp, err := client.Do(request)
 	if err != nil {
 		return nil, err
@@ -137,13 +151,15 @@ func getRrdLeader(addrs []string) string {
 	var clusterStat RrdClusterStat
 	for _, addr := range addrs {
 		url := "http://" + addr + "/status"
-		if resp, err := getData(url); err == nil {
+		resp, err := getData(url)
+		if err == nil {
 			if err1 := json.Unmarshal(resp, &clusterStat); err1 == nil {
 				if clusterStat.Store.Raft.State == "Leader" {
 					return addr
 				}
 			}
 		}
+		log.Errorln("### Get Leader data err: ", err)
 	}
 	return ""
 }
