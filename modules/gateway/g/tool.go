@@ -3,7 +3,6 @@ package g
 import (
 	"bytes"
 	"encoding/json"
-	"fmt"
 	log "github.com/Sirupsen/logrus"
 	cmodel "github.com/open-falcon/falcon-plus/common/model"
 	"io/ioutil"
@@ -49,7 +48,7 @@ func getData(url string) ([]byte, error) {
 	return body, nil
 }
 
-func postData(url string, data []byte, method string) ([]byte, error) {
+func submitData(url string, data []byte, method string) ([]byte, error) {
 	request, _ := http.NewRequest(method, url, bytes.NewBuffer(data))
 	request.Header.Set("Content-Type", "application/json")
 	request.Header.Set("TIMEOUT", "10")
@@ -103,7 +102,7 @@ func Flushrrd(filename string, items []*cmodel.GraphItem) error {
 	if b, err := json.Marshal(data); err == nil && url != "" {
 		log.Infoln("-----------------start flush------")
 		//log.Infoln(string(b))
-		_, err := postData(url, b)
+		_, err := submitData(url, b,"POST")
 		if err != nil {
 			log.Errorln("fail to flush", filename, len(items))
 			return nil
