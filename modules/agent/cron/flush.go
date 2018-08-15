@@ -7,8 +7,9 @@ import (
 	"time"
 )
 
-func UpdateStoreStatus() {
+func updateStoreStatus() {
 	ticker := time.NewTicker(time.Duration(g.Config().Transfer.Interval) * time.Second)
+	defer ticker.Stop()
 	for {
 		select {
 		case <-ticker.C:
@@ -33,6 +34,7 @@ func consumeStore(queue chan string) {
 
 func cleanStale() {
 	ticker := time.NewTicker(time.Duration(g.Config().Backend.Expire) * time.Second)
+	defer ticker.Stop()
 	for {
 		select {
 		case <-ticker.C:
@@ -45,7 +47,7 @@ func cleanStale() {
 
 func eatStore(queue chan string) {
 	ticker := time.NewTicker(time.Duration(g.Config().Transfer.Interval) * time.Second)
-
+	defer ticker.Stop()
 	for {
 		select {
 		case <-ticker.C:
@@ -62,6 +64,7 @@ func FlushStore() {
 		return
 	}
 	queue := make(chan string, g.Config().Transfer.Interval)
+	go updateStoreStatus()
 	go eatStore(queue)
 	go consumeStore(queue)
 	go cleanStale()

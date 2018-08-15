@@ -99,7 +99,7 @@ func collectMetric(sec int64, fn func() []*model.MetricValue) {
 		if err != nil || len(buf) == 0 {
 			return
 		}
-		store := store.GetStore()
-		store.Update(buf)
+		s := store.GetStore()
+		s.Update(buf)
 	}
 }
