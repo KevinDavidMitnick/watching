@@ -316,7 +316,7 @@ func GetAllInfo() string {
 func sendSystemInfoToConsul(consulUrl string, nodeId string, data string) {
 	if data != "" {
 		url := fmt.Sprintf("%s/kv/push?url=/v1/kv/object/%s/system", consulUrl, nodeId)
-		ret, err := funcs.GetData(url)
+		ret, err := funcs.SubmitData(url, []byte(data), "PUT")
 		log.Info(string(ret), err)
 	}
 }
