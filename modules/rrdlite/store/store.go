@@ -575,26 +575,26 @@ func (s *Store) WaitForAppliedIndex(idx uint64, timeout time.Duration) error {
 
 // Stats returns stats for the store.
 func (s *Store) Stats() (map[string]interface{}, error) {
-	fkEnabled, err := s.dbConn.FKConstraints()
-	if err != nil {
-		return nil, err
-	}
-
-	dbStatus := map[string]interface{}{
-		"dsn":            s.dbConf.DSN,
-		"fk_constraints": enabledFromBool(fkEnabled),
-		"version":        sdb.DBVersion,
-	}
-	if !s.dbConf.Memory {
-		dbStatus["path"] = s.dbPath
-		stat, err := os.Stat(s.dbPath)
-		if err != nil {
-			return nil, err
-		}
-		dbStatus["size"] = stat.Size()
-	} else {
-		dbStatus["path"] = ":memory:"
-	}
+	//fkEnabled, err := s.dbConn.FKConstraints()
+	//if err != nil {
+	//	return nil, err
+	//}
+	//
+	//dbStatus := map[string]interface{}{
+	//	"dsn":            s.dbConf.DSN,
+	//	"fk_constraints": enabledFromBool(fkEnabled),
+	//	"version":        sdb.DBVersion,
+	//}
+	//if !s.dbConf.Memory {
+	//	dbStatus["path"] = s.dbPath
+	//	stat, err := os.Stat(s.dbPath)
+	//	if err != nil {
+	//		return nil, err
+	//	}
+	//	dbStatus["size"] = stat.Size()
+	//} else {
+	//	dbStatus["path"] = ":memory:"
+	//}
 
 	nodes, err := s.Nodes()
 	if err != nil {
@@ -619,7 +619,7 @@ func (s *Store) Stats() (map[string]interface{}, error) {
 		"metadata":           s.meta,
 		"nodes":              nodes,
 		"dir":                s.raftDir,
-		"sqlite3":            dbStatus,
+		//"sqlite3":            dbStatus,
 		"db_conf":            s.dbConf,
 	}
 	return status, nil

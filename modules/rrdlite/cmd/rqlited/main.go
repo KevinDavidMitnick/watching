@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"log"
 	"os"
+	"syscall"
 	"os/signal"
 	"path/filepath"
 	"runtime"
@@ -262,7 +263,7 @@ func main() {
 
 	// Block until signalled.
 	terminate := make(chan os.Signal, 1)
-	signal.Notify(terminate, os.Interrupt)
+	signal.Notify(terminate, syscall.SIGINT, syscall.SIGTERM, syscall.SIGQUIT)
 	<-terminate
 	if err := str.Close(true); err != nil {
 		log.Printf("failed to close store: %s", err.Error())
