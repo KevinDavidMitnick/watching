@@ -118,7 +118,6 @@ func pushToRrd(data []byte) string {
 	}
 
 	filename := ""
-	graphItems := make([]*cmodel.GraphItem, len(items))
 	for i, item := range items {
 		var graphItem cmodel.GraphItem
 		graphItem.Endpoint = item["endpoint"].(string)
@@ -133,14 +132,7 @@ func pushToRrd(data []byte) string {
 
 			filename = fmt.Sprintf("%s/%s_%s_%d.rrd", checksum[0:2], checksum, graphItem.DsType, graphItem.Step)
 		}
-		graphItems = append(graphItems, &graphItem)
+		g.Flushrrd(filename, []*cmodel.GraphItem{&graphItem})
 	}
-	if filename == "" {
-		return "push to rrd data is empty,filename not right."
-	}
-	if err := g.Flushrrd(filename, graphItems); err == nil {
-		return "success push data to rrd file:" + filename
-	} else {
-		return "failed to push data to rrd file:" + filename
-	}
+	return "finish to pushToRrd"
 }
