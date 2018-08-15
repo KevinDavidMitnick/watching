@@ -18,6 +18,7 @@ import (
 	"encoding/json"
 	"github.com/open-falcon/falcon-plus/common/model"
 	"github.com/open-falcon/falcon-plus/modules/agent/g"
+	"github.com/open-falcon/falcon-plus/modules/agent/store"
 	"net/http"
 )
 
@@ -36,7 +37,17 @@ func configPushRoutes() {
 			return
 		}
 
-		g.SendToTransfer(metrics)
+		if store.GetStoreStatus() {
+			g.SendToTransfer(metrics)
+		} else {
+			if len(metrics) > 0 {
+				buf, err := json.Marshal(metrics)
+				if err == nil && len(buf) > 0 {
+					s := store.GetStore()
+					s.Update(buf)
+				}
+			}
+		}
 		w.Write([]byte("success"))
 	})
 }
