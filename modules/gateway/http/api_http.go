@@ -117,8 +117,7 @@ func pushToRrd(data []byte) string {
 		return "unmarsh data failed."
 	}
 
-	filename := ""
-	for i, item := range items {
+	for _, item := range items {
 		var graphItem cmodel.GraphItem
 		graphItem.Endpoint = item["endpoint"].(string)
 		graphItem.DsType = item["counterType"].(string)
@@ -127,11 +126,8 @@ func pushToRrd(data []byte) string {
 		graphItem.Timestamp = int64(item["timestamp"].(float64))
 		graphItem.Value = item["value"].(float64)
 		graphItem.Tags = utils.DictedTagstring(item["tags"].(string))
-		if i == 0 {
-			checksum := utils.Checksum(graphItem.Endpoint, graphItem.Metric, graphItem.Tags)
-
-			filename = fmt.Sprintf("%s/%s_%s_%d.rrd", checksum[0:2], checksum, graphItem.DsType, graphItem.Step)
-		}
+		checksum := utils.Checksum(graphItem.Endpoint, graphItem.Metric, graphItem.Tags)
+		filename := fmt.Sprintf("%s/%s_%s_%d.rrd", checksum[0:2], checksum, graphItem.DsType, graphItem.Step)
 		g.Flushrrd(filename, []*cmodel.GraphItem{&graphItem})
 	}
 	return "finish to pushToRrd"
