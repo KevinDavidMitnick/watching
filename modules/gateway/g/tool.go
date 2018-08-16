@@ -120,7 +120,7 @@ func Flushrrd(filename string, items []*cmodel.GraphItem) error {
 			log.Errorln("fail to flush", filename, len(items))
 			return nil
 		}
-		log.Infoln("success to flush", filename, len(items))
+		log.Infoln("success to flush", filename, len(items), string(b))
 	}
 	return nil
 }
