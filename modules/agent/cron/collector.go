@@ -88,8 +88,7 @@ func collectMetric(sec int64, fn func() []*model.MetricValue) {
 		}
 		mvs[j].Timestamp = now
 	}
-
-	if store.GetStoreStatus() {
+	if !g.Config().Backend.Enabled {
 		g.SendToTransfer(mvs)
 		return
 	}
