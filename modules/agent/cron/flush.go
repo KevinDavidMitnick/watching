@@ -57,7 +57,7 @@ func FlushStore() {
 		return
 	}
 	queue := make(chan string, g.Config().Transfer.Interval)
+	go cleanStale()
 	go eatStore(queue)
 	go consumeStore(queue)
-	go cleanStale()
 }
