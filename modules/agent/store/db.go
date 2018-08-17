@@ -4,6 +4,7 @@ import (
 	"encoding/binary"
 	"encoding/json"
 	"github.com/boltdb/bolt"
+	log "github.com/sirupsen/logrus"
 	"os"
 	"sync"
 )
@@ -61,6 +62,7 @@ func (s *DBStore) Update(data []byte) error {
 	err = s.db.Update(func(tx *bolt.Tx) error {
 		bucket := tx.Bucket([]byte("switch"))
 		id, _ := bucket.NextSequence()
+		log.Infoln("update, kye is:", id, "data is:", string(data))
 		return bucket.Put(itob(int(id)), data)
 	})
 	return err
@@ -81,6 +83,7 @@ func (s *DBStore) Read() string {
 		key, value := c.First()
 		if key != nil {
 			data = string(value)
+			log.Infoln("read, kye is:", binary.BigEndian.Uint64(key), "data is:", data)
 			return c.Delete()
 		}
 		return nil
