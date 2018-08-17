@@ -16,7 +16,6 @@ package http
 
 import (
 	"encoding/json"
-	"fmt"
 	"github.com/toolkits/net/httplib"
 	"io/ioutil"
 	"net/http"
@@ -126,9 +125,7 @@ func pushToRrd(data []byte) string {
 		graphItem.Timestamp = int64(item["timestamp"].(float64))
 		graphItem.Value = item["value"].(float64)
 		graphItem.Tags = utils.DictedTagstring(item["tags"].(string))
-		checksum := utils.Checksum(graphItem.Endpoint, graphItem.Metric, graphItem.Tags)
-		filename := fmt.Sprintf("%s/%s_%s_%d.rrd", checksum[0:2], checksum, graphItem.DsType, graphItem.Step)
-		g.Flushrrd(filename, []*cmodel.GraphItem{&graphItem})
+		g.Flushrrd([]*cmodel.GraphItem{&graphItem})
 	}
 	return "finish to pushToRrd"
 }

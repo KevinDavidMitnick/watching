@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	cmodel "github.com/open-falcon/falcon-plus/common/model"
 	log "github.com/sirupsen/logrus"
+	"github.com/toolkits/net/httplib"
 	"io/ioutil"
 	"net/http"
 	"time"
@@ -23,9 +24,8 @@ type RrdClusterStat struct {
 }
 
 type Flushfile_t struct {
-	Filename string              `json:"filename"`
-	Items    []*cmodel.GraphItem `json:"items"`
-	Method   string              `json:"method"`
+	Items  []*cmodel.GraphItem `json:"items"`
+	Method string              `json:"method"`
 }
 
 // GetData from url,use method get
@@ -82,7 +82,7 @@ func SubmitData(url string, data []byte, method string) ([]byte, error) {
 	return body, nil
 }
 
-func getRrdLeader(addrs []string) string {
+func getRrdLeader_old(addrs []string) string {
 	var clusterStat RrdClusterStat
 	for _, addr := range addrs {
 		url := "http://" + addr + "/status"
@@ -97,12 +97,27 @@ func getRrdLeader(addrs []string) string {
 	return ""
 }
 
+func getRrdLeader(addrs []string) string {
+	var clusterStat RrdClusterStat
+	for _, addr := range addrs {
+		url := "http://" + addr + "/status"
+		req := httplib.Get(url).SetTimeout(2*time.Second, 10*time.Second)
+		err := req.ToJson(&clusterStat)
+		if err == nil {
+			if clusterStat.Store.Raft.State == "Leader" {
+				return addr
+			}
+		}
+		log.Errorln("### Get Leader data err: ", err)
+	}
+	return ""
+}
+
 // flush to disk from memory
 // 最新的数据在列表的最后面
 // TODO fix me, filename fmt from item[0], it's hard to keep consistent
-func Flushrrd(filename string, items []*cmodel.GraphItem) error {
+func Flushrrd_old(filename string, items []*cmodel.GraphItem) error {
 	var data Flushfile_t
-	data.Filename = filename
 	data.Items = items
 	data.Method = "insert"
 
@@ -121,6 +136,31 @@ func Flushrrd(filename string, items []*cmodel.GraphItem) error {
 			return nil
 		}
 		log.Infoln("success to flush", filename, len(items), string(b))
+	}
+	return nil
+}
+
+func Flushrrd(items []*cmodel.GraphItem) error {
+	var data Flushfile_t
+	data.Items = items
+	data.Method = "insert"
+
+	url := getRrdLeader(Config().Rrd.Addr)
+	if url == "" {
+		log.Errorln("get rrd leader failed...")
+		return nil
+	}
+	url = "http://" + url + "/db/execute?pretty&timings"
+	req := httplib.Post(url).SetTimeout(3*time.Second, 10*time.Second)
+	if b, err := json.Marshal(data); err == nil && url != "" {
+		log.Infoln("-----------------start flush------")
+		req.Body(b)
+		_, err := req.String()
+		if err != nil {
+			log.Errorln("fail to flush", len(items))
+			return nil
+		}
+		log.Infoln("success to flush", len(items))
 	}
 	return nil
 }
