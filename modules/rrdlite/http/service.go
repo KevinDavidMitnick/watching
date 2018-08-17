@@ -585,7 +585,6 @@ func (s *Service) handleExecute(w http.ResponseWriter, r *http.Request) {
 	}
 
 	queries, _ = ConvertToSQL(exeReq)
-
 	var resp Response
 	results, err := s.store.Execute(&store.ExecuteRequest{queries, timings, isTx})
 	if err != nil {
@@ -924,8 +923,8 @@ func ConvertToSQL(execReq ExeRequest) ([]string, error) {
 
 	if method == "insert" {
 		for _, item := range items {
-			itemStr, _ := json.Marshal(item)
-			sql := fmt.Sprintf("INSERT %s %s", filename, itemStr)
+			itemByte, _ := json.Marshal(item)
+			sql := fmt.Sprintf("INSERT %s", itemByte)
 			queries = append(queries, sql)
 		}
 	} else if method == "query" {
