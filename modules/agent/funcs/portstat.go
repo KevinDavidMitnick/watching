@@ -18,9 +18,9 @@ import (
 	"fmt"
 	"github.com/open-falcon/falcon-plus/common/model"
 	"github.com/open-falcon/falcon-plus/modules/agent/g"
+	log "github.com/sirupsen/logrus"
 	"github.com/toolkits/nux"
 	"github.com/toolkits/slice"
-	"log"
 )
 
 func PortMetrics() (L []*model.MetricValue) {

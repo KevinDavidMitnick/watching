@@ -15,7 +15,7 @@
 package g
 
 import (
-	"log"
+	log "github.com/sirupsen/logrus"
 	"math/rand"
 	"sync"
 	"time"

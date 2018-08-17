@@ -17,8 +17,8 @@ package g
 import (
 	"bytes"
 	"github.com/open-falcon/falcon-plus/common/model"
+	log "github.com/sirupsen/logrus"
 	"github.com/toolkits/slice"
-	"log"
 	"net"
 	"os"
 	"strings"

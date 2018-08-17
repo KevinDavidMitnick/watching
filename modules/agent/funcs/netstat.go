@@ -16,8 +16,8 @@ package funcs
 
 import (
 	"github.com/open-falcon/falcon-plus/common/model"
+	log "github.com/sirupsen/logrus"
 	"github.com/toolkits/nux"
-	"log"
 )
 
 var USES = map[string]struct{}{
