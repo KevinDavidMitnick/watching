@@ -47,6 +47,8 @@ func (s *DBStore) Open() error {
 }
 
 func (s *DBStore) Close() error {
+	s.Lock()
+	defer s.Unlock()
 	var err error
 	if s.db != nil {
 		err = s.db.Close()
