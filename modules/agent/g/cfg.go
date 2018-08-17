@@ -70,7 +70,6 @@ type ConsulConfig struct {
 }
 type BackendConfig struct {
 	Enabled bool   `json:"enabled"`
-	Backup  string `json:"backup"`
 	Check   string `json:"check"`
 	Expire  int64  `json:"expire"`
 }
