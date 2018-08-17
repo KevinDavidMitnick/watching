@@ -21,6 +21,7 @@ import (
 	cmodel "github.com/open-falcon/falcon-plus/common/model"
 	"github.com/open-falcon/falcon-plus/modules/graph/g"
 	"github.com/open-falcon/falcon-plus/modules/graph/store"
+	"github.com/toolkits/net/httplib"
 	"io/ioutil"
 	"net/http"
 	"sync/atomic"
@@ -144,7 +145,7 @@ func SubmitData(url string, data []byte, method string) ([]byte, error) {
 	return body, nil
 }
 
-func getRrdLeader(addrs []string) string {
+func getRrdLeader_old(addrs []string) string {
 	var clusterStat RrdClusterStat
 	for _, addr := range addrs {
 		url := "http://" + addr + "/status"
@@ -161,10 +162,26 @@ func getRrdLeader(addrs []string) string {
 	return ""
 }
 
+func getRrdLeader(addrs []string) string {
+	var clusterStat RrdClusterStat
+	for _, addr := range addrs {
+		url := "http://" + addr + "/status"
+		req := httplib.Get(url).SetTimeout(2*time.Second, 10*time.Second)
+		err := req.ToJson(&clusterStat)
+		if err == nil {
+			if clusterStat.Store.Raft.State == "Leader" {
+				return addr
+			}
+		}
+		log.Errorln("### Get Leader data err: ", err)
+	}
+	return ""
+}
+
 // flush to disk from memory
 // 最新的数据在列表的最后面
 // TODO fix me, filename fmt from item[0], it's hard to keep consistent
-func Flushrrd(items []*cmodel.GraphItem) error {
+func Flushrrd_old(items []*cmodel.GraphItem) error {
 	var data Flushfile_t
 	data.Items = items
 	data.Method = "insert"
@@ -188,6 +205,31 @@ func Flushrrd(items []*cmodel.GraphItem) error {
 	return nil
 }
 
+func Flushrrd(items []*cmodel.GraphItem) error {
+	var data Flushfile_t
+	data.Items = items
+	data.Method = "insert"
+
+	url := getRrdLeader(g.Config().Rrd.Addr)
+	if url == "" {
+		log.Errorln("get rrd leader failed...")
+		return nil
+	}
+	url = "http://" + url + "/db/execute?pretty&timings"
+	req := httplib.Post(url).SetTimeout(3*time.Second, 10*time.Second)
+	if b, err := json.Marshal(data); err == nil && url != "" {
+		log.Infoln("-----------------start flush------")
+		req.Body(b)
+		_, err := req.String()
+		if err != nil {
+			log.Errorln("fail to flush", len(items))
+			return nil
+		}
+		log.Infoln("success to flush", len(items))
+	}
+	return nil
+}
+
 func FlushFile(filename string, items []*cmodel.GraphItem) error {
 	done := make(chan error, 1)
 	io_task_chan <- &io_task_t{
@@ -202,25 +244,7 @@ func FlushFile(filename string, items []*cmodel.GraphItem) error {
 	return <-done
 }
 
-// func Fetch(filename string, cf string, start, end int64, step int) ([]*cmodel.RRDData, error) {
-// 	done := make(chan error, 1)
-// 	task := &io_task_t{
-// 		method: IO_TASK_M_FETCH,
-// 		args: &fetch_t{
-// 			filename: filename,
-// 			cf:       cf,
-// 			start:    start,
-// 			end:      end,
-// 			step:     step,
-// 		},
-// 		done: done,
-// 	}
-// 	io_task_chan <- task
-// 	err := <-done
-// 	return task.args.(*fetch_t).data, err
-// }
-
-func Fetch(filename string, cf string, start, end int64, step int) ([]*cmodel.RRDData, error) {
+func Fetch_old(filename string, cf string, start, end int64, step int) ([]*cmodel.RRDData, error) {
 	var rrd []*cmodel.RRDData
 	var fetch_return Fetch_return
 	var data Fetch_t
@@ -249,6 +273,39 @@ func Fetch(filename string, cf string, start, end int64, step int) ([]*cmodel.RR
 			log.Infof("success fetch data,len is: %d", len(rrd))
 			return rrd, nil
 		}
+	}
+	return rrd, nil
+}
+
+func Fetch(filename string, cf string, start, end int64, step int) ([]*cmodel.RRDData, error) {
+	var rrd []*cmodel.RRDData
+	var fetch_return Fetch_return
+	var data Fetch_t
+	data.Start = start
+	data.End = end
+	data.Step = int(step)
+	data.Cf = cf
+	data.Filename = filename
+	data.Method = "query"
+	log.Println("starting fetching data....")
+	if b, err := json.Marshal(data); err == nil {
+		log.Println(string(b))
+		url := getRrdLeader(g.Config().Rrd.Addr)
+		if url == "" {
+			log.Infoln("get rrd leader failed...")
+			return rrd, nil
+		}
+		url = "http://" + url + "/db/query?pretty&timings"
+		req := httplib.Post(url).SetTimeout(3*time.Second, 10*time.Second)
+		req.Body(b)
+		err1 := req.ToJson(&fetch_return)
+		if err1 != nil {
+			log.Infof("fetch error:filename is %s,start time is:%d,end time is:%d,step is :%d,time_len is:%d", filename, start, end, step, len(rrd))
+			return rrd, nil
+		}
+		rrd = fetch_return.Result
+		log.Infof("success fetch data,len is: %d", len(rrd))
+		return rrd, nil
 	}
 	return rrd, nil
 }
