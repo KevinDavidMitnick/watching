@@ -51,7 +51,7 @@ func cleanStale() {
 }
 
 func eatStore(queue chan string) {
-	ticker := time.NewTicker(time.Duration(g.Config().Transfer.Interval) * time.Second)
+	ticker := time.NewTicker(time.Second)
 	defer ticker.Stop()
 	for {
 		select {
