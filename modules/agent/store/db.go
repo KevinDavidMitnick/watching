@@ -5,7 +5,7 @@ import (
 	"encoding/json"
 	"github.com/boltdb/bolt"
 	log "github.com/sirupsen/logrus"
-	"os"
+	//"os"
 	"sync"
 )
 
@@ -114,8 +114,8 @@ func (s *DBStore) CleanStale(timestamp int64) {
 		return nil
 	})
 	if flag {
-		s.Close()
-		os.Remove("opsultra.db")
+		//s.Close()
+		//os.Remove("opsultra.db")
 	}
 }
 
