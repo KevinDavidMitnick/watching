@@ -116,6 +116,7 @@ func handleItems(items []*cmodel.GraphItem) {
 
 	cfg := g.Config()
 
+	var datas []*cmodel.GraphItem
 	for i := 0; i < count; i++ {
 		if items[i] == nil {
 			continue
@@ -139,10 +140,7 @@ func handleItems(items []*cmodel.GraphItem) {
 			continue
 		}
 
-		dsType := items[i].DsType
-		step := items[i].Step
 		checksum := items[i].Checksum()
-		filename := g.RrdFileName(checksum, dsType, step)
 
 		//statistics
 		proc.GraphRpcRecvCnt.Incr()
@@ -159,15 +157,16 @@ func handleItems(items []*cmodel.GraphItem) {
 
 		// To History
 		store.AddItem(checksum, items[i])
+		datas = append(datas, items[i])
 
-		// flush to disk
-		rrdtool.Flushrrd(filename, []*cmodel.GraphItem{items[i]})
 	}
+	// flush to disk
+	rrdtool.Flushrrd(datas)
 }
 
 func (this *Graph) Query(param cmodel.GraphQueryParam, resp *cmodel.GraphQueryResponse) error {
 	var (
-		datas       []*cmodel.RRDData
+		datas []*cmodel.RRDData
 	)
 
 	// statistics

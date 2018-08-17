@@ -111,7 +111,7 @@ func ioWorker() {
 			go func() {
 				if task.method == IO_TASK_M_FLUSH {
 					if args, ok := task.args.(*flushfile_t); ok {
-						task.done <- Flushrrd(args.filename, args.items)
+						task.done <- Flushrrd(args.items)
 					}
 				} else if task.method == IO_TASK_M_FETCH {
 					if args, ok := task.args.(*fetch_t); ok {

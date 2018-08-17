@@ -57,9 +57,8 @@ type flushfile_t struct {
 }
 
 type Flushfile_t struct {
-	Filename string              `json:"filename"`
-	Items    []*cmodel.GraphItem `json:"items"`
-	Method   string              `json:"method"`
+	Items  []*cmodel.GraphItem `json:"items"`
+	Method string              `json:"method"`
 }
 
 type Fetch_return struct {
@@ -165,9 +164,8 @@ func getRrdLeader(addrs []string) string {
 // flush to disk from memory
 // 最新的数据在列表的最后面
 // TODO fix me, filename fmt from item[0], it's hard to keep consistent
-func Flushrrd(filename string, items []*cmodel.GraphItem) error {
+func Flushrrd(items []*cmodel.GraphItem) error {
 	var data Flushfile_t
-	data.Filename = filename
 	data.Items = items
 	data.Method = "insert"
 
@@ -182,10 +180,10 @@ func Flushrrd(filename string, items []*cmodel.GraphItem) error {
 		//log.Infoln(string(b))
 		_, err := SubmitData(url, b, "POST")
 		if err != nil {
-			log.Errorln("fail to flush", filename, len(items))
+			log.Errorln("fail to flush", len(items))
 			return nil
 		}
-		log.Infoln("success to flush", filename, len(items))
+		log.Infoln("success to flush", len(items))
 	}
 	return nil
 }
