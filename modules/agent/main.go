@@ -57,7 +57,6 @@ func main() {
 	funcs.BuildMappers()
 
 	go cron.InitDataHistory()
-	go cron.FlushStore()
 
 	cron.ReportAgentStatus()
 	cron.SyncMinePlugins()
@@ -65,6 +64,7 @@ func main() {
 	cron.SyncTrustableIps()
 	cron.Collect()
 	cron.ReportSystemInfo()
+	go cron.FlushStore()
 
 	go http.Start()
 
