@@ -1,6 +1,8 @@
 package cron
 
 import (
+	"encoding/json"
+	"github.com/open-falcon/falcon-plus/common/model"
 	"github.com/open-falcon/falcon-plus/modules/agent/funcs"
 	"github.com/open-falcon/falcon-plus/modules/agent/g"
 	"github.com/open-falcon/falcon-plus/modules/agent/store"
@@ -27,7 +29,10 @@ func consumeStore(queue chan string) {
 	for {
 		select {
 		case data := <-queue:
-			funcs.SubmitData(g.Config().Backend.Backup, []byte(data), "POST")
+			var mvs []*model.MetricValue
+			if err := json.Unmarshal([]byte(data), &mvs); err == nil {
+				g.SendToTransfer(mvs)
+			}
 		}
 	}
 }
