@@ -267,7 +267,7 @@ func GetEventEndpoint(c *gin.Context) {
 	uuids := make([]string, 0)
 	f := alm.EventCases{}
 	cevens := []APIEventEndpoint{}
-	perparedSql := fmt.Sprintf("select endpoint from %s ", f.TableName())
+	perparedSql := fmt.Sprintf("select endpoint from %s where `status` like \"%PROBLEM\"", f.TableName())
 	db.Alarm.Raw(perparedSql).Find(&cevens)
 	for _, event := range cevens {
 		uuids = append(uuids, event.Endpoint)
