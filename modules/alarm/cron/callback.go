@@ -21,6 +21,7 @@ import (
 	"time"
 
 	"crypto/tls"
+	"encoding/json"
 	"github.com/open-falcon/falcon-plus/common/model"
 	"github.com/open-falcon/falcon-plus/modules/alarm/api"
 	"github.com/open-falcon/falcon-plus/modules/alarm/redi"
@@ -96,6 +97,9 @@ func Callback(event *model.Event, action *api.Action) string {
 	req := httplib.Post(action.Url).SetTimeout(3*time.Second, 20*time.Second)
 	req.Header("Content-type", "application/json")
 	req.Header("St2-Api-Key", "YTRlMWI2ZmI5N2Y4YjU5ZGNjNTc1ZWM3ODQyNWY0MzFlN2NjZTkwM2MzNDk4MzI5OWJiOWZiNjg2OGRlOTcyNQ")
+
+	b, _ := json.Marshal(data)
+	req = req.Body(b)
 
 	//跳过证书验证
 	resp := make(map[string]interface{})
