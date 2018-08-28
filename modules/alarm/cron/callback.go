@@ -20,6 +20,7 @@ import (
 	"strings"
 	"time"
 
+	"crypto/tls"
 	"github.com/open-falcon/falcon-plus/common/model"
 	"github.com/open-falcon/falcon-plus/modules/alarm/api"
 	"github.com/open-falcon/falcon-plus/modules/alarm/redi"
@@ -81,28 +82,33 @@ func Callback(event *model.Event, action *api.Action) string {
 		tags = strings.Join(L, ",")
 	}
 
-	req := httplib.Get(action.Url).SetTimeout(3*time.Second, 20*time.Second)
+	data := make(map[string]interface{})
+	data["endpoint"] = event.Endpoint
+	data["metric"] = event.Metric()
+	data["status"] = event.Status
+	data["step"] = fmt.Sprintf("%d", event.CurrentStep)
+	data["priority"] = fmt.Sprintf("%d", event.Priority())
+	data["time"] = event.FormattedTime()
+	data["tpl_id"] = fmt.Sprintf("%d", event.TplId())
+	data["exp_id"] = fmt.Sprintf("%d", event.ExpressionId())
+	data["stra_id"] = fmt.Sprintf("%d", event.StrategyId())
+	data["tags"] = tags
+	req := httplib.Post(action.Url).SetTimeout(3*time.Second, 20*time.Second)
+	req.Header("Content-type", "application/json")
+	req.Header("St2-Api-Key", "YTRlMWI2ZmI5N2Y4YjU5ZGNjNTc1ZWM3ODQyNWY0MzFlN2NjZTkwM2MzNDk4MzI5OWJiOWZiNjg2OGRlOTcyNQ")
 
-	req.Param("endpoint", event.Endpoint)
-	req.Param("metric", event.Metric())
-	req.Param("status", event.Status)
-	req.Param("step", fmt.Sprintf("%d", event.CurrentStep))
-	req.Param("priority", fmt.Sprintf("%d", event.Priority()))
-	req.Param("time", event.FormattedTime())
-	req.Param("tpl_id", fmt.Sprintf("%d", event.TplId()))
-	req.Param("exp_id", fmt.Sprintf("%d", event.ExpressionId()))
-	req.Param("stra_id", fmt.Sprintf("%d", event.StrategyId()))
-	req.Param("tags", tags)
-
-	resp, e := req.String()
+	//跳过证书验证
+	resp := make(map[string]interface{})
+	req.SetTLSClientConfig(&tls.Config{InsecureSkipVerify: true})
+	e := req.ToJson(&resp)
 
 	success := "success"
 	if e != nil {
 		log.Errorf("callback fail, action:%v, event:%s, error:%s", action, event.String(), e.Error())
 		success = fmt.Sprintf("fail:%s", e.Error())
 	}
-	message := fmt.Sprintf("curl %s %s. resp: %s", action.Url, success, resp)
-	log.Debugf("callback to url:%s, event:%s, resp:%s", action.Url, event.String(), resp)
+	message := fmt.Sprintf("curl %s %s. resp: %v", action.Url, success, resp)
+	log.Debugf("callback to url:%s, event:%s, resp:%v", action.Url, event.String(), resp)
 
 	return message
 }
